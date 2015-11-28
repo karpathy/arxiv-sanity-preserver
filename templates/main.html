@@ -1,0 +1,268 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Arxiv Sanity Preserver</title>
+
+<style>
+/* CSS */
+
+body {
+	margin: 0;
+	padding: 0;
+	font-family: arial;
+	background-color: #F6F3E5;
+}
+.as {
+	font-size: 12px;
+	color: #900;
+}
+.ts {
+	font-weight: bold;
+	font-size: 14px;
+}
+.tt {
+	color: #000;
+	background-color: #EFE;
+	font-size: 14px;
+	display: block;
+	padding: 10px;
+	border-radius: 5px;
+}
+h1 {
+	font-size: 20px;
+	padding: 0;
+	margin: 0;
+}
+#titdiv {
+	width: 100%;
+	height: 70px;
+	background-color: #840000;
+	color: white;
+
+	padding-top: 20px;
+	padding-left: 20px;
+
+	border-bottom: 1px solid #540000;
+}
+
+#maindiv {
+	width: 970px;
+	padding: 15px;
+	margin-left: auto;
+	margin-right: auto;
+
+	border-left: solid 1px #D6D3C5;
+	border-right: solid 1px #D6D3C5;
+
+	background-color: white;
+}
+
+.apaper {
+	margin-top: 25px;
+	min-height: 300px;
+}
+.apaper img {
+   width: 100%;
+}
+.paperdesc {
+	float: left;
+}
+
+.dllinks {
+	float: right;
+	text-align: right;
+}
+.w {
+	color: #050;
+	cursor: pointer;
+	text-decoration: underline;
+}
+#titdiv a:link{ color: white; }
+#titdiv a:visited{ color: white; }
+
+#maindiv a:link{ color: #666; }
+#maindiv a:visited{ color: #600; }
+
+.t0 { color: #000;}
+.t1 { color: #C00;}
+.t2 { color: #0C0;}
+.t3 { color: #00C;}
+.t4 { color: #AA0;}
+.t5 { color: #C0C;}
+.t6 { color: #0CC;}
+
+.topicchoice {
+	border: 2px solid black;
+	border-radius: 10px;
+	padding: 4px;
+	cursor: pointer;
+	text-decoration: underline;
+}
+
+#explanation {
+	background-color: #CFC;
+	border-radius: 5px;
+	color: black;
+	padding: 5px;
+	text-align: center;
+}
+#tsneexp {
+	background-color: #CCF;
+	border-radius: 5px;
+	color: black;
+	padding: 5px;
+}
+
+#sortoptions {
+	text-align: center;
+	padding: 10px;
+}
+
+.sim {
+	cursor: pointer;
+	text-decoration: underline;
+	display: block;
+}
+
+.abstrholder {
+	background-color: #DFD;
+	border: 1px solid #BDB;
+	font-size: 12px;
+	padding: 10px;
+	border-radius: 5px;
+	display: none; /* so that these are hidden initially */
+	margin-bottom: 5px;
+}
+input {
+  border: 5px solid white; 
+  padding: 10px;
+  width: 1000px;
+  background: rgba(255,255,255,0.5);
+  border: solid 1px #999;
+  margin-bottom: 5px;
+}
+#sbox {
+	margin-top: 10px;
+  text-align: center;
+}
+
+</style>
+
+<script src="/static/jquery-1.8.3.min.js"></script>
+<script src="/static/d3.min.js"></script>
+<script>
+
+// passed in from flask as json
+var papers = {{ papers | tojson }};
+
+var urlq = '';
+
+// helper function so that we can access keys in url bar
+var QueryString = function () {
+  // This function is anonymous, is executed immediately and 
+  // the return value is assigned to QueryString!
+  var query_string = {};
+  var query = window.location.search.substring(1);
+  var vars = query.split("&");
+  for (var i=0;i<vars.length;i++) {
+    var pair = vars[i].split("=");
+        // If first entry with this name
+    if (typeof query_string[pair[0]] === "undefined") {
+      query_string[pair[0]] = decodeURIComponent(pair[1]);
+        // If second entry with this name
+    } else if (typeof query_string[pair[0]] === "string") {
+      var arr = [ query_string[pair[0]],decodeURIComponent(pair[1]) ];
+      query_string[pair[0]] = arr;
+        // If third or later entry with this name
+    } else {
+      query_string[pair[0]].push(decodeURIComponent(pair[1]));
+    }
+  } 
+    return query_string;
+}();
+
+function replaceAll(str, find, replace) {
+  return str.replace(new RegExp(find, 'g'), replace);
+}
+function highlight(s) {
+	return s;
+	if (urlq == '') return s;
+	var res = replaceAll(s, urlq, "<b>" + urlq + "</b>");
+	return res;
+}
+
+// this permutes the divs (that contian 1 paper each) based on a custom sorting function
+// in our case, this sort is done as dot product based on the choices[] array
+// here we are guaranteed ldadist[] already sums to 1 for every paper
+function arrangeDivs() {
+
+  var root = d3.select("#rtable");
+  for(var i=0,n=papers.length;i<n;i++) {
+  	var p = papers[i];
+  	var div = root.append('div').classed('apaper', true).attr('id', p.pid);
+
+  	var tdiv = div.append('div').classed('paperdesc', true);
+  	tdiv.append('span').classed('ts', true).html(highlight(p.title))
+  	tdiv.append('br')
+  	tdiv.append('span').classed('as', true).html(highlight(p.authors.join(', ')))
+  	tdiv.append('br')
+  	tdiv.append('br')
+
+  	var ldiv = div.append('div').classed('dllinks', true);
+  	ldiv.append('a').attr('href', p.link).html('[pdf]');
+
+  	ldiv.append('span').classed('sim', true).attr('id', 'sim'+p.pid).html('[rank by tf-idf similarity to this]');
+
+  	div.append('img').attr('src', p.img);
+
+  	div.append('span').classed('tt', true).html(highlight(p.abstract));
+  }
+}
+
+// when page loads...
+$(document).ready(function(){
+	
+	urlq = QueryString.q;
+
+	arrangeDivs();
+
+	d3.select("#qfield").attr('value', urlq);
+
+	// user clicks on "rank by tf-idf similarity to this" button for some paper
+	$(".sim").click(function() {
+		similarTo = $(this).attr('id').substring(3); // get the id of clicked paper
+		// redirect: requery the server
+		window.location.replace('/' + similarTo);
+	});
+
+});
+
+</script>
+</head>
+
+<body>
+
+<div id ="titdiv">
+<h1>Arxiv Sanity Preserver</h1>
+Because things are seriously getting out of hand.<br>
+Serving {{ numpapers }} papers.
+</div>
+
+<div id="sbox">
+	Search:<br>
+  <form action="/search" method="get">
+  	<input name="q" type="text" id="qfield" style="height:40px;font-size:20px;">
+  </form>
+</div>
+
+<div id="maindiv">
+
+<div id="rtable">
+</div>
+
+</div>
+
+<br /><br /><br /><br /><br /><br />
+</body>
+
+</html>
