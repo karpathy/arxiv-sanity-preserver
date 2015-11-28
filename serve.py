@@ -4,11 +4,17 @@ from flask import request
 import cPickle as pickle
 import numpy as np
 import json
+import time
+import dateutil.parser
+import argparse
+from random import shuffle
 
 app = Flask(__name__)
-app.debug = True
 
-NRET = 25 # number of results to return
+def papers_shuffle():
+  ks = db.keys()
+  shuffle(ks)
+  return [db[k] for k in ks]
 
 def papers_search(qraw):
   qparts = qraw.lower().split() # split by spaces
@@ -55,6 +61,16 @@ def encode_json(ps, n=10):
     struct['link'] = p['link']
     struct['abstract'] = p['summary']
     struct['img'] = '/static/thumbs/' + p['rawid'] + '.pdf.jpg'
+    struct['tags'] = [t['term'] for t in p['tags']]
+    
+    timestruct = dateutil.parser.parse(p['updated'])
+    struct['published_time'] = '%s/%s/%s' % (timestruct.month, timestruct.day, timestruct.year)
+
+    cc = p.get('arxiv_comment', '')
+    if len(cc) > 100:
+      cc = cc[:100] + '...'
+    struct['comment'] = cc
+
     ret.append(struct)
   return ret
 
@@ -64,26 +80,36 @@ def intmain(request_pid=None):
   if request_pid == 'favicon.ico': return '' # must be better way, todo
   
   if request_pid is None:
-    # ??? 
-    q = 'RNN'
-    papers = papers_search(q) # perform the query and get sorted documents
+    papers = papers_shuffle() # perform the query and get sorted documents
   else:
     papers = papers_similar(request_pid)
 
-  ret = encode_json(papers, NRET) # encode the top few to json
+  ret = encode_json(papers, args.num_results) # encode the top few to json
   return render_template('main.html', papers=ret, numpapers=len(db))
 
 @app.route("/search", methods=['GET'])
 def search():
   q = request.args.get('q', '') # get the search request
   papers = papers_search(q) # perform the query and get sorted documents
-  ret = encode_json(papers, NRET) # encode the top few to json
+  ret = encode_json(papers, args.num_results) # encode the top few to json
   return render_template('main.html', papers=ret, numpapers=len(db)) # weeee
 
 if __name__ == "__main__":
+   
+  parser = argparse.ArgumentParser()
+  parser.add_argument('-p', '--prod', dest='prod', action='store_true', help='run in prod?')
+  parser.add_argument('-r', '--num_results', dest='num_results', type=int, default=25, help='number of results to return per query')
+  args = parser.parse_args()
+  print args
+
   # load main database
   db = pickle.load(open('db.p', 'rb'))
   # load tfidf vectors
   tfidf = pickle.load(open("tfidf.p", "rb"))
   X = tfidf['X'].todense()
-  app.run()
+
+  if args.prod:
+    app.run(host='0.0.0.0')
+  else:
+    app.debug = True
+    app.run()

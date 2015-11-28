@@ -5,7 +5,6 @@
 import os
 import os.path
 
-os.system('mkdir -p static')
 os.system('mkdir -p static/thumbs')
 
 relpath = "pdf"
