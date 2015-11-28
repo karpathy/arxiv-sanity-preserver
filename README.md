@@ -28,5 +28,7 @@ Requires reading code and getting hands dirty. Magic numbers throughout code.
 
 If you'd like to browse arxiv papers from last 3 months you can download the result of running the above steps 1-6, and only run 7. to browse. [Here is the download link.](http://cs.stanford.edu/people/karpathy/arxiv_cv_lg_sep_to_dec.zip). Unzip in root folder and fire up flask with `serve.py`. Should work I think.
 
+### Running online
 
+If you'd like to run this flask server online (e.g. AWS/Flask) make sure to uncomment `app.debug = True` in `serve.py`, and change `app.run()` to `app.run(host='0.0.0.0')` to make the app visible to the world.
 
