@@ -5,6 +5,8 @@ There are way too many arxiv papers, so I wrote a quick webapp that lets you sea
 
 It's super hacky and was written in 4 hours. I'll keep polishing it a bit over time perhaps but it serves its purpose for me already. 
 
+Main functionality is a search feature, and most useful is that you can click "sort by tfidf similarity to this", which returns all the most similar papers to that one in terms of tfidf bigrams. I find this quite useful.
+
 ![user interface](https://raw.github.com/karpathy/arxiv-sanity-preserver/master/ui.jpeg)
 
 ### Dependencies
