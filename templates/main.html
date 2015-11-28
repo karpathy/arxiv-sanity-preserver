@@ -226,7 +226,7 @@ $(document).ready(function(){
 
 	arrangeDivs();
 
-	d3.select("#qfield").attr('value', urlq);
+	d3.select("#qfield").attr('value', urlq.replace('+', ' '));
 
 	// user clicks on "rank by tf-idf similarity to this" button for some paper
 	$(".sim").click(function() {
