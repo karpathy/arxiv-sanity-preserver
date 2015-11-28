@@ -50,9 +50,9 @@ def papers_similar(pid):
   ix = [i for i,p in enumerate(tfidf['pids']) if p == pid]
   if len(ix) == 1:
     ix0 = ix[0]
-    xquery = X[ix0, :]
-    ds = np.sum(np.square(X - xquery), axis=1)
-    scores = [(-ds[i], tfidf['pids'][i]) for i in xrange(X.shape[0])]
+    xquery = X[ix0, np.newaxis]
+    ds = np.asarray(np.dot(X, xquery.T)).ravel() # L2 normalized tfidf vectors
+    scores = [(ds[i], tfidf['pids'][i]) for i in xrange(X.shape[0])]
     scores.sort(reverse=True) # descending
     out = [db[sp[1]] for sp in scores]
     return out
