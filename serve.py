@@ -10,18 +10,21 @@ app.debug = True
 
 NRET = 25 # number of results to return
 
-def papers_search(q):
+def papers_search(qraw):
+  qparts = qraw.lower().split() # split by spaces
+
   scores = []
   for pid in db:
     p = db[pid]
     score = 0
-    # search titles
-    if q in p['title']:
-      score += 10.0
-    # search authors
-    score += sum(5.0 for x in p['authors'] if q in x['name'])
-    # search abstracts
-    score += 1.0 * p['summary'].count(q)
+    for q in qparts:
+      # search titles
+      if q in p['title'].lower():
+        score += 5.0
+      # search authors
+      score += sum(3.0 for x in p['authors'] if q in x['name'].lower())
+      # search abstracts
+      score += min(2.0, 1.0 * p['summary'].lower().count(q)) # robustify with min
     scores.append((score, p))
   scores.sort(reverse=True) # descending
   out = [x[1] for x in scores if x[0] > 0]
