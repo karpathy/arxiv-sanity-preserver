@@ -5,8 +5,8 @@
 import os
 import os.path
 
-os.system('mkdir -p static')
 os.system('mkdir -p static/thumbs')
+os.system('rm static/thumbs/*')
 
 relpath = "pdf"
 allFiles = os.listdir(relpath)
