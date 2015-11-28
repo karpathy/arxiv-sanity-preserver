@@ -10,7 +10,7 @@ Main functionality is a search feature, and most useful is that you can click "s
 ![user interface](https://raw.github.com/karpathy/arxiv-sanity-preserver/master/ui.jpeg)
 
 ### Dependencies
-You will need numpy, scikit learn (for tfidf vectorizer), and flask (for serving the results)
+You will need numpy, feedparser (to process xml files), scikit learn (for tfidf vectorizer), and flask (for serving the results)
 
 ### Ugly I don't have time processing pipeline
 
