@@ -3,7 +3,7 @@
 
 There are way too many arxiv papers, so I wrote a quick webapp that lets you search and sort through the mess in a pretty interface, similar to my [pretty conference format](http://cs.stanford.edu/people/karpathy/nips2014/).
 
-It's super hacky and was written in 4 hours. I'll keep polishing it a bit over time perhaps but it serves its purpose for me already. 
+It's super hacky and was written in 4 hours. I'll keep polishing it a bit over time perhaps but it serves its purpose for me already. The code uses Arxiv API to download the most recent papers (as many as you want - I used the last 1100 papers over last 3 months), and then downloads all papers, extracts text, creates tfidf vectors for each paper, and lastly is a flask interface for searching through and filtering similar papers using the vectors.
 
 Main functionality is a search feature, and most useful is that you can click "sort by tfidf similarity to this", which returns all the most similar papers to that one in terms of tfidf bigrams. I find this quite useful.
 
