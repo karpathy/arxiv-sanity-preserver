@@ -26,7 +26,7 @@ Requires reading code and getting hands dirty. Magic numbers throughout code.
 
 ### Prebuilt database
 
-If you'd like to browse arxiv papers from last 3 months you can download the result of running the above steps 1-6, and only run 7. to browse. [Here is the download link.](cs.stanford.edu/people/karpathy/arxiv_cv_lg_sep_to_dec.zip). Unzip in root folder and fire up flask with `serve.py`. Should work I think.
+If you'd like to browse arxiv papers from last 3 months you can download the result of running the above steps 1-6, and only run 7. to browse. [Here is the download link.](http://cs.stanford.edu/people/karpathy/arxiv_cv_lg_sep_to_dec.zip). Unzip in root folder and fire up flask with `serve.py`. Should work I think.
 
 
 
