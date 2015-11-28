@@ -30,5 +30,5 @@ If you'd like to browse arxiv papers from last 3 months you can download the res
 
 ### Running online
 
-If you'd like to run this flask server online (e.g. AWS/Flask) make sure to uncomment `app.debug = True` in `serve.py`, and change `app.run()` to `app.run(host='0.0.0.0')` to make the app visible to the world.
+If you'd like to run this flask server online (e.g. AWS/Terminal) make sure to uncomment `app.debug = True` in `serve.py`, and change `app.run()` to `app.run(host='0.0.0.0')` to make the app visible to the world.
 
