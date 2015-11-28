@@ -128,9 +128,19 @@ input {
   border: 5px solid white; 
   padding: 10px;
   width: 1000px;
-  background: rgba(255,255,255,0.5);
   border: solid 1px #999;
   margin-bottom: 5px;
+
+  height: 40px;
+  font-size: 22px;
+  color: "#333";
+
+  padding-left: 50px;
+
+  background-image:url('/static/search.png');
+	background-repeat:no-repeat;
+	background-position:left center;
+	outline:0;
 }
 #sbox {
 	margin-top: 10px;
@@ -233,13 +243,12 @@ $(document).ready(function(){
 <div id ="titdiv">
 <h1>Arxiv Sanity Preserver</h1>
 Because things are seriously getting out of hand.<br>
-Serving {{ numpapers }} papers.
+Serving last {{ numpapers }} papers from cv.CV/cv.LG.
 </div>
 
 <div id="sbox">
-	Search:<br>
   <form action="/search" method="get">
-  	<input name="q" type="text" id="qfield" style="height:40px;font-size:20px;">
+  	<input name="q" type="text" id="qfield">
   </form>
 </div>
 

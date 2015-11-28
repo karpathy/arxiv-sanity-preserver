@@ -16,6 +16,16 @@ def papers_shuffle():
   shuffle(ks)
   return [db[k] for k in ks]
 
+def date_sort():
+  scores = []
+  for pid in db:
+    p = db[pid]
+    timestruct = dateutil.parser.parse(p['updated'])
+    scores.append((timestruct, p))
+  scores.sort(reverse=True)
+  out = [sp[1] for sp in scores]
+  return out
+
 def papers_search(qraw):
   qparts = qraw.lower().split() # split by spaces
 
