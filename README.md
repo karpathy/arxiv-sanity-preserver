@@ -30,7 +30,7 @@ Requires reading code and getting hands dirty. Magic numbers throughout code.
 
 ### Prebuilt database
 
-If you'd like to browse arxiv papers from last 3 months you can download the result of running the above steps 1-6, and only run 7. to browse. [Here is the download link.](http://cs.stanford.edu/people/karpathy/arxiv_cv_lg_sep_to_dec.zip). Unzip in root folder and fire up flask with `serve.py`. Should work I think.
+If you'd like to browse the 10400 arxiv papers currently running in the demo, you can download the prebuilt database. This means you can skip steps 1-6 above and simply run the server (step 7). [Here is the download link.](http://cs.stanford.edu/people/karpathy/arxiv_10K_export.zip). Unzip in root folder and fire up flask with `serve.py`.
 
 ### Running online
 
