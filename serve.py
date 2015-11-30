@@ -177,7 +177,7 @@ if __name__ == "__main__":
   #import code; code.interact(local=locals())
   print 'starting!'
   if args.prod:
-    app.run(host='0.0.0.0')
+    app.run(host='0.0.0.0', threaded=True)
   else:
     app.debug = True
     app.run()
