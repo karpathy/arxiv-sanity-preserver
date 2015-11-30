@@ -11,7 +11,7 @@ os.system('mkdir -p raw') # ?
 base_url = 'http://export.arxiv.org/api/query?';
 
 # Search parameters
-search_query = 'cat:cs.CV+OR+cat:cs.LG' # search for electron in all fields
+search_query = 'cat:cs.CV+OR+cat:cs.LG+OR+cat:cs.CL'
 start = 0
 total_results = 50000
 results_per_iteration = 100

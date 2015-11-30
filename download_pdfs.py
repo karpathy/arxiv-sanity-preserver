@@ -7,8 +7,9 @@ import random
 
 os.system('mkdir -p pdf') # ?
 
-timeout_secs = 10
+timeout_secs = 10 # after this many seconds we give up on a paper
 numok = 0
+numtot = 0
 db = pickle.load(open('db.p', 'rb'))
 for pid,j in db.iteritems():
   
@@ -18,6 +19,7 @@ for pid,j in db.iteritems():
   fname = os.path.join('pdf', pid) + '.pdf'
 
   # try retrieve the pdf
+  numtot += 1
   try:
     print 'fetching %s into %s' % (pdf_url, fname)
     if not os.path.isfile(fname):
@@ -27,11 +29,11 @@ for pid,j in db.iteritems():
     else:
       print 'exists, skipping'
     numok+=1
-    print '%d/%d downloaded ok.' % (numok, len(db))
-    time.sleep(0.1 + random.uniform(0,0.2))
-
   except Exception, e:
     print 'error downloading: ', pdf_url
     print e
 
-print 'num okay: %d/%d' % (numok, len(db))
+  print '%d/%d of %d downloaded ok.' % (numok, numtot, len(db))
+  time.sleep(0.1 + random.uniform(0,0.2))
+
+print 'final number of papers downloaded okay: %d/%d' % (numok, len(db))
