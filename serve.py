@@ -72,7 +72,7 @@ def papers_similar(pid):
   else:
     return [db[pid]] # err wat?
 
-def encode_json(ps, n=10):
+def encode_json(ps, n=10, send_images=True, send_abstracts=True):
 
   ret = []
   for i in xrange(min(len(ps),n)):
@@ -82,8 +82,10 @@ def encode_json(ps, n=10):
     struct['pid'] = p['rawid']
     struct['authors'] = [a['name'] for a in p['authors']]
     struct['link'] = p['link']
-    struct['abstract'] = p['summary']
-    struct['img'] = '/static/thumbs/' + p['rawid'] + '.pdf.jpg'
+    if send_abstracts:
+      struct['abstract'] = p['summary']
+    if send_images:
+      struct['img'] = '/static/thumbs/' + p['rawid'] + '.pdf.jpg'
     struct['tags'] = [t['term'] for t in p['tags']]
     
     timestruct = dateutil.parser.parse(p['updated'])
@@ -106,18 +108,20 @@ def intmain(request_pid=None):
   if request_pid is None:
     #papers = papers_shuffle() # perform the query and get sorted documents
     papers = date_sort()
+    ret = encode_json(papers, 100, send_images=False, send_abstracts=False)
+    collapsed = 1
   else:
     papers = papers_similar(request_pid)
-
-  ret = encode_json(papers, args.num_results) # encode the top few to json
-  return render_template('main.html', papers=ret, numpapers=len(db))
+    ret = encode_json(papers, args.num_results) # encode the top few to json
+    collapsed = 0
+  return render_template('main.html', papers=ret, numpapers=len(db), collapsed=collapsed)
 
 @app.route("/search", methods=['GET'])
 def search():
   q = request.args.get('q', '') # get the search request
   papers = papers_search(q) # perform the query and get sorted documents
   ret = encode_json(papers, args.num_results) # encode the top few to json
-  return render_template('main.html', papers=ret, numpapers=len(db)) # weeee
+  return render_template('main.html', papers=ret, numpapers=len(db), collapsed=0) # weeee
 
 if __name__ == "__main__":
    

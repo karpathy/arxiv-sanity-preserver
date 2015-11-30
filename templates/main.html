@@ -77,7 +77,7 @@ h1 {
 
 .apaper {
 	margin-top: 25px;
-	min-height: 300px;
+	/* min-height: 300px; */
 }
 .animg {
 	text-align: left;
@@ -149,7 +149,11 @@ input {
 	margin-top: 10px;
   text-align: center;
 }
-
+.msg {
+	background-color: #EEF;
+	padding: 10px;
+	border-radius: 10px;
+}
 </style>
 
 <script src="/static/jquery-1.8.3.min.js"></script>
@@ -158,6 +162,7 @@ input {
 
 // passed in from flask as json
 var papers = {{ papers | tojson }};
+var collapsed = {{ collapsed }}
 
 var urlq = '';
 
@@ -191,6 +196,11 @@ var QueryString = function () {
 function arrangeDivs() {
 
   var root = d3.select("#rtable");
+
+  if(collapsed === 1) {
+  	root.append('div').classed('msg', true).html('showing a collapsed view of the most recent 100 papers in the database.')
+  }
+
   for(var i=0,n=papers.length;i<n;i++) {
   	var p = papers[i];
   	var div = root.append('div').classed('apaper', true).attr('id', p.pid);
@@ -212,9 +222,14 @@ function arrangeDivs() {
   	ldiv.append('span').classed('sim', true).attr('id', 'sim'+p.pid).html('[rank by tf-idf similarity to this]');
 
   	div.append('div').attr('style', 'clear:both');
-  	div.append('div').classed('animg', true).append('img').attr('src', p.img);
 
-  	div.append('span').classed('tt', true).html(p.abstract);
+  	if(typeof p.img !== 'undefined') {
+  		div.append('div').classed('animg', true).append('img').attr('src', p.img);
+  	}
+
+  	if(typeof p.abstract !== 'undefined') {
+  		div.append('span').classed('tt', true).html(p.abstract);
+  	}
   }
 }
 
@@ -244,11 +259,13 @@ $(document).ready(function(){
 <body>
 <a href="https://github.com/karpathy/arxiv-sanity-preserver"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/38ef81f8aca64bb9a64448d0d70f1308ef5341ab/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6461726b626c75655f3132313632312e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png"></a>
 
-<div id ="titdiv">
-<h1>Arxiv Sanity Preserver</h1>
-Because things are seriously getting out of hand.<br>
-Serving last {{ numpapers }} papers from cs.[CV|CL|LG]
-</div>
+<a href="/" style="text-decoration:none">
+	<div id ="titdiv">
+	<h1>Arxiv Sanity Preserver</h1>
+	Because things are seriously getting out of hand.<br>
+	Serving last {{ numpapers }} papers from cs.[CV|CL|LG]
+	</div>
+</a>
 
 <div id="sbox">
   <form action="/search" method="get">
