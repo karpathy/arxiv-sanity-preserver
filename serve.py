@@ -104,7 +104,8 @@ def intmain(request_pid=None):
   if request_pid == 'robots.txt': return '' # must be better way, todo
 
   if request_pid is None:
-    papers = papers_shuffle() # perform the query and get sorted documents
+    #papers = papers_shuffle() # perform the query and get sorted documents
+    papers = date_sort()
   else:
     papers = papers_similar(request_pid)
 
