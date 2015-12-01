@@ -102,8 +102,6 @@ def encode_json(ps, n=10, send_images=True, send_abstracts=True):
 @app.route("/")
 @app.route("/<request_pid>")
 def intmain(request_pid=None):
-  if request_pid == 'favicon.ico': return '' # must be better way, todo
-  if request_pid == 'robots.txt': return '' # must be better way, todo
 
   if request_pid is None:
     #papers = papers_shuffle() # perform the query and get sorted documents
@@ -111,6 +109,8 @@ def intmain(request_pid=None):
     ret = encode_json(papers, 100, send_images=False, send_abstracts=False)
     collapsed = 1
   else:
+    if request_pid.endswith('.ico') or request_pid.endswith('.png') or request_pid.endswith('.txt'):
+      return '' # these are requests for icons and things like robots.txt
     papers = papers_similar(request_pid)
     ret = encode_json(papers, args.num_results) # encode the top few to json
     collapsed = 0
