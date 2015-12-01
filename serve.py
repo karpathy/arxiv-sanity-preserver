@@ -1,6 +1,9 @@
 from flask import Flask
 from flask import render_template
 from flask import request
+from tornado.wsgi import WSGIContainer
+from tornado.httpserver import HTTPServer
+from tornado.ioloop import IOLoop
 import cPickle as pickle
 import numpy as np
 import json
@@ -177,7 +180,11 @@ if __name__ == "__main__":
   #import code; code.interact(local=locals())
   print 'starting!'
   if args.prod:
-    app.run(host='0.0.0.0', threaded=True)
+    # run on Tornado instead, since running raw Flask in prod is not recommended
+    http_server = HTTPServer(WSGIContainer(app))
+    http_server.listen(5000)
+    IOLoop.instance().start()
+    #app.run(host='0.0.0.0', threaded=True)
   else:
     app.debug = True
     app.run()

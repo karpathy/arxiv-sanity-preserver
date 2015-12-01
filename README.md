@@ -14,7 +14,7 @@ Main functionality is a search feature, and most useful is that you can click "s
 This code is currently running live at [https://karpathy23-5000.terminal.com](https://karpathy23-5000.terminal.com), serving 10400 arxiv papers from cs.[CV|CL|LG] over the last ~3 years. Clearly, this is not the final home and I would like to move it to a more permanent location soon.
 
 ### Dependencies
-You will need numpy, feedparser (to process xml files), scikit learn (for tfidf vectorizer), and flask (for serving the results)
+You will need numpy, feedparser (to process xml files), scikit learn (for tfidf vectorizer), and flask (for serving the results), and tornado (if you want to run the flask server in production).
 
 ### Ugly I don't have time processing pipeline
 
