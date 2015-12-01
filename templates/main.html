@@ -16,6 +16,15 @@ body {
 	font-size: 14px;
 	color: #900;
 }
+.aa {
+	font-size: 14px;
+	color: #900;
+}
+.as a:link{ text-decoration: none; color: #900; }
+.as a:visited{ text-decoration: none; color: #900; }
+.as a:hover{ text-decoration: none; color: #F00; }
+.as a:active{ text-decoration: none; color: #900; }
+
 .ts {
 	font-weight: bold;
 	font-size: 16px;
@@ -98,34 +107,10 @@ h1 {
 	cursor: pointer;
 	text-decoration: underline;
 }
-#titdiv a:link{ color: white; }
-#titdiv a:visited{ color: white; }
-
-#maindiv a:link{ color: #666; }
-#maindiv a:visited{ color: #600; }
-
-.t0 { color: #000;}
-.t1 { color: #C00;}
-.t2 { color: #0C0;}
-.t3 { color: #00C;}
-.t4 { color: #AA0;}
-.t5 { color: #C0C;}
-.t6 { color: #0CC;}
-
 .sim {
 	cursor: pointer;
 	text-decoration: underline;
 	display: block;
-}
-
-.abstrholder {
-	background-color: #DFD;
-	border: 1px solid #BDB;
-	font-size: 12px;
-	padding: 10px;
-	border-radius: 5px;
-	display: none; /* so that these are hidden initially */
-	margin-bottom: 5px;
 }
 input {
   border: 5px solid white; 
@@ -190,6 +175,16 @@ var QueryString = function () {
     return query_string;
 }();
 
+function build_authors_html(authors) {
+	var res = '';
+	for(var i=0,n=authors.length;i<n;i++) {
+		var link = '/search?q=' + authors[i].replace(/ /g, "+");
+		res += '<a href="' + link + '" class="aa">' + authors[i] + '</a>';
+		if(i<n-1) res += ', ';
+	}
+	return res;
+}
+
 // this permutes the divs (that contian 1 paper each) based on a custom sorting function
 // in our case, this sort is done as dot product based on the choices[] array
 // here we are guaranteed ldadist[] already sums to 1 for every paper
@@ -208,7 +203,7 @@ function arrangeDivs() {
   	var tdiv = div.append('div').classed('paperdesc', true);
   	tdiv.append('span').classed('ts', true).html(p.title);
   	tdiv.append('br');
-  	tdiv.append('span').classed('as', true).html(p.authors.join(', '));
+  	tdiv.append('span').classed('as', true).html(build_authors_html(p.authors));
   	tdiv.append('br');
   	tdiv.append('span').classed('ds', true).html(p.published_time);
   	tdiv.append('span').classed('cs', true).html(p.tags.join(' | '));
