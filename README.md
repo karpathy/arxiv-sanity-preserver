@@ -14,7 +14,19 @@ Main functionality is a search feature, and most useful is that you can click "s
 This code is currently running live at [https://karpathy23-5000.terminal.com](https://karpathy23-5000.terminal.com), serving 10400 arxiv papers from cs.[CV|CL|LG] over the last ~3 years. Clearly, this is not the final home and I would like to move it to a more permanent location soon.
 
 ### Dependencies
-You will need numpy, feedparser (to process xml files), scikit learn (for tfidf vectorizer), and flask (for serving the results), and tornado (if you want to run the flask server in production).
+You will need numpy, feedparser (to process xml files), scikit learn (for tfidf vectorizer), and flask (for serving the results), and tornado (if you want to run the flask server in production). Also dateutil, and scipy. Most of these are easy to get through `pip`, e.g.:
+
+```bash
+$ virtualenv env                # optional: use virtualenv
+$ source env/bin/activate       # optional: use virtualenv
+$ pip install feedparser        # only if you want to scrape arxiv
+$ pip install numpy             
+$ pip install scipy             
+$ pip install scikit-learn      # needed for sparse arrays
+$ pip install python-dateutil   # only in serve.py for some date utils
+$ pip install flask             # only in serve.py
+$ pip install tornado           # only in serve.py
+```
 
 ### Ugly I don't have time processing pipeline
 
