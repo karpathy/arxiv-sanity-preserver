@@ -72,7 +72,7 @@ def papers_similar(pid):
   else:
     return [db[pid]] # err wat?
 
-def encode_json(ps, n=10, send_images=True, send_abstracts=True):
+def encode_json(ps, n=10, send_images=True, send_abstracts=True, send_tfidf=True):
 
   ret = []
   for i in xrange(min(len(ps),n)):
@@ -87,6 +87,9 @@ def encode_json(ps, n=10, send_images=True, send_abstracts=True):
     if send_images:
       struct['img'] = '/static/thumbs/' + p['rawid'] + '.pdf.jpg'
     struct['tags'] = [t['term'] for t in p['tags']]
+
+    if send_tfidf:
+      struct['terms'] = top_terms(p['rawid'])
     
     timestruct = dateutil.parser.parse(p['updated'])
     struct['published_time'] = '%s/%s/%s' % (timestruct.month, timestruct.day, timestruct.year)
@@ -102,7 +105,7 @@ def encode_json(ps, n=10, send_images=True, send_abstracts=True):
 @app.route("/")
 @app.route("/<request_pid>")
 def intmain(request_pid=None):
-
+  query = request.args.get('q', None)
   if request_pid is None:
     #papers = papers_shuffle() # perform the query and get sorted documents
     papers = date_sort()
@@ -112,6 +115,10 @@ def intmain(request_pid=None):
     if request_pid.endswith('.ico') or request_pid.endswith('.png') or request_pid.endswith('.txt'):
       return '' # these are requests for icons and things like robots.txt
     papers = papers_similar(request_pid)
+    if query:
+        qpapers = papers_search(query)
+        ids = {p['rawid'] for p in qpapers}
+        papers = [p for p in papers if p['rawid'] in ids]
     ret = encode_json(papers, args.num_results) # encode the top few to json
     collapsed = 0
   return render_template('main.html', papers=ret, numpapers=len(db), collapsed=collapsed)
@@ -122,6 +129,15 @@ def search():
   papers = papers_search(q) # perform the query and get sorted documents
   ret = encode_json(papers, args.num_results) # encode the top few to json
   return render_template('main.html', papers=ret, numpapers=len(db), collapsed=0) # weeee
+
+def top_terms(pid,k=20):
+    if pid in tfidf['ptoi']:
+        ix0 = tfidf['ptoi'][pid]
+        vec = X[ix0]
+        idxs = np.argsort(-vec)
+        return list(iv[idxs].flatten())[:k]
+    else:
+        return [] # err wat?
 
 if __name__ == "__main__":
    
@@ -139,6 +155,9 @@ if __name__ == "__main__":
   X = tfidf['X'].todense()
   vocab = tfidf['vocab']
   idf = tfidf['idf']
+
+  iv={i:k for k,i in tfidf['vocab'].iteritems()}
+  iv=np.array([iv[i] for i in xrange(len(iv))])
 
   # some utilities for creating a search index for faster search
 
