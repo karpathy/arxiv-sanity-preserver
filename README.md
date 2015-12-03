@@ -9,9 +9,9 @@ Main functionality is a search feature, and most useful is that you can click "s
 
 ![user interface](https://raw.github.com/karpathy/arxiv-sanity-preserver/master/ui.jpeg)
 
-### See it in action
+### Find it online
 
-This code is currently running live at [https://karpathy23-5000.terminal.com](https://karpathy23-5000.terminal.com), serving 10400 arxiv papers from cs.[CV|CL|LG] over the last ~3 years. Clearly, this is not the final home and I would like to move it to a more permanent location soon.
+This code is currently running live at [www.arxiv-sanity.com/](http://www.arxiv-sanity.com/). Right now it's serving 10400 arxiv papers from cs.[CV|CL|LG] over the last ~3 years, and more will be added in time as I build this out.
 
 ### Dependencies
 You will need numpy, feedparser (to process xml files), scikit learn (for tfidf vectorizer), and flask (for serving the results), and tornado (if you want to run the flask server in production). Also dateutil, and scipy. Most of these are easy to get through `pip`, e.g.:
