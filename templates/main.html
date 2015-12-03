@@ -153,6 +153,22 @@ h1 {
 	padding: 10px;
 	border-radius: 10px;
 }
+#search_hint {
+	text-align: center;
+	margin-bottom: 10px;
+	font-size: 14px;
+}
+#search_hint a {
+	margin-right: 10px;
+}
+#search_hint a:link{ color: #777; }
+#search_hint a:visited{ color: #777; }
+#search_hint a:hover{ color: #777; }
+#search_hint a:active{ color: #777; }
+
+form {
+	margin-bottom: 5px;
+}
 </style>
 
 <script src="/static/jquery-1.8.3.min.js"></script>
@@ -218,6 +234,12 @@ function arrangeDivs() {
 
   if(collapsed === 1) {
   	root.append('div').classed('msg', true).html('showing a collapsed view of the most recent 100 papers in the database.')
+  	// also display a search hint on top
+  	var sdiv = d3.select('#search_hint');
+  	sdiv.append('span').html('e.g.: ');
+  	sdiv.append('a').attr('href', '/search?q=Geoffrey+Hinton').html('Geoffrey Hinton');
+  	sdiv.append('a').attr('href', '/search?q=image+captioning').html('image captioning');
+  	sdiv.append('a').attr('href', '/search?q=deep+reinforcement+learning').html('deep reinforcement learning');
   }
 
   for(var i=0,n=papers.length;i<n;i++) {
@@ -303,6 +325,7 @@ $(document).ready(function(){
   <form action="/search" method="get">
   	<input name="q" type="text" id="qfield" class='topinput'>
   </form>
+  <div id="search_hint"></div>
 </div>
 
 <div id="maindiv">
