@@ -29,6 +29,11 @@ body {
 	font-weight: bold;
 	font-size: 16px;
 }
+.ts a:link{ text-decoration: none; color: #000; }
+.ts a:visited{ text-decoration: none; color: #000; }
+.ts a:hover{ text-decoration: none; color: #000; }
+.ts a:active{ text-decoration: none; color: #000; }
+
 .cs {
 	color: #009;
 	font-size: 14px;
@@ -223,7 +228,7 @@ function arrangeDivs() {
   	var div = root.append('div').classed('apaper', true).attr('id', p.pid);
 
   	var tdiv = div.append('div').classed('paperdesc', true);
-  	tdiv.append('span').classed('ts', true).html(p.title);
+  	tdiv.append('span').classed('ts', true).html('<a href="/' + p.pid + '">' + p.title + '</a>');
   	tdiv.append('br');
   	tdiv.append('span').classed('as', true).html(build_authors_html(p.authors));
   	tdiv.append('br');
@@ -265,7 +270,7 @@ $(document).ready(function(){
 	$(".sim").click(function() {
 		similarTo = $(this).attr('id').substring(3); // get the id of clicked paper
 		// redirect: requery the server
-		window.location.replace('/' + similarTo);
+		window.location.replace('/similar/' + similarTo);
 	});
 
 });
