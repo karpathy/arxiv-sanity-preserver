@@ -25,6 +25,15 @@ body {
 .as a:hover{ text-decoration: none; color: #F00; }
 .as a:active{ text-decoration: none; color: #900; }
 
+.termss {
+	font-size: 14px;
+	color: #888;
+}
+.termss a:link{ text-decoration: none; color: #888; }
+.termss a:visited{ text-decoration: none; color: #888; }
+.termss a:hover{ text-decoration: none; color: #333; }
+.termss a:active{ text-decoration: none; color: #888; }
+
 .ts {
 	font-weight: bold;
 	font-size: 16px;
@@ -112,7 +121,12 @@ h1 {
 	text-decoration: underline;
 	display: block;
 }
-input {
+.simq {
+	cursor: pointer;
+	text-decoration: underline;
+	display: block;
+}
+.topinput {
   border: 5px solid white; 
   padding: 10px;
   width: 1000px;
@@ -201,6 +215,16 @@ function build_authors_html(authors) {
 	return res;
 }
 
+function build_terms_html(terms) {
+	var res = '';
+	for(var i=0,n=terms.length;i<n;i++) {
+		var link = '/search?q=' + terms[i].replace(/ /g, "+");
+		res += '<a href="' + link + '" class="aa">' + terms[i] + '</a>';
+		if(i<n-1) res += ', ';
+	}
+	return res;
+}
+
 // this permutes the divs (that contian 1 paper each) based on a custom sorting function
 // in our case, this sort is done as dot product based on the choices[] array
 // here we are guaranteed ldadist[] already sums to 1 for every paper
@@ -230,6 +254,8 @@ function arrangeDivs() {
   	tdiv.append('span').classed('ds', true).html(p.published_time);
   	tdiv.append('span').classed('cs', true).html(p.tags.join(' | '));
   	tdiv.append('br');
+  	tdiv.append('span').classed('termss', true).html(build_terms_html(p.terms));
+  	tdiv.append('br');
   	tdiv.append('span').classed('ccs', true).html(p.comment);
 
   	var ldiv = div.append('div').classed('dllinks', true);
@@ -237,6 +263,9 @@ function arrangeDivs() {
   	ldiv.append('a').attr('href', p.link).html('[pdf]');
 
   	ldiv.append('span').classed('sim', true).attr('id', 'sim'+p.pid).html('[rank by tf-idf similarity to this]');
+    if (urlq) {
+        ldiv.append('span').classed('simq',true).attr('id', 'sim'+p.pid).html('[rank query by tf-idf similarity to this]');
+    }
 
   	div.append('div').attr('style', 'clear:both');
 
@@ -267,6 +296,14 @@ $(document).ready(function(){
 		// redirect: requery the server
 		window.location.replace('/' + similarTo);
 	});
+	// user clicks on "rank query by tf-idf similarity to this" button for some paper
+	$(".simq").click(function() {
+
+        query = document.getElementById('qfield').value;
+		similarTo = $(this).attr('id').substring(3); // get the id of clicked paper
+		// redirect: requery the server
+		window.location.replace('/' + similarTo + "?q=" + query);
+	});
 
 });
 
@@ -286,7 +323,7 @@ $(document).ready(function(){
 
 <div id="sbox">
   <form action="/search" method="get">
-  	<input name="q" type="text" id="qfield">
+  	<input name="q" type="text" id="qfield" class='topinput'>
   </form>
   <div id="search_hint"></div>
 </div>
