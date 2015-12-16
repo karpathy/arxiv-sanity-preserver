@@ -72,6 +72,9 @@ def papers_similar(pid):
   else:
     return [db[pid]] # err wat?
 
+def paper_get(pid):
+    return [db[pid]]
+
 def encode_json(ps, n=10, send_images=True, send_abstracts=True):
 
   ret = []
@@ -102,7 +105,21 @@ def encode_json(ps, n=10, send_images=True, send_abstracts=True):
 @app.route("/")
 @app.route("/<request_pid>")
 def intmain(request_pid=None):
+  if request_pid is None:
+    #papers = papers_shuffle() # perform the query and get sorted documents
+    papers = date_sort()
+    ret = encode_json(papers, 100, send_images=False, send_abstracts=False)
+    collapsed = 1
+  else:
+    if request_pid.endswith('.ico') or request_pid.endswith('.png') or request_pid.endswith('.txt'):
+      return '' # these are requests for icons and things like robots.txt
+    paper = paper_get(request_pid)
+    ret = encode_json(paper, 1) # encode to json
+    collapsed = 0
+  return render_template('main.html', papers=ret, numpapers=len(db), collapsed=collapsed)
 
+@app.route("/similar/<request_pid>")
+def similar(request_pid=None):
   if request_pid is None:
     #papers = papers_shuffle() # perform the query and get sorted documents
     papers = date_sort()
