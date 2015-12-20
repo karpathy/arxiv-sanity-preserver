@@ -1,9 +1,6 @@
-import cPickle as pickle
-import urllib2
-import shutil
 import time
 import os
-import random
+
 
 os.system('mkdir -p txt') # ?
 
