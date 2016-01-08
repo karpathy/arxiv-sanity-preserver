@@ -24,11 +24,14 @@ body {
 .as a:visited{ text-decoration: none; color: #900; }
 .as a:hover{ text-decoration: none; color: #F00; }
 .as a:active{ text-decoration: none; color: #900; }
-
 .ts {
 	font-weight: bold;
 	font-size: 16px;
 }
+.ts a:link{ text-decoration: none; color: #333; }
+.ts a:visited{ text-decoration: none; color: #333; }
+.ts a:hover{ text-decoration: underline; color: #000; }
+.ts a:active{ text-decoration: none; color: #333; }
 .cs {
 	color: #009;
 	font-size: 14px;
@@ -223,7 +226,7 @@ function arrangeDivs() {
   	var div = root.append('div').classed('apaper', true).attr('id', p.pid);
 
   	var tdiv = div.append('div').classed('paperdesc', true);
-  	tdiv.append('span').classed('ts', true).html(p.title);
+  	tdiv.append('span').classed('ts', true).append('a').attr('href', p.link).attr('target', '_blank').html(p.title);
   	tdiv.append('br');
   	tdiv.append('span').classed('as', true).html(build_authors_html(p.authors));
   	tdiv.append('br');
@@ -234,7 +237,7 @@ function arrangeDivs() {
 
   	var ldiv = div.append('div').classed('dllinks', true);
   	ldiv.append('span').classed('spid', true).html(p.pid);
-  	ldiv.append('a').attr('href', p.link).html('[pdf]');
+  	ldiv.append('a').attr('href', p.link).attr('target', '_blank').html('[pdf]');
 
   	ldiv.append('span').classed('sim', true).attr('id', 'sim'+p.pid).html('[rank by tf-idf similarity to this]');
 
