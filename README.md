@@ -1,11 +1,11 @@
 
 # arxiv sanity preserver
 
-There are way too many arxiv papers, so I wrote a quick webapp that lets you search and sort through the mess in a pretty interface, similar to my [pretty conference format](http://cs.stanford.edu/people/karpathy/nips2014/).
+There are way too many arxiv papers, so I wrote a quick webapp that lets you search and sort through the mess in a pretty interface, similar to my [pretty conference format](http://cs.stanford.edu/people/karpathy/nips2014/). The code is broken up into two main pieces:
 
-It's super hacky and was written in 4 hours. I'll keep polishing it a bit over time perhaps but it serves its purpose for me already. The code uses Arxiv API to download the most recent papers (as many as you want - I used the last 1100 papers over last 3 months), and then downloads all papers, extracts text, creates tfidf vectors for each paper, and lastly is a flask interface for searching through and filtering similar papers using the vectors.
+**Indexing code**. Uses Arxiv API to download the most recent papers in any categories you like, and then downloads all papers, extracts all text, and creates tfidf vectors for each paper. This code is therefore concerned with building up a database of arxiv papers, calculating content vectors, creating thumbnails, etc.
 
-Main functionality is a search feature, and most useful is that you can click "sort by tfidf similarity to this", which returns all the most similar papers to that one in terms of tfidf bigrams. I find this quite useful.
+**User interface**. Then thre is a web server (based on Flask) that enables searching through the database and filtering papers by similarity, etc. Main functionality is a search feature, and most useful is that you can click "sort by tfidf similarity to this", which returns all the most similar papers to that one in terms of tfidf bigrams. I find this quite useful.
 
 ![user interface](https://raw.github.com/karpathy/arxiv-sanity-preserver/master/ui.jpeg)
 
@@ -28,9 +28,9 @@ $ pip install flask             # only in serve.py
 $ pip install tornado           # only in serve.py
 ```
 
-### Ugly I don't have time processing pipeline
+### Processing pipeline
 
-Requires reading code and getting hands dirty. Magic numbers throughout code.
+Right now this code requires reading code and getting your hands dirty. There are magic numbers throughout code, but luckily each script is quite short, transparent and easy to modify. In order there are:
 
 1. Run `scrape.py`, which queries most recent papers in Arxiv and dumps xml into folder `raw`
 2. Run `parse_raw.py`, which reads all xml files in `raw` and creates a pickle with all critical information called `db.p`.
