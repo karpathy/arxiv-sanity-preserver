@@ -12,13 +12,13 @@ relpath = "pdf"
 allFiles = os.listdir(relpath)
 pdfs = [x for x in allFiles if x.endswith(".pdf")]
 
-for p in pdfs:
+def process_pdf(p):
   fullpath = os.path.join(relpath, p)
   outpath = os.path.join('static', 'thumbs', p + '.jpg')
 
   if os.path.isfile(outpath): 
     print 'skipping %s, exists.' % (fullpath, )
-    continue
+    return
 
   print "processing ", p
 
@@ -52,4 +52,11 @@ for p in pdfs:
   os.system(cmd)
 
   time.sleep(0.05) # silly way for allowing for ctrl+c termination
-  
+
+import multiprocessing
+
+pool = multiprocessing.Pool(processes = multiprocessing.cpu_count())
+pool.map(process_pdf, pdfs)
+
+#for p in pdfs: process_pdf(p)
+
