@@ -8,6 +8,7 @@ import time
 import dateutil.parser
 import argparse
 from random import shuffle
+import re
 
 app = Flask(__name__)
 
@@ -109,8 +110,10 @@ def intmain(request_pid=None):
     ret = encode_json(papers, 100, send_images=False, send_abstracts=False)
     collapsed = 1
   else:
-    if request_pid.endswith('.ico') or request_pid.endswith('.png') or request_pid.endswith('.txt'):
-      return '' # these are requests for icons and things like robots.txt
+    # "1511.08198v1" is an example of a valid arxiv id that we accept
+    if not re.match('^\d+\.\d+(v\d+)?$', request_pid):
+      return '' # these are requests for icons, things like robots.txt, etc
+
     papers = papers_similar(request_pid)
     ret = encode_json(papers, args.num_results) # encode the top few to json
     collapsed = 0
