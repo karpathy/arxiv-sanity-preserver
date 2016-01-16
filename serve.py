@@ -209,16 +209,16 @@ def login():
       flash('User ' + request.form['username'] + ' already exists, wrong password.')
   else:
     # create account and log in
-    g.db.execute('''insert into user (username, pw_hash) values (?, ?)''',
-      [request.form['username'], generate_password_hash(request.form['password'])])
+    creation_time = int(time.time())
+    g.db.execute('''insert into user (username, pw_hash, creation_time) values (?, ?, ?)''',
+      [request.form['username'], 
+      generate_password_hash(request.form['password']), 
+      creation_time])
     user_id = g.db.execute('select last_insert_rowid()').fetchall()[0][0]
     g.db.commit()
 
-    print '::::'
-    print user_id
-
     session['user_id'] = user_id
-    flash('New account ' + request.form['username'] + ' was created')
+    flash('New account %s created' % (request.form['username'], ))
   
   return redirect(url_for('intmain'))
 
