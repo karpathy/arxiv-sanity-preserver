@@ -14,7 +14,7 @@
 
 // passed in from flask as json
 var papers = {{ papers | tojson }};
-var collapsed = {{ collapsed }}
+var msg = "{{ msg }}";
 
 var urlq = '';
 
@@ -59,8 +59,8 @@ function arrangeDivs() {
 
   var root = d3.select("#rtable");
 
-  if(collapsed === 1) {
-  	root.append('div').classed('msg', true).html('showing a collapsed view of the most recent 100 papers in the database.')
+  if(msg !== '') {
+  	root.append('div').classed('msg', true).html(msg);
   	// also display a search hint on top
   	var sdiv = d3.select('#search_hint');
   	sdiv.append('span').html('e.g.: ');
@@ -83,11 +83,16 @@ function arrangeDivs() {
   	tdiv.append('br');
   	tdiv.append('span').classed('ccs', true).html(p.comment);
 
+    // action items for each paper
   	var ldiv = div.append('div').classed('dllinks', true);
+    // show raw arxiv id
   	ldiv.append('span').classed('spid', true).html(p.pid);
-  	ldiv.append('a').attr('href', p.link).attr('target', '_blank').html('[pdf]');
-
-  	ldiv.append('span').classed('sim', true).attr('id', 'sim'+p.pid).html('[rank by tf-idf similarity to this]');
+    // access PDF of the paper
+  	ldiv.append('a').attr('href', p.link).attr('target', '_blank').html('pdf');
+    // rank by tfidf similarity
+  	ldiv.append('span').classed('sim', true).attr('id', 'sim'+p.pid).html('rank by tf-idf similarity to this');
+    // view reviews for this paper
+    ldiv.append('span').classed('rev', true).attr('id', 'rev'+p.pid).html('reviews (0)');
 
   	div.append('div').attr('style', 'clear:both');
 

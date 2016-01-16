@@ -169,8 +169,8 @@ def intmain(request_pid=None):
   if request_pid is None:
     #papers = papers_shuffle() # perform the query and get sorted documents
     papers = date_sort()
-    ret = encode_json(papers, 100, send_images=False, send_abstracts=False)
-    collapsed = 1
+    ret = encode_json(papers, 20)
+    msg = 'Showing 20 most recent Arxiv papers:'
   else:
     # "1511.08198v1" is an example of a valid arxiv id that we accept
     if not re.match('^\d+\.\d+(v\d+)?$', request_pid):
@@ -178,15 +178,15 @@ def intmain(request_pid=None):
 
     papers = papers_similar(request_pid)
     ret = encode_json(papers, args.num_results) # encode the top few to json
-    collapsed = 0
-  return render_template('main.html', papers=ret, numpapers=len(db), collapsed=collapsed)
+    msg = ''
+  return render_template('main.html', papers=ret, numpapers=len(db), msg=msg)
 
 @app.route("/search", methods=['GET'])
 def search():
   q = request.args.get('q', '') # get the search request
   papers = papers_search(q) # perform the query and get sorted documents
   ret = encode_json(papers, args.num_results) # encode the top few to json
-  return render_template('main.html', papers=ret, numpapers=len(db), collapsed=0) # weeee
+  return render_template('main.html', papers=ret, numpapers=len(db), msg='') # weeee
 
 @app.route('/login', methods=['POST'])
 def login():
