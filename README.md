@@ -32,13 +32,12 @@ $ pip install tornado           # only in serve.py
 
 Right now this code requires reading code and getting your hands dirty. There are magic numbers throughout code, but luckily each script is quite short, transparent and easy to modify. In order there are:
 
-1. Run `scrape.py`, which queries most recent papers in Arxiv and dumps xml into folder `raw`
-2. Run `parse_raw.py`, which reads all xml files in `raw` and creates a pickle with all critical information called `db.p`.
-3. Run `download_pdf.py`, which iterates over all papers in parsed pickle and downloads the papers into folder `pdf`
-4. Run `parse_pdf_to_text.py` to export all text from pdfs to files in `txt`
-5. Run `analyze.py` to compute tfidf vectors for all documents based on bigrams. Saves a `tfidf.p` pickle file.
-6. Run `thumb_pdf.py` to export thumbnails of all pdfs to `thumb`
-7. Run the flask server with `serve.py`. Visit localhost:5000 and enjoy sane viewing of papers
+1. Run `fetch_papers.py` to query arxiv API and create a file `db.p` that contains all information for each paper
+2. Run `download_pdf.py`, which iterates over all papers in parsed pickle and downloads the papers into folder `pdf`
+3. Run `parse_pdf_to_text.py` to export all text from pdfs to files in `txt`
+4. Run `analyze.py` to compute tfidf vectors for all documents based on bigrams. Saves a `tfidf.p` pickle file.
+5. Run `thumb_pdf.py` to export thumbnails of all pdfs to `thumb`
+6. Run the flask server with `serve.py`. Visit localhost:5000 and enjoy sane viewing of papers
 
 ### Prebuilt database
 
