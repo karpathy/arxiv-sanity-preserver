@@ -9,8 +9,10 @@ import dateutil.parser
 import argparse
 from random import shuffle
 import re
+import os
 
 app = Flask(__name__)
+SEARCH_DICT = {}
 
 def papers_shuffle():
   ks = db.keys()
@@ -55,7 +57,7 @@ def papers_search(qraw):
   scores = []
   for pid in db:
     p = db[pid]
-    score = sum(p['search_dict'].get(q,0) for q in qparts)
+    score = sum(SEARCH_DICT[pid].get(q,0) for q in qparts)
     scores.append((score, p))
   scores.sort(reverse=True) # descending
   out = [x[1] for x in scores if x[0] > 0]
@@ -175,17 +177,33 @@ if __name__ == "__main__":
         out[k] = out.get(k,0) + v
     return out
 
-  print 'building an index for faster search...'
-  for pid in db:
-    p = db[pid]
-    dict_title = makedict(p['title'])
-    dict_authors = makedict(' '.join(x['name'] for x in p['authors']), 10.0)
-    dict_summary = makedict(p['summary'])
-    p['search_dict'] = merge_dicts([dict_title, dict_authors, dict_summary])
+  # caching: check if db.p is younger than search_dict.p
+  recompute_index = True
+  if os.path.isfile('search_dict.p'):
+    db_modified_time = os.path.getmtime('db.p')
+    search_modified_time = os.path.getmtime('search_dict.p')
+    if search_modified_time > db_modified_time:
+      # search index exists and is more recent, no need
+      recompute_index = False
+  if recompute_index:
+    print 'building an index for faster search...'
+    for pid in db:
+      p = db[pid]
+      dict_title = makedict(p['title'])
+      dict_authors = makedict(' '.join(x['name'] for x in p['authors']), 10.0)
+      dict_summary = makedict(p['summary'])
+      SEARCH_DICT[pid] = merge_dicts([dict_title, dict_authors, dict_summary])
+    # and cache it in file
+    print 'writing search_dict.p as cache'
+    pickle.dump(SEARCH_DICT, open('search_dict.p', 'wb'))
+  else:
+    print 'loading cached index for faster search...'
+    SEARCH_DICT = pickle.load(open('search_dict.p', 'rb'))
 
-  print 'starting!'
+  # start
   if args.prod:
     # run on Tornado instead, since running raw Flask in prod is not recommended
+    print 'starting tornado!'
     from tornado.wsgi import WSGIContainer
     from tornado.httpserver import HTTPServer
     from tornado.ioloop import IOLoop
@@ -196,5 +214,6 @@ if __name__ == "__main__":
     IOLoop.instance().start()
     #app.run(host='0.0.0.0', threaded=True)
   else:
+    print 'starting flask!'
     app.debug = True
     app.run(port=args.port)
