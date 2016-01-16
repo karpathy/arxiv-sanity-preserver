@@ -7,6 +7,7 @@ import os.path
 import time
 
 os.system('mkdir -p static/thumbs')
+os.system('mkdir -p tmp') # for intermediate files
 
 relpath = "pdf"
 allFiles = os.listdir(relpath)
@@ -18,7 +19,7 @@ for i,p in enumerate(pdfs):
 
   if os.path.isfile(outpath): 
     print 'skipping %s, exists.' % (fullpath, )
-    return
+    continue
 
   print "%d/%d processing %s" % (i, len(pdfs), p)
 
@@ -33,8 +34,8 @@ for i,p in enumerate(pdfs):
 
   # erase previous intermediate files test-*.png
   for i in xrange(8):
-    f = 'test-%d.png' % (i,)
-    f2= 'testbuf-%d.png' % (i,)
+    f = 'tmp/test-%d.png' % (i,)
+    f2= 'tmp/testbuf-%d.png' % (i,)
     if os.path.isfile(f):
       cmd = 'mv %s %s' % (f, f2)
       os.system(cmd)
@@ -44,9 +45,9 @@ for i,p in enumerate(pdfs):
       # some papers are shorter than 8 pages, then results from previous paper will
       # "leek" over to this result, through the intermediate files.
 
-  cmd = "convert %s[0-7] -thumbnail x156 test.png" % (fullpath, )
+  cmd = "convert %s[0-7] -thumbnail x156 tmp/test.png" % (fullpath, )
   os.system(cmd)
-  cmd = "montage -mode concatenate -quality 80 -tile x1 test-*.png %s" % (outpath, )
+  cmd = "montage -mode concatenate -quality 80 -tile x1 tmp/test-*.png %s" % (outpath, )
   print cmd
   os.system(cmd)
 
