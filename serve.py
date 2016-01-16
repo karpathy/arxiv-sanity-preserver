@@ -156,12 +156,26 @@ def encode_json(ps, n=10, send_images=True, send_abstracts=True):
       cc = cc[:100] + '...' # crop very long comments
     struct['comment'] = cc
 
+    # also fetch reviews for the paper
+    reviews = query_db('''select * from review where paper_id = ?''', [idvv])
+    processed_reviews = []
+    for r in reviews:
+      rr = {}
+      rr['text'] = r['text']
+      processed_reviews.append(rr)
+    struct['reviews'] = processed_reviews
+
     ret.append(struct)
   return ret
 
 # -----------------------------------------------------------------------------
 # flask request handling
 # -----------------------------------------------------------------------------
+
+# "1511.08198v1" is an example of a valid arxiv id that we accept
+def isvalidid(pid):
+  return re.match('^\d+\.\d+(v\d+)?$', pid)
+
 @app.route("/")
 @app.route("/<request_pid>")
 def intmain(request_pid=None):
@@ -172,8 +186,7 @@ def intmain(request_pid=None):
     ret = encode_json(papers, 20)
     msg = 'Showing 20 most recent Arxiv papers:'
   else:
-    # "1511.08198v1" is an example of a valid arxiv id that we accept
-    if not re.match('^\d+\.\d+(v\d+)?$', request_pid):
+    if not isvalidid(request_pid):
       return '' # these are requests for icons, things like robots.txt, etc
 
     papers = papers_similar(request_pid)
@@ -187,6 +200,30 @@ def search():
   papers = papers_search(q) # perform the query and get sorted documents
   ret = encode_json(papers, args.num_results) # encode the top few to json
   return render_template('main.html', papers=ret, numpapers=len(db), msg='') # weeee
+
+@app.route('/review', methods=['POST'])
+def review():
+  """ when user wants to add a review """
+  
+  # make sure user is logged in
+  if not g.user:
+    flash('the user must be logged in to review.')
+    return redirect(url_for('intmain'))
+
+  pid = request.form['pid'] # includes version
+  if not isvalidid(pid):
+    flash('malformed arxiv paper id')
+    return redirect(url_for('intmain'))
+
+  txt = request.form['reviewtext']
+  creation_time = int(time.time())
+  pidraw = pid.split('v')[0] # part without the v
+  g.db.execute('''insert into review (paper_id_raw, paper_id, author_id, text, creation_time, update_time) values (?, ?, ?, ?, ?, ?)''',
+      [pidraw, pid, session['user_id'], txt, creation_time, creation_time])
+  g.db.commit()
+
+  flash('review added.')
+  return redirect(url_for('intmain'))
 
 @app.route('/login', methods=['POST'])
 def login():

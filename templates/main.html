@@ -92,7 +92,7 @@ function arrangeDivs() {
     // rank by tfidf similarity
   	ldiv.append('span').classed('sim', true).attr('id', 'sim'+p.pid).html('rank by tf-idf similarity to this');
     // view reviews for this paper
-    ldiv.append('span').classed('rev', true).attr('id', 'rev'+p.pid).html('reviews (0)');
+    ldiv.append('span').classed('rev', true).attr('id', 'rev'+p.pid).html('reviews <b>(' + p.reviews.length + ')</b>');
 
   	div.append('div').attr('style', 'clear:both');
 
@@ -103,8 +103,15 @@ function arrangeDivs() {
   	if(typeof p.abstract !== 'undefined') {
   		div.append('span').classed('tt', true).html(p.abstract);
   	}
+
+    var review_div = div.append('div').classed('reviews', true).attr('id', 'reviews'+p.pid);
+    for(var j=0;j<p.reviews.length;j++) {
+      review_div.append('div').classed('areview', true).html(p.reviews[j].text);
+    }
   }
 }
+
+function jq( myid ) { return myid.replace( /(:|\.|\[|\]|,)/g, "\\$1" ); } // for dealing with ids that have . in them
 
 // when page loads...
 $(document).ready(function(){
@@ -124,6 +131,20 @@ $(document).ready(function(){
 		window.location.replace('/' + similarTo);
 	});
 
+  // user clicks on "reviews" link
+  $(".rev").click(function() {
+    reviewOf = $(this).attr('id').substring(3); // get the id of clicked paper
+    // create interface for submitting a new review
+    var review_div = d3.select(jq('#reviews' + reviewOf));
+    review_div.append('div').html(' \
+      <form action="/review" method="post"> \
+        <textarea class="revarea" name="reviewtext"></textarea> \
+        <input type="hidden" name="pid" value="' + reviewOf + '"> \
+        <input class="revbut" type="submit" value="Add review"> \
+      </form> \
+      ');
+  });
+
 });
 
 </script>
@@ -137,8 +158,8 @@ $(document).ready(function(){
 	<div id="userinfo">
 		{% if not g.user %}
 		<form action="{{ url_for('login') }}" method="post">
-		Username: <input type="text" name="username"> Password: <input type="password" name="password"> <input type="submit" value="Login or Create">
-	  	</form>
+		  Username: <input type="text" name="username"> Password: <input type="password" name="password"> <input type="submit" value="Login or Create">
+	  </form>
 		{% else %}
 		<a href="">{{ g.user.username }}</a>
 		<a href="{{ url_for('logout') }}">log out</a>

@@ -112,6 +112,11 @@ h1 {
 	text-decoration: underline;
 	display: block;
 }
+.rev {
+	cursor: pointer;
+	text-decoration: underline;
+	display: block;
+}
 #qfield {
   border: 5px solid white; 
   padding: 10px;
@@ -189,4 +194,21 @@ ul.flashes li {
     -moz-border-radius: 2px;
     -webkit-border-radius: 2px;
     padding: 10px;
+}
+.revarea {
+	width: 100%;
+	height:200px;
+	margin-top: 10px;
+	padding: 5px;
+}
+.revbut {
+	margin-top:5px;
+	width:100px;
+	height:40px;
+}
+.areview {
+	padding: 5px;
+	margin: 5px;
+	border: 1px solid #CCC;
+	background-color: #FFFFEE;
 }
