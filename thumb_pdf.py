@@ -12,7 +12,7 @@ relpath = "pdf"
 allFiles = os.listdir(relpath)
 pdfs = [x for x in allFiles if x.endswith(".pdf")]
 
-def process_pdf(p):
+for i,p in enumerate(pdfs):
   fullpath = os.path.join(relpath, p)
   outpath = os.path.join('static', 'thumbs', p + '.jpg')
 
@@ -20,16 +20,15 @@ def process_pdf(p):
     print 'skipping %s, exists.' % (fullpath, )
     return
 
-  print "processing ", p
+  print "%d/%d processing %s" % (i, len(pdfs), p)
 
-  # this is a mouthful... 
   # take first 8 pages of the pdf ([0-7]), since 9th page are references
   # tile them horizontally, use JPEG compression 80, trim the borders for each image
   #cmd = "montage %s[0-7] -mode Concatenate -tile x1 -quality 80 -resize x230 -trim %s" % (fullpath, "thumbs/" + f + ".jpg")
   #print "EXEC: " + cmd
   
   # nvm, below using a roundabout alternative that is worse and requires temporary files, yuck!
-  # but i found that it succeeds ore often. I can't remember wha thappened anymore but I remember
+  # but i found that it succeeds more often. I can't remember wha thappened anymore but I remember
   # that the version above, while more elegant, had some problem with it on some pdfs. I think.
 
   # erase previous intermediate files test-*.png
@@ -52,11 +51,3 @@ def process_pdf(p):
   os.system(cmd)
 
   time.sleep(0.05) # silly way for allowing for ctrl+c termination
-
-import multiprocessing
-
-pool = multiprocessing.Pool(processes = multiprocessing.cpu_count())
-pool.map(process_pdf, pdfs)
-
-#for p in pdfs: process_pdf(p)
-

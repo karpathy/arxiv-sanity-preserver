@@ -16,7 +16,8 @@ for pid,j in db.iteritems():
   pdfs = [x['href'] for x in j['links'] if x['type'] == 'application/pdf']
   assert len(pdfs) == 1
   pdf_url = pdfs[0] + '.pdf'
-  fname = os.path.join('pdf', pid) + '.pdf'
+  basename = pdf_url.split('/')[-1]
+  fname = os.path.join('pdf', basename)
 
   # try retrieve the pdf
   numtot += 1

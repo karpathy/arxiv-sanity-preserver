@@ -1,3 +1,10 @@
+"""
+Very simple script that simply iterates over all files pdf/f.pdf
+and create a file txt/f.pdf.txt that contains the raw text, extracted
+using the "pdftotext" command. If a pdf cannot be converted, this
+script will not produce the output file.
+"""
+
 import cPickle as pickle
 import urllib2
 import shutil

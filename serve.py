@@ -145,7 +145,6 @@ if __name__ == "__main__":
   idf = tfidf['idf']
 
   # some utilities for creating a search index for faster search
-
   punc = "'!\"#$%&\'()*+,./:;<=>?@[\\]^_`{|}~'" # removed hyphen from string.punctuation
   trans_table = {ord(c): None for c in punc}
   def makedict(s, forceidf=None):
@@ -178,7 +177,6 @@ if __name__ == "__main__":
     dict_summary = makedict(p['summary'])
     p['search_dict'] = merge_dicts([dict_title, dict_authors, dict_summary])
 
-  #import code; code.interact(local=locals())
   print 'starting!'
   if args.prod:
     # run on Tornado instead, since running raw Flask in prod is not recommended
