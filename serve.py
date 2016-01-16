@@ -1,6 +1,8 @@
-from flask import Flask
-from flask import render_template
-from flask import request
+from sqlite3 import dbapi2 as sqlite3
+from hashlib import md5
+from flask import Flask, request, session, url_for, redirect, \
+     render_template, abort, g, flash, _app_ctx_stack
+from werkzeug import check_password_hash, generate_password_hash
 import cPickle as pickle
 import numpy as np
 import json
@@ -11,9 +13,58 @@ from random import shuffle
 import re
 import os
 
+# configuration
+DATABASE = 'as.db'
+if os.path.isfile('secret_key.txt'):
+  SECRET_KEY = open('secret_key.txt', 'r').read()
+else:
+  SECRET_KEY = 'devkey, should be in a file'
 app = Flask(__name__)
+app.config.from_object(__name__)
+
 SEARCH_DICT = {}
 
+# -----------------------------------------------------------------------------
+# utilities for database interactions 
+# -----------------------------------------------------------------------------
+# to initialize the database: sqlite3 as.db < schema.sql
+
+def connect_db():
+  sqlite_db = sqlite3.connect(DATABASE)
+  sqlite_db.row_factory = sqlite3.Row # to return dicts rather than tuples
+  return sqlite_db
+
+@app.before_request
+def before_request():
+  # this will always request database connection, even if we dont end up using it ;\
+  g.db = connect_db()
+  # retrieve user object from the database if user_id is set
+  g.user = None
+  if 'user_id' in session:
+    g.user = query_db('select * from user where user_id = ?',
+                      [session['user_id']], one=True)
+
+@app.teardown_request
+def teardown_request(exception):
+  db = getattr(g, 'db', None)
+  if db is not None:
+    db.close()
+
+def query_db(query, args=(), one=False):
+    """Queries the database and returns a list of dictionaries."""
+    cur = g.db.execute(query, args)
+    rv = cur.fetchall()
+    return (rv[0] if rv else None) if one else rv
+
+def get_user_id(username):
+  """Convenience method to look up the id for a username."""
+  rv = query_db('select user_id from user where username = ?',
+                [username], one=True)
+  return rv[0] if rv else None
+
+# -----------------------------------------------------------------------------
+# search/sort functionality
+# -----------------------------------------------------------------------------
 def papers_shuffle():
   ks = db.keys()
   shuffle(ks)
@@ -108,6 +159,9 @@ def encode_json(ps, n=10, send_images=True, send_abstracts=True):
     ret.append(struct)
   return ret
 
+# -----------------------------------------------------------------------------
+# flask request handling
+# -----------------------------------------------------------------------------
 @app.route("/")
 @app.route("/<request_pid>")
 def intmain(request_pid=None):
@@ -134,6 +188,49 @@ def search():
   ret = encode_json(papers, args.num_results) # encode the top few to json
   return render_template('main.html', papers=ret, numpapers=len(db), collapsed=0) # weeee
 
+@app.route('/login', methods=['POST'])
+def login():
+  """ logs in the user. if the username doesn't exist creates the account """
+  
+  if not request.form['username']:
+    flash('You have to enter a username')
+  elif not request.form['password']:
+    flash('You have to enter a password')
+  elif get_user_id(request.form['username']) is not None:
+    # username already exists, fetch all of its attributes
+    user = query_db('''select * from user where
+          username = ?''', [request.form['username']], one=True)
+    if check_password_hash(user['pw_hash'], request.form['password']):
+      # password is correct, log in the user
+      session['user_id'] = get_user_id(request.form['username'])
+      flash('User ' + request.form['username'] + ' logged in.')
+    else:
+      # incorrect password
+      flash('User ' + request.form['username'] + ' already exists, wrong password.')
+  else:
+    # create account and log in
+    g.db.execute('''insert into user (username, pw_hash) values (?, ?)''',
+      [request.form['username'], generate_password_hash(request.form['password'])])
+    user_id = g.db.execute('select last_insert_rowid()').fetchall()[0][0]
+    g.db.commit()
+
+    print '::::'
+    print user_id
+
+    session['user_id'] = user_id
+    flash('New account ' + request.form['username'] + ' was created')
+  
+  return redirect(url_for('intmain'))
+
+@app.route('/logout')
+def logout():
+  session.pop('user_id', None)
+  flash('You were logged out')
+  return redirect(url_for('intmain'))
+
+# -----------------------------------------------------------------------------
+# int main
+# -----------------------------------------------------------------------------
 if __name__ == "__main__":
    
   parser = argparse.ArgumentParser()
@@ -158,7 +255,7 @@ if __name__ == "__main__":
   def makedict(s, forceidf=None):
     words = s.lower().translate(trans_table).strip().split()
     out = {}
-    for w in words:
+    for w in words: # todo: if we're using bigrams in vocab then this won't search over them
       if forceidf is None:
         if w in vocab:
           # we have idf for this

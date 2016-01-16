@@ -3,3 +3,5 @@ pdf/
 txt/
 static/thumbs/
 *.p
+*.pyc
+as.db

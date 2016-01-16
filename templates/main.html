@@ -1,168 +1,15 @@
 <html>
+
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title>Arxiv Sanity Preserver</title>
 
-<style>
-/* CSS */
+<!-- CSS -->
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
 
-body {
-	margin: 0;
-	padding: 0;
-	font-family: arial;
-	background-color: #F6F3E5;
-}
-.as {
-	font-size: 14px;
-	color: #900;
-}
-.aa {
-	font-size: 14px;
-	color: #900;
-}
-.as a:link{ text-decoration: none; color: #900; }
-.as a:visited{ text-decoration: none; color: #900; }
-.as a:hover{ text-decoration: none; color: #F00; }
-.as a:active{ text-decoration: none; color: #900; }
-.ts {
-	font-weight: bold;
-	font-size: 16px;
-}
-.ts a:link{ text-decoration: none; color: #333; }
-.ts a:visited{ text-decoration: none; color: #333; }
-.ts a:hover{ text-decoration: underline; color: #000; }
-.ts a:active{ text-decoration: none; color: #333; }
-.cs {
-	color: #009;
-	font-size: 14px;
-}
-.ds {
-	margin-right: 10px;
-	color: #090;
-	font-size: 14px;
-}
-.ccs {
-	color: #000;
-	font-size: 12px;
-}
-.tt {
-	color: #000;
-	background-color: #EFE;
-	font-size: 14px;
-	display: block;
-	padding: 10px;
-	border-radius: 5px;
-}
-.spid {
-	font-size: 14px;
-	margin-right: 5px;
-	color: #555;
-}
-h1 {
-	font-size: 20px;
-	padding: 0;
-	margin: 0;
-}
-#titdiv {
-	width: auto;
-	height: 70px;
-	background-color: #840000;
-	color: white;
-
-	padding-top: 20px;
-	padding-left: 20px;
-
-	border-bottom: 1px solid #540000;
-}
-
-#maindiv {
-	width: 970px;
-	padding: 15px;
-	margin-left: auto;
-	margin-right: auto;
-
-	border-left: solid 1px #D6D3C5;
-	border-right: solid 1px #D6D3C5;
-
-	background-color: white;
-}
-
-.apaper {
-	margin-top: 25px;
-	/* min-height: 300px; */
-}
-.animg {
-	text-align: left;
-}
-.apaper img {
-   height: 156px;
-}
-.paperdesc {
-	float: left;
-	width: 750px;
-}
-
-.dllinks {
-	float: right;
-	text-align: right;
-}
-.w {
-	color: #050;
-	cursor: pointer;
-	text-decoration: underline;
-}
-.sim {
-	cursor: pointer;
-	text-decoration: underline;
-	display: block;
-}
-input {
-  border: 5px solid white; 
-  padding: 10px;
-  width: 1000px;
-  border: solid 1px #999;
-  margin-bottom: 5px;
-
-  height: 40px;
-  font-size: 22px;
-  color: "#333";
-
-  padding-left: 50px;
-
-  background-image:url('/static/search.png');
-	background-repeat:no-repeat;
-	background-position:left center;
-	outline:0;
-}
-#sbox {
-	margin-top: 10px;
-  text-align: center;
-}
-.msg {
-	background-color: #EEF;
-	padding: 10px;
-	border-radius: 10px;
-}
-#search_hint {
-	text-align: center;
-	margin-bottom: 10px;
-	font-size: 14px;
-}
-#search_hint a {
-	margin-right: 10px;
-}
-#search_hint a:link{ color: #777; }
-#search_hint a:visited{ color: #777; }
-#search_hint a:hover{ color: #777; }
-#search_hint a:active{ color: #777; }
-
-form {
-	margin-bottom: 5px;
-}
-</style>
-
-<script src="/static/jquery-1.8.3.min.js"></script>
-<script src="/static/d3.min.js"></script>
+<!-- JS -->
+<script src="{{ url_for('static', filename='jquery-1.8.3.min.js') }}"></script>
+<script src="{{ url_for('static', filename='d3.min.js') }}"></script>
 <script>
 
 // passed in from flask as json
@@ -280,13 +127,39 @@ $(document).ready(function(){
 <body>
 <a href="https://github.com/karpathy/arxiv-sanity-preserver"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/38ef81f8aca64bb9a64448d0d70f1308ef5341ab/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6461726b626c75655f3132313632312e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png"></a>
 
-<a href="/" style="text-decoration:none">
-	<div id ="titdiv">
-	<h1>Arxiv Sanity Preserver</h1>
-	Because things are seriously getting out of hand.<br>
-	Serving last {{ numpapers }} papers from cs.[CV|CL|LG]
+<div id ="titdiv">
+	
+	<div id="userinfo">
+		{% if not g.user %}
+		<form action="{{ url_for('login') }}" method="post">
+		Username: <input type="text" name="username"> Password: <input type="password" name="password"> <input type="submit" value="Login or Create">
+	  	</form>
+		{% else %}
+		<a href="">{{ g.user.username }}</a>
+		<a href="{{ url_for('logout') }}">log out</a>
+		{% endif %}
 	</div>
-</a>
+
+	<a href="/">
+	<div id="tittxt">
+		<h1>Arxiv Sanity Preserver</h1>
+		Because things are seriously getting out of hand.<br>
+		Serving last {{ numpapers }} papers from cs.[CV|CL|LG]
+	</div>
+	</a>
+</div>
+
+<div id="flashesdiv">
+{% with flashes = get_flashed_messages() %}
+    {% if flashes %}
+      <ul class="flashes">
+      {% for message in flashes %}
+        <li>{{ message }}
+      {% endfor %}
+      </ul>
+    {% endif %}
+{% endwith %}
+</div>
 
 <div id="sbox">
   <form action="/search" method="get">
