@@ -43,7 +43,7 @@ out = {}
 out['vocab'] = v.vocabulary_
 out['idf'] = v._tfidf.idf_
 out['X'] = X
-out['pids'] = pids
+out['pids'] = pids # a full idvv string (id and version number)
 out['ptoi'] = { x:i for i,x in enumerate(pids) } # pid to ix in X mapping
 
 print('writing tfidf.p')

@@ -61,6 +61,10 @@ def papers_search(qraw):
   out = [x[1] for x in scores if x[0] > 0]
   return out
 
+def strip_version(idstr):
+  parts = idstr.split('v')
+  return parts[0]
+
 def papers_similar(pid):
   if pid in tfidf['ptoi']:
     ix0 = tfidf['ptoi'][pid]
@@ -68,7 +72,7 @@ def papers_similar(pid):
     ds = np.asarray(np.dot(X, xquery.T)).ravel() # L2 normalized tfidf vectors
     scores = [(ds[i], tfidf['pids'][i]) for i in xrange(X.shape[0])]
     scores.sort(reverse=True) # descending
-    out = [db[sp[1]] for sp in scores]
+    out = [db[strip_version(sp[1])] for sp in scores]
     return out
   else:
     return [db[pid]] # err wat?
@@ -78,15 +82,17 @@ def encode_json(ps, n=10, send_images=True, send_abstracts=True):
   ret = []
   for i in xrange(min(len(ps),n)):
     p = ps[i]
+    idvv = '%sv%d' % (p['_rawid'], p['_version'])
+
     struct = {}
     struct['title'] = p['title']
-    struct['pid'] = p['rawid']
+    struct['pid'] = idvv
     struct['authors'] = [a['name'] for a in p['authors']]
     struct['link'] = p['link']
     if send_abstracts:
       struct['abstract'] = p['summary']
     if send_images:
-      struct['img'] = '/static/thumbs/' + p['rawid'] + '.pdf.jpg'
+      struct['img'] = '/static/thumbs/' + idvv + '.pdf.jpg'
     struct['tags'] = [t['term'] for t in p['tags']]
     
     timestruct = dateutil.parser.parse(p['updated'])
