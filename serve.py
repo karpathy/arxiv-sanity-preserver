@@ -62,6 +62,12 @@ def get_user_id(username):
                 [username], one=True)
   return rv[0] if rv else None
 
+def get_username(user_id):
+  """Convenience method to look up the username for a user."""
+  rv = query_db('select username from user where user_id = ?',
+                [user_id], one=True)
+  return rv[0] if rv else None
+
 # -----------------------------------------------------------------------------
 # search/sort functionality
 # -----------------------------------------------------------------------------
@@ -162,6 +168,8 @@ def encode_json(ps, n=10, send_images=True, send_abstracts=True):
     for r in reviews:
       rr = {}
       rr['text'] = r['text']
+      rr['username'] = get_username(r['author_id'])
+      rr['created'] = time.ctime(r['creation_time'])
       processed_reviews.append(rr)
     struct['reviews'] = processed_reviews
 

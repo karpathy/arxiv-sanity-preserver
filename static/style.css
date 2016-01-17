@@ -209,6 +209,18 @@ ul.flashes li {
 .areview {
 	padding: 5px;
 	margin: 5px;
-	border: 1px solid #CCC;
-	background-color: #FFFFEE;
+	font-size: 14px;
+}
+.revuser {
+	font-weight: bold;
+	color: #080;
+	margin-right: 10px;
+	font-size: 16px;
+}
+.revtime {
+	font-style: italic;
+	color: #888;
+}
+.revtext {
+	white-space: pre;
 }

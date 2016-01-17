@@ -104,10 +104,24 @@ function arrangeDivs() {
   		div.append('span').classed('tt', true).html(p.abstract);
   	}
 
+    // insert reviews
     var review_div = div.append('div').classed('reviews', true).attr('id', 'reviews'+p.pid);
     for(var j=0;j<p.reviews.length;j++) {
-      review_div.append('div').classed('areview', true).html(p.reviews[j].text);
+      var rev = p.reviews[j];
+      var revdiv = review_div.append('div').classed('areview', true);
+      revdiv.append('span').classed('revuser', true).html(rev.username);
+      revdiv.append('span').classed('revtime', true).html(rev.created);
+      revdiv.append('div').classed('revtext', true).html(rev.text);
     }
+    review_div.append('div').classed('revnew', true).html(' \
+    <form action="/review" method="post"> \
+      <textarea class="revarea" name="reviewtext"></textarea> \
+      <input type="hidden" name="pid" value="' + p.pid + '"> \
+      <input class="revbut" type="submit" value="Comment"> \
+    </form>');
+
+    review_div.style("display", 'none'); // hide the div at first
+
   }
 }
 
@@ -131,18 +145,12 @@ $(document).ready(function(){
 		window.location.replace('/' + similarTo);
 	});
 
-  // user clicks on "reviews" link
+  // user clicks on "reviews" link: toggle visibility of reviews
   $(".rev").click(function() {
     reviewOf = $(this).attr('id').substring(3); // get the id of clicked paper
-    // create interface for submitting a new review
     var review_div = d3.select(jq('#reviews' + reviewOf));
-    review_div.append('div').html(' \
-      <form action="/review" method="post"> \
-        <textarea class="revarea" name="reviewtext"></textarea> \
-        <input type="hidden" name="pid" value="' + reviewOf + '"> \
-        <input class="revbut" type="submit" value="Add review"> \
-      </form> \
-      ');
+    var new_display = review_div.style("display") === 'none' ? 'block' : 'none'; // toggle vis
+    review_div.style("display", new_display);
   });
 
 });
