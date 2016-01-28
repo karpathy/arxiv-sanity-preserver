@@ -51,4 +51,4 @@ for i,p in enumerate(pdfs):
   print cmd
   os.system(cmd)
 
-  time.sleep(0.05) # silly way for allowing for ctrl+c termination
+  time.sleep(0.03) # silly way for allowing for ctrl+c termination

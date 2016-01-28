@@ -22,19 +22,21 @@ for pid,j in db.iteritems():
   # try retrieve the pdf
   numtot += 1
   try:
-    print 'fetching %s into %s' % (pdf_url, fname)
     if not os.path.isfile(fname):
+      print 'fetching %s into %s' % (pdf_url, fname)
       req = urllib2.urlopen(pdf_url, None, timeout_secs)
       with open(fname, 'wb') as fp:
           shutil.copyfileobj(req, fp)
+      time.sleep(0.1 + random.uniform(0,0.2))
     else:
-      print 'exists, skipping'
+      print '%s exists, skipping' % (fname, )
     numok+=1
   except Exception, e:
     print 'error downloading: ', pdf_url
     print e
+  time.sleep(0.01)
 
   print '%d/%d of %d downloaded ok.' % (numok, numtot, len(db))
-  time.sleep(0.1 + random.uniform(0,0.2))
+  
 
 print 'final number of papers downloaded okay: %d/%d' % (numok, len(db))
