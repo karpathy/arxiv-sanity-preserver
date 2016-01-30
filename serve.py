@@ -1,8 +1,4 @@
-from sqlite3 import dbapi2 as sqlite3
-from hashlib import md5
-from flask import Flask, request, session, url_for, redirect, \
-     render_template, abort, g, flash, _app_ctx_stack
-from werkzeug import check_password_hash, generate_password_hash
+from flask import Flask, render_template, request
 import cPickle as pickle
 import numpy as np
 import json
@@ -13,61 +9,9 @@ from random import shuffle
 import re
 import os
 
-# configuration
-DATABASE = 'as.db'
-if os.path.isfile('secret_key.txt'):
-  SECRET_KEY = open('secret_key.txt', 'r').read()
-else:
-  SECRET_KEY = 'devkey, should be in a file'
 app = Flask(__name__)
-app.config.from_object(__name__)
 
 SEARCH_DICT = {}
-
-# -----------------------------------------------------------------------------
-# utilities for database interactions 
-# -----------------------------------------------------------------------------
-# to initialize the database: sqlite3 as.db < schema.sql
-
-def connect_db():
-  sqlite_db = sqlite3.connect(DATABASE)
-  sqlite_db.row_factory = sqlite3.Row # to return dicts rather than tuples
-  return sqlite_db
-
-@app.before_request
-def before_request():
-  # this will always request database connection, even if we dont end up using it ;\
-  g.db = connect_db()
-  # retrieve user object from the database if user_id is set
-  g.user = None
-  if 'user_id' in session:
-    g.user = query_db('select * from user where user_id = ?',
-                      [session['user_id']], one=True)
-
-@app.teardown_request
-def teardown_request(exception):
-  db = getattr(g, 'db', None)
-  if db is not None:
-    db.close()
-
-def query_db(query, args=(), one=False):
-    """Queries the database and returns a list of dictionaries."""
-    cur = g.db.execute(query, args)
-    rv = cur.fetchall()
-    return (rv[0] if rv else None) if one else rv
-
-def get_user_id(username):
-  """Convenience method to look up the id for a username."""
-  rv = query_db('select user_id from user where username = ?',
-                [username], one=True)
-  return rv[0] if rv else None
-
-def get_username(user_id):
-  """Convenience method to look up the username for a user."""
-  rv = query_db('select username from user where user_id = ?',
-                [user_id], one=True)
-  return rv[0] if rv else None
-
 # -----------------------------------------------------------------------------
 # search/sort functionality
 # -----------------------------------------------------------------------------
@@ -86,28 +30,6 @@ def date_sort():
   out = [sp[1] for sp in scores]
   return out
 
-def papers_search_old(qraw):
-  """ deprecated, slow, brute-force search """
-  qparts = qraw.lower().strip().split() # split by spaces
-
-  # brute force search with unigrams, weeee
-  scores = []
-  for pid in db:
-    p = db[pid]
-    score = 0
-    for q in qparts:
-      # search titles
-      if q in p['title'].lower():
-        score += 5.0
-      # search authors
-      score += sum(3.0 for x in p['authors'] if q in x['name'].lower())
-      # search abstracts
-      score += min(3.0, 1.0 * p['summary'].lower().count(q)) # robustify with min
-    scores.append((score, p))
-  scores.sort(reverse=True) # descending
-  out = [x[1] for x in scores if x[0] > 0]
-  return out
-
 def papers_search(qraw):
   qparts = qraw.lower().strip().split() # split by spaces
   # use reverse index and accumulate scores
@@ -115,6 +37,8 @@ def papers_search(qraw):
   for pid in db:
     p = db[pid]
     score = sum(SEARCH_DICT[pid].get(q,0) for q in qparts)
+    # give a small boost to more recent papers
+    score += 0.0001*p['tscore']
     scores.append((score, p))
   scores.sort(reverse=True) # descending
   out = [x[1] for x in scores if x[0] > 0]
@@ -125,16 +49,10 @@ def strip_version(idstr):
   return parts[0]
 
 def papers_similar(pid):
-  if pid in tfidf['ptoi']:
-    ix0 = tfidf['ptoi'][pid]
-    xquery = X[ix0, np.newaxis]
-    ds = np.asarray(np.dot(X, xquery.T)).ravel() # L2 normalized tfidf vectors
-    scores = [(ds[i], tfidf['pids'][i]) for i in xrange(X.shape[0])]
-    scores.sort(reverse=True) # descending
-    out = [db[strip_version(sp[1])] for sp in scores]
-    return out
+  if pid in sim_dict:
+    return [db[strip_version(k)] for k in sim_dict[pid]]
   else:
-    return [db[pid]] # err wat?
+    return [db[strip_version(pid)]] # err wat?
 
 def encode_json(ps, n=10, send_images=True, send_abstracts=True):
 
@@ -142,7 +60,6 @@ def encode_json(ps, n=10, send_images=True, send_abstracts=True):
   for i in xrange(min(len(ps),n)):
     p = ps[i]
     idvv = '%sv%d' % (p['_rawid'], p['_version'])
-
     struct = {}
     struct['title'] = p['title']
     struct['pid'] = idvv
@@ -161,17 +78,6 @@ def encode_json(ps, n=10, send_images=True, send_abstracts=True):
     if len(cc) > 100:
       cc = cc[:100] + '...' # crop very long comments
     struct['comment'] = cc
-
-    # also fetch reviews for the paper
-    reviews = query_db('''select * from review where paper_id = ?''', [idvv])
-    processed_reviews = []
-    for r in reviews:
-      rr = {}
-      rr['text'] = r['text']
-      rr['username'] = get_username(r['author_id'])
-      rr['created'] = time.ctime(r['creation_time'])
-      processed_reviews.append(rr)
-    struct['reviews'] = processed_reviews
 
     ret.append(struct)
   return ret
@@ -209,70 +115,6 @@ def search():
   ret = encode_json(papers, args.num_results) # encode the top few to json
   return render_template('main.html', papers=ret, numpapers=len(db), msg='') # weeee
 
-@app.route('/review', methods=['POST'])
-def review():
-  """ when user wants to add a review """
-  
-  # make sure user is logged in
-  if not g.user:
-    flash('the user must be logged in to review.')
-    return redirect(url_for('intmain'))
-
-  pid = request.form['pid'] # includes version
-  if not isvalidid(pid):
-    flash('malformed arxiv paper id')
-    return redirect(url_for('intmain'))
-
-  txt = request.form['reviewtext']
-  creation_time = int(time.time())
-  pidraw = pid.split('v')[0] # part without the v
-  g.db.execute('''insert into review (paper_id_raw, paper_id, author_id, text, creation_time, update_time) values (?, ?, ?, ?, ?, ?)''',
-      [pidraw, pid, session['user_id'], txt, creation_time, creation_time])
-  g.db.commit()
-
-  flash('review added.')
-  return redirect(url_for('intmain'))
-
-@app.route('/login', methods=['POST'])
-def login():
-  """ logs in the user. if the username doesn't exist creates the account """
-  
-  if not request.form['username']:
-    flash('You have to enter a username')
-  elif not request.form['password']:
-    flash('You have to enter a password')
-  elif get_user_id(request.form['username']) is not None:
-    # username already exists, fetch all of its attributes
-    user = query_db('''select * from user where
-          username = ?''', [request.form['username']], one=True)
-    if check_password_hash(user['pw_hash'], request.form['password']):
-      # password is correct, log in the user
-      session['user_id'] = get_user_id(request.form['username'])
-      flash('User ' + request.form['username'] + ' logged in.')
-    else:
-      # incorrect password
-      flash('User ' + request.form['username'] + ' already exists, wrong password.')
-  else:
-    # create account and log in
-    creation_time = int(time.time())
-    g.db.execute('''insert into user (username, pw_hash, creation_time) values (?, ?, ?)''',
-      [request.form['username'], 
-      generate_password_hash(request.form['password']), 
-      creation_time])
-    user_id = g.db.execute('select last_insert_rowid()').fetchall()[0][0]
-    g.db.commit()
-
-    session['user_id'] = user_id
-    flash('New account %s created' % (request.form['username'], ))
-  
-  return redirect(url_for('intmain'))
-
-@app.route('/logout')
-def logout():
-  session.pop('user_id', None)
-  flash('You were logged out')
-  return redirect(url_for('intmain'))
-
 # -----------------------------------------------------------------------------
 # int main
 # -----------------------------------------------------------------------------
@@ -288,11 +130,21 @@ if __name__ == "__main__":
   print 'loading db.p...'
   db = pickle.load(open('db.p', 'rb'))
   
-  print 'loading tfidf.p...'
-  tfidf = pickle.load(open("tfidf.p", "rb"))
-  X = tfidf['X'].todense()
-  vocab = tfidf['vocab']
-  idf = tfidf['idf']
+  print 'loading tfidf_meta.p...'
+  meta = pickle.load(open("tfidf_meta.p", "rb"))
+  vocab = meta['vocab']
+  idf = meta['idf']
+
+  print 'loading sim_dict.p...'
+  sim_dict = pickle.load(open("sim_dict.p", "rb"))
+
+  # compute min and max time for all papers
+  tts = [time.mktime(dateutil.parser.parse(p['updated']).timetuple()) for pid,p in db.iteritems()]
+  ttmin = min(tts)*1.0
+  ttmax = max(tts)*1.0
+  for pid,p in db.iteritems():
+    tt = time.mktime(dateutil.parser.parse(p['updated']).timetuple())
+    p['tscore'] = (tt-ttmin)/(ttmax-ttmin)
 
   # some utilities for creating a search index for faster search
   punc = "'!\"#$%&\'()*+,./:;<=>?@[\\]^_`{|}~'" # removed hyphen from string.punctuation

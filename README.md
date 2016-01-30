@@ -35,8 +35,8 @@ Right now this code requires reading code and getting your hands dirty. There ar
 1. Run `fetch_papers.py` to query arxiv API and create a file `db.p` that contains all information for each paper
 2. Run `download_pdf.py`, which iterates over all papers in parsed pickle and downloads the papers into folder `pdf`
 3. Run `parse_pdf_to_text.py` to export all text from pdfs to files in `txt`
-4. Run `analyze.py` to compute tfidf vectors for all documents based on bigrams. Saves a `tfidf.p` pickle file.
-5. Run `thumb_pdf.py` to export thumbnails of all pdfs to `thumb`
+4. Run `thumb_pdf.py` to export thumbnails of all pdfs to `thumb`
+5. Run `analyze.py` to compute tfidf vectors for all documents based on bigrams. Saves a `tfidf.p` and `sim_dict.p` pickle files.
 6. Run the flask server with `serve.py`. Visit localhost:5000 and enjoy sane viewing of papers
 
 ### Prebuilt database

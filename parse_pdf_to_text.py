@@ -14,15 +14,22 @@ import random
 
 os.system('mkdir -p txt') # ?
 
+have = os.listdir('txt')
 files = os.listdir('pdf')
 for i,f in enumerate(files):
   pdf_path = os.path.join('pdf', f)
-  txt_path = os.path.join('txt', f+'.txt')
-  if not os.path.isfile(txt_path):
+  txt_basename = f + '.txt'
+  txt_path = os.path.join('txt', txt_basename)
+  if not txt_basename in have:
     cmd = "pdftotext %s %s" % (pdf_path, txt_path)
-    print '%d/%d %s' % (i, len(files), cmd)
     os.system(cmd)
-    time.sleep(0.05) # silly way for allowing for ctrl+c termination
+    print '%d/%d %s' % (i, len(files), cmd)
+
+    # check output was made
+    if not os.path.isfile(txt_path):
+      # there was an error with converting the pdf
+      os.system('touch ' + txt_path) # create empty file, but it's a record of having tried to convert
+
+    time.sleep(0.02) # silly way for allowing for ctrl+c termination
   else:
     print 'skipping %s, already exists.' % (pdf_path, )
-    time.sleep(0.005)

@@ -91,8 +91,6 @@ function arrangeDivs() {
   	ldiv.append('a').attr('href', p.link).attr('target', '_blank').html('pdf');
     // rank by tfidf similarity
   	ldiv.append('span').classed('sim', true).attr('id', 'sim'+p.pid).html('rank by tf-idf similarity to this');
-    // view reviews for this paper
-    ldiv.append('span').classed('rev', true).attr('id', 'rev'+p.pid).html('reviews <b>(' + p.reviews.length + ')</b>');
 
   	div.append('div').attr('style', 'clear:both');
 
@@ -103,25 +101,6 @@ function arrangeDivs() {
   	if(typeof p.abstract !== 'undefined') {
   		div.append('span').classed('tt', true).html(p.abstract);
   	}
-
-    // insert reviews
-    var review_div = div.append('div').classed('reviews', true).attr('id', 'reviews'+p.pid);
-    for(var j=0;j<p.reviews.length;j++) {
-      var rev = p.reviews[j];
-      var revdiv = review_div.append('div').classed('areview', true);
-      revdiv.append('span').classed('revuser', true).html(rev.username);
-      revdiv.append('span').classed('revtime', true).html(rev.created);
-      revdiv.append('div').classed('revtext', true).html(rev.text);
-    }
-    review_div.append('div').classed('revnew', true).html(' \
-    <form action="/review" method="post"> \
-      <textarea class="revarea" name="reviewtext"></textarea> \
-      <input type="hidden" name="pid" value="' + p.pid + '"> \
-      <input class="revbut" type="submit" value="Comment"> \
-    </form>');
-
-    review_div.style("display", 'none'); // hide the div at first
-
   }
 }
 
@@ -145,14 +124,6 @@ $(document).ready(function(){
 		window.location.replace('/' + similarTo);
 	});
 
-  // user clicks on "reviews" link: toggle visibility of reviews
-  $(".rev").click(function() {
-    reviewOf = $(this).attr('id').substring(3); // get the id of clicked paper
-    var review_div = d3.select(jq('#reviews' + reviewOf));
-    var new_display = review_div.style("display") === 'none' ? 'block' : 'none'; // toggle vis
-    review_div.style("display", new_display);
-  });
-
 });
 
 </script>
@@ -162,17 +133,6 @@ $(document).ready(function(){
 <a href="https://github.com/karpathy/arxiv-sanity-preserver"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/38ef81f8aca64bb9a64448d0d70f1308ef5341ab/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6461726b626c75655f3132313632312e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png"></a>
 
 <div id ="titdiv">
-	
-	<div id="userinfo">
-		{% if not g.user %}
-		<form action="{{ url_for('login') }}" method="post">
-		  Username: <input type="text" name="username"> Password: <input type="password" name="password"> <input type="submit" value="Login or Create">
-	  </form>
-		{% else %}
-		<a href="">{{ g.user.username }}</a>
-		<a href="{{ url_for('logout') }}">log out</a>
-		{% endif %}
-	</div>
 
 	<a href="/">
 	<div id="tittxt">
