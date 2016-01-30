@@ -11,7 +11,7 @@ There are way too many arxiv papers, so I wrote a quick webapp that lets you sea
 
 ### Find it online
 
-This code is currently running live at [www.arxiv-sanity.com/](http://www.arxiv-sanity.com/). Right now it's serving 10400 arxiv papers from cs.[CV|CL|LG] over the last ~3 years, and more will be added in time as I build this out.
+This code is currently running live at [www.arxiv-sanity.com/](http://www.arxiv-sanity.com/). Right now it's serving ~13,000 arxiv papers from cs.[CV|CL|LG] over the last ~3 years, and more will be added in time as I build this out.
 
 ### Dependencies
 You will need numpy, feedparser (to process xml files), scikit learn (for tfidf vectorizer), and flask (for serving the results), and tornado (if you want to run the flask server in production). Also dateutil, and scipy. Most of these are easy to get through `pip`, e.g.:
@@ -30,18 +30,14 @@ $ pip install tornado           # only in serve.py
 
 ### Processing pipeline
 
-Right now this code requires reading code and getting your hands dirty. There are magic numbers throughout code, but luckily each script is quite short, transparent and easy to modify. In order there are:
+Right now this code requires reading code and getting your hands dirty. There are a few magic numbers throughout code, but luckily each script is quite short, transparent and easy to modify. In order there are:
 
 1. Run `fetch_papers.py` to query arxiv API and create a file `db.p` that contains all information for each paper
 2. Run `download_pdf.py`, which iterates over all papers in parsed pickle and downloads the papers into folder `pdf`
 3. Run `parse_pdf_to_text.py` to export all text from pdfs to files in `txt`
 4. Run `thumb_pdf.py` to export thumbnails of all pdfs to `thumb`
-5. Run `analyze.py` to compute tfidf vectors for all documents based on bigrams. Saves a `tfidf.p` and `sim_dict.p` pickle files.
+5. Run `analyze.py` to compute tfidf vectors for all documents based on bigrams. Saves a `tfidf.p`, `tfidf_meta.p` and `sim_dict.p` pickle files.
 6. Run the flask server with `serve.py`. Visit localhost:5000 and enjoy sane viewing of papers
-
-### Prebuilt database
-
-If you'd like to browse the 10400 arxiv papers currently running in the demo, you can download the prebuilt database. This means you can skip steps 1-6 above and simply run the server (step 7). [Here is the download link.](http://cs.stanford.edu/people/karpathy/arxiv_10K_export.zip). Unzip in root folder and fire up flask with `serve.py`.
 
 ### Running online
 
