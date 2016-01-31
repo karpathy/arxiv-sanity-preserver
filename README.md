@@ -5,7 +5,7 @@ There are way too many arxiv papers, so I wrote a quick webapp that lets you sea
 
 **Indexing code**. Uses Arxiv API to download the most recent papers in any categories you like, and then downloads all papers, extracts all text, and creates tfidf vectors for each paper. This code is therefore concerned with building up a database of arxiv papers, calculating content vectors, creating thumbnails, etc.
 
-**User interface**. Then thre is a web server (based on Flask) that enables searching through the database and filtering papers by similarity, etc. Main functionality is a search feature, and most useful is that you can click "sort by tfidf similarity to this", which returns all the most similar papers to that one in terms of tfidf bigrams. I find this quite useful.
+**User interface**. Then there is a web server (based on Flask) that enables searching through the database and filtering papers by similarity, etc. Main functionality is a search feature, and most useful is that you can click "sort by tfidf similarity to this", which returns all the most similar papers to that one in terms of tfidf bigrams. I find this quite useful.
 
 ![user interface](https://raw.github.com/karpathy/arxiv-sanity-preserver/master/ui.jpeg)
 
