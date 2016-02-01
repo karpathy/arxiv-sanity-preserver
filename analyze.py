@@ -24,10 +24,12 @@ for pid,j in db.iteritems():
   fname = os.path.join('txt', idvv) + '.pdf.txt'
   if os.path.isfile(fname): # some pdfs dont translate to txt
     txt = open(fname, 'r').read()
-    if len(txt) < 100: # way too short and suspicious
+    if len(txt) > 100: # way too short and suspicious
       txts.append(txt) # todo later: maybe filter or something some of them
       pids.append(idvv)
       print 'read %d/%d (%s) with %d chars' % (n, len(db), idvv, len(txt))
+    else:
+      print 'skipped %d/%d (%s) with %d chars: suspicious!' % (n, len(db), idvv, len(txt))
 
 # compute tfidf vectors with scikits
 v = TfidfVectorizer(input='content', 
@@ -65,6 +67,6 @@ for i,pid in enumerate(pids):
   scores = [(ds[j], j) for j in xrange(X.shape[0])]
   scores.sort(reverse=True) # descending by distance  
   sim_dict[pids[i]] = [ pids[scores[j][1]] for j in xrange(50) ]
-  if i%100==0: print '%d/%d...' % (i, len(pids))
+  if i%10==0: print '%d/%d...' % (i, len(pids))
 print('writing sim_dict.p')
 pickle.dump(sim_dict, open("sim_dict.p", "wb"))
