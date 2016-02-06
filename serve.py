@@ -149,19 +149,19 @@ if __name__ == "__main__":
   # some utilities for creating a search index for faster search
   punc = "'!\"#$%&\'()*+,./:;<=>?@[\\]^_`{|}~'" # removed hyphen from string.punctuation
   trans_table = {ord(c): None for c in punc}
-  def makedict(s, forceidf=None):
-    words = s.lower().translate(trans_table).strip().split()
+  def makedict(s, forceidf=None, scale=1.0):
+    words = set(s.lower().translate(trans_table).strip().split())
     out = {}
     for w in words: # todo: if we're using bigrams in vocab then this won't search over them
       if forceidf is None:
         if w in vocab:
           # we have idf for this
-          idfval = idf[vocab[w]]
+          idfval = idf[vocab[w]]*scale
         else:
-          idfval = 1.0 # assume idf 1.0 (low)
+          idfval = 1.0*scale # assume idf 1.0 (low)
       else:
         idfval = forceidf
-      out[w] = idfval # note, we're overwriting, so no adding up
+      out[w] = idfval
     return out
 
   def merge_dicts(dlist):
@@ -183,8 +183,11 @@ if __name__ == "__main__":
     print 'building an index for faster search...'
     for pid in db:
       p = db[pid]
-      dict_title = makedict(p['title'])
-      dict_authors = makedict(' '.join(x['name'] for x in p['authors']), 10.0)
+      dict_title = makedict(p['title'], forceidf=5, scale=3)
+      dict_authors = makedict(' '.join(x['name'] for x in p['authors']), forceidf=5)
+      if 'and' in dict_authors: 
+        # special case for "and" handling in authors list
+        del dict_authors['and']
       dict_summary = makedict(p['summary'])
       SEARCH_DICT[pid] = merge_dicts([dict_title, dict_authors, dict_summary])
     # and cache it in file
