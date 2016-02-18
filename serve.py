@@ -106,14 +106,14 @@ def intmain(request_pid=None):
     papers = papers_similar(request_pid)
     ret = encode_json(papers, args.num_results) # encode the top few to json
     msg = ''
-  return render_template('main.html', papers=ret, numpapers=len(db), msg=msg)
+  return render_template('main.html', papers=ret, numpapers=len(db), msg=msg, render_format="paper")
 
 @app.route("/search", methods=['GET'])
 def search():
   q = request.args.get('q', '') # get the search request
   papers = papers_search(q) # perform the query and get sorted documents
   ret = encode_json(papers, args.num_results) # encode the top few to json
-  return render_template('main.html', papers=ret, numpapers=len(db), msg='') # weeee
+  return render_template('main.html', papers=ret, numpapers=len(db), msg='', render_format="search") # weeee
 
 # -----------------------------------------------------------------------------
 # int main

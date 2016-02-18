@@ -15,6 +15,7 @@
 // passed in from flask as json
 var papers = {{ papers | tojson }};
 var msg = "{{ msg }}";
+var render_format = "{{ render_format }}";
 
 var urlq = '';
 
@@ -101,6 +102,11 @@ function arrangeDivs() {
   	if(typeof p.abstract !== 'undefined') {
   		div.append('span').classed('tt', true).html(p.abstract);
   	}
+
+    if(render_format == 'paper' && i === 0) {
+      // lets insert a divider/message
+      div.append('div').classed('paperdivider', true).html('Most similar papers:');
+    }
   }
 }
 

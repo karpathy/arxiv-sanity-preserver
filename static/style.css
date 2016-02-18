@@ -144,6 +144,15 @@ h1 {
 	padding: 10px;
 	border-radius: 10px;
 }
+.paperdivider {
+	background-color: #EEF;
+	padding: 10px;
+	margin-top: 10px;
+	margin-bottom: 10px;
+	border-bottom: 1px solid #CCD;
+	border-top: 1px solid #CCD;
+	color: #005;
+}
 #search_hint {
 	text-align: center;
 	margin-bottom: 10px;
