@@ -45,14 +45,35 @@ def papers_search(qraw):
   return out
 
 def strip_version(idstr):
+  """ identity function if arxiv id has no version, otherwise strips it. """
   parts = idstr.split('v')
   return parts[0]
 
 def papers_similar(pid):
+  rawpid = strip_version(pid)
+
+  # check if we have this paper at all, otherwise return empty list
+  if not rawpid in db: 
+    return []
+
+  # check if we have distances to this specific version of paper id (includes version)
   if pid in sim_dict:
+    # good, simplest case: lets return the papers
     return [db[strip_version(k)] for k in sim_dict[pid]]
   else:
-    return [db[strip_version(pid)]] # err wat?
+    # ok we don't have this specific version. could be a stale URL that points to, 
+    # e.g. v1 of a paper, but due to an updated version of it we only have v2 on file
+    # now. We want to use v2 in that case.
+    # lets try to retrieve the most recent version of this paper we do have
+    ks = sim_dict.keys()
+    kok = [k for k in sim_dict.iterkeys() if rawpid in k]
+    if kok:
+      # ok we have at least one different version of this paper, lets use it instead
+      id_use_instead = kok[0]
+      return [db[strip_version(k)] for k in sim_dict[id_use_instead]]
+    else:
+      # return just the paper. we dont have similarities for it for some reason
+      return [db[rawpid]]
 
 def encode_json(ps, n=10, send_images=True, send_abstracts=True):
 
@@ -99,14 +120,16 @@ def intmain(request_pid=None):
     papers = date_sort()
     ret = encode_json(papers, 20)
     msg = 'Showing 20 most recent Arxiv papers:'
+    render_format = 'recent'
   else:
     if not isvalidid(request_pid):
       return '' # these are requests for icons, things like robots.txt, etc
-
     papers = papers_similar(request_pid)
     ret = encode_json(papers, args.num_results) # encode the top few to json
     msg = ''
-  return render_template('main.html', papers=ret, numpapers=len(db), msg=msg, render_format="paper")
+    render_format = 'paper'
+
+  return render_template('main.html', papers=ret, numpapers=len(db), msg=msg, render_format=render_format)
 
 @app.route("/search", methods=['GET'])
 def search():
