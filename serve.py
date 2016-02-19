@@ -12,6 +12,7 @@ import os
 app = Flask(__name__)
 
 SEARCH_DICT = {}
+
 # -----------------------------------------------------------------------------
 # search/sort functionality
 # -----------------------------------------------------------------------------
@@ -116,8 +117,7 @@ def isvalidid(pid):
 def intmain(request_pid=None):
 
   if request_pid is None:
-    #papers = papers_shuffle() # perform the query and get sorted documents
-    papers = date_sort()
+    papers = DATE_SORTED_PAPERS # precomputed
     ret = encode_json(papers, 20)
     msg = 'Showing 20 most recent Arxiv papers:'
     render_format = 'recent'
@@ -160,6 +160,9 @@ if __name__ == "__main__":
 
   print 'loading sim_dict.p...'
   sim_dict = pickle.load(open("sim_dict.p", "rb"))
+
+  print 'precomputing papers date sorted...'
+  DATE_SORTED_PAPERS = date_sort()
 
   # compute min and max time for all papers
   tts = [time.mktime(dateutil.parser.parse(p['updated']).timetuple()) for pid,p in db.iteritems()]
