@@ -80,6 +80,7 @@ def date_sort():
   for pid in db:
     p = db[pid]
     timestruct = dateutil.parser.parse(p['updated'])
+    p['time_updated'] = int(timestruct.strftime("%s"))
     scores.append((timestruct, p))
   scores.sort(reverse=True)
   out = [sp[1] for sp in scores]
@@ -133,13 +134,32 @@ def papers_similar(pid):
 def papers_from_library():
   out = []
   if g.user:
-    
     # user is logged in, lets fetch their saved library data
     uid = session['user_id']
     user_library = query_db('''select * from library where user_id = ?''', [uid])
     libids = [strip_version(x['paper_id']) for x in user_library]
     out = [db[x] for x in libids]
     out = sorted(out, key=lambda k: k['updated'], reverse=True)
+  return out
+
+def papers_from_svm(recent_days=None):
+  out = []
+  if g.user:
+
+    uid = session['user_id']
+    if not uid in user_sim:
+      break # abort, user has no SVM trained
+    
+    user_library = query_db('''select * from library where user_id = ?''', [uid])
+    libids = [strip_version(x['paper_id']) for x in user_library]
+
+    plist = user_sim[uid]
+    out = [db[x] for x in plist if not x in libids]
+
+    if recent_days is not None:
+      # filter as well to only most recent papers
+      curtime = int(time.time()) # in seconds
+      out = [x for x in out if curtime - x['time_updated'] < recent_days*24*60*60]
 
   return out
 
@@ -208,6 +228,22 @@ def search():
   papers = papers_search(q) # perform the query and get sorted documents
   ret = encode_json(papers, args.num_results) # encode the top few to json
   return render_template('main.html', papers=ret, numpapers=len(db), msg='', render_format="search") # weeee
+
+@app.route('/recent-recommend')
+def recent_recommend():
+  """ return user's svm sorted list, but only recent papers"""
+  papers = papers_from_svm(recent_days=7)
+  ret = encode_json(papers, 30)
+  msg = 'Recommended papers over last week: (based on your library, refreshed every day or so)' if g.user else 'You must be logged in and have some papers saved in your library.'
+  return render_template('main.html', papers=ret, numpapers=len(db), msg=msg, render_format='recent')
+
+@app.route('/recommend')
+def recommend():
+  """ return user's svm sorted list """
+  papers = papers_from_svm()
+  ret = encode_json(papers, 50)
+  msg = 'Recommended papers: (based on your library, refreshed every day or so)' if g.user else 'You must be logged in and have some papers saved in your library.'
+  return render_template('main.html', papers=ret, numpapers=len(db), msg=msg, render_format='recent')
 
 @app.route('/library')
 def library():
@@ -319,6 +355,12 @@ if __name__ == "__main__":
 
   print 'loading sim_dict.p...'
   sim_dict = pickle.load(open("sim_dict.p", "rb"))
+
+  print 'loading user_sim.p...'
+  if os.path.isfile('user_sim.p'):
+    user_sim = pickle.load(open('user_sim.p', 'rb'))
+  else:
+    user_sim = {}
 
   print 'precomputing papers date sorted...'
   DATE_SORTED_PAPERS = date_sort()
