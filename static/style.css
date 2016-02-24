@@ -44,6 +44,7 @@ body {
 	display: block;
 	padding: 10px;
 	border-radius: 5px;
+	text-align: justify;
 }
 .spid {
 	font-size: 14px;
@@ -89,9 +90,7 @@ h1 {
 }
 .animg {
 	text-align: left;
-}
-.apaper img {
-   height: 156px;
+	height: 156px;
 }
 .paperdesc {
 	float: left;
@@ -175,7 +174,18 @@ form {
 	top: 10px;
 	right: 150px;
 	color: white;
-	font-size: 18px;
+	font-size: 16px;
+}
+.input-no-border {
+	border: none;
+	padding: 4px;
+	width: 100px;
+}
+.btn-fancy {
+	background-color: #FFF;
+	border: none;
+	padding: 4px;
+	cursor: pointer;
 }
 
 #userinfo a {
@@ -186,6 +196,13 @@ form {
 #titdiv a:visited{ text-decoration: none; color: #FFF;}
 #titdiv a:hover{ text-decoration: none; color: #FFF;}
 #titdiv a:active{ text-decoration: none; color: #FFF;}
+
+.save-icon {
+	width: 24px;
+	height: 24px;
+	cursor: pointer;
+	margin-top: 5px;
+}
 
 #flashesdiv {
 	width: 1000px;
@@ -233,3 +250,31 @@ ul.flashes li {
 .revtext {
 	white-space: pre;
 }
+
+#pagebar {
+	width: 970px;
+	padding: 10px 15px 0px 15px;
+	margin-left: auto;
+	margin-right: auto;
+
+	border-top: solid 1px #D6D3C5;
+	border-left: solid 1px #D6D3C5;
+	border-right: solid 1px #D6D3C5;
+
+	background-color: #EEE;
+}
+.pagelink {
+	display: inline-block;
+	margin-right: 3px;
+	font-size: 16px;
+	border-left: 1px solid #AAA;
+	border-right: 1px solid #AAA;
+	border-top: 1px solid #AAA;
+	
+	padding: 10px 5px 10px 5px;
+	background-color: #FFF;
+}
+#pagebar a:link{ text-decoration: none; color: #338;}
+#pagebar a:visited{ text-decoration: none; color: #338;}
+#pagebar a:hover{ text-decoration: none; color: #338;}
+#pagebar a:active{ text-decoration: none; color: #338;}

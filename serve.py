@@ -1,4 +1,8 @@
-from flask import Flask, render_template, request
+from sqlite3 import dbapi2 as sqlite3
+from hashlib import md5
+from flask import Flask, request, session, url_for, redirect, \
+     render_template, abort, g, flash, _app_ctx_stack
+from werkzeug import check_password_hash, generate_password_hash
 import cPickle as pickle
 import numpy as np
 import json
@@ -9,9 +13,59 @@ from random import shuffle
 import re
 import os
 
+# database configuration
+DATABASE = 'as.db'
+if os.path.isfile('secret_key.txt'):
+  SECRET_KEY = open('secret_key.txt', 'r').read()
+else:
+  SECRET_KEY = 'devkey, should be in a file'
 app = Flask(__name__)
+app.config.from_object(__name__)
 
 SEARCH_DICT = {}
+
+# -----------------------------------------------------------------------------
+# utilities for database interactions 
+# -----------------------------------------------------------------------------
+# to initialize the database: sqlite3 as.db < schema.sql
+def connect_db():
+  sqlite_db = sqlite3.connect(DATABASE)
+  sqlite_db.row_factory = sqlite3.Row # to return dicts rather than tuples
+  return sqlite_db
+
+@app.before_request
+def before_request():
+  # this will always request database connection, even if we dont end up using it ;\
+  g.db = connect_db()
+  # retrieve user object from the database if user_id is set
+  g.user = None
+  if 'user_id' in session:
+    g.user = query_db('select * from user where user_id = ?',
+                      [session['user_id']], one=True)
+
+@app.teardown_request
+def teardown_request(exception):
+  db = getattr(g, 'db', None)
+  if db is not None:
+    db.close()
+
+def query_db(query, args=(), one=False):
+    """Queries the database and returns a list of dictionaries."""
+    cur = g.db.execute(query, args)
+    rv = cur.fetchall()
+    return (rv[0] if rv else None) if one else rv
+
+def get_user_id(username):
+  """Convenience method to look up the id for a username."""
+  rv = query_db('select user_id from user where username = ?',
+                [username], one=True)
+  return rv[0] if rv else None
+
+def get_username(user_id):
+  """Convenience method to look up the username for a user."""
+  rv = query_db('select username from user where user_id = ?',
+                [user_id], one=True)
+  return rv[0] if rv else None
 
 # -----------------------------------------------------------------------------
 # search/sort functionality
@@ -76,7 +130,27 @@ def papers_similar(pid):
       # return just the paper. we dont have similarities for it for some reason
       return [db[rawpid]]
 
+def papers_from_library():
+  out = []
+  if g.user:
+    
+    # user is logged in, lets fetch their saved library data
+    uid = session['user_id']
+    user_library = query_db('''select * from library where user_id = ?''', [uid])
+    libids = [strip_version(x['paper_id']) for x in user_library]
+    out = [db[x] for x in libids]
+    out = sorted(out, key=lambda k: k['updated'], reverse=True)
+
+  return out
+
 def encode_json(ps, n=10, send_images=True, send_abstracts=True):
+
+  libids = []
+  if g.user:
+    # user is logged in, lets fetch their saved library data
+    uid = session['user_id']
+    user_library = query_db('''select * from library where user_id = ?''', [uid])
+    libids = [strip_version(x['paper_id']) for x in user_library]
 
   ret = []
   for i in xrange(min(len(ps),n)):
@@ -87,6 +161,7 @@ def encode_json(ps, n=10, send_images=True, send_abstracts=True):
     struct['pid'] = idvv
     struct['authors'] = [a['name'] for a in p['authors']]
     struct['link'] = p['link']
+    struct['in_library'] = 1 if p['_rawid'] in libids else 0
     if send_abstracts:
       struct['abstract'] = p['summary']
     if send_images:
@@ -113,23 +188,19 @@ def isvalidid(pid):
   return re.match('^\d+\.\d+(v\d+)?$', pid)
 
 @app.route("/")
+def intmain():
+  papers = DATE_SORTED_PAPERS # precomputed
+  ret = encode_json(papers, 20)
+  msg = 'Showing 20 most recent Arxiv papers:'
+  return render_template('main.html', papers=ret, numpapers=len(db), msg=msg, render_format='recent')
+
 @app.route("/<request_pid>")
-def intmain(request_pid=None):
-
-  if request_pid is None:
-    papers = DATE_SORTED_PAPERS # precomputed
-    ret = encode_json(papers, 20)
-    msg = 'Showing 20 most recent Arxiv papers:'
-    render_format = 'recent'
-  else:
-    if not isvalidid(request_pid):
-      return '' # these are requests for icons, things like robots.txt, etc
-    papers = papers_similar(request_pid)
-    ret = encode_json(papers, args.num_results) # encode the top few to json
-    msg = ''
-    render_format = 'paper'
-
-  return render_template('main.html', papers=ret, numpapers=len(db), msg=msg, render_format=render_format)
+def rank(request_pid=None):
+  if not isvalidid(request_pid):
+    return '' # these are requests for icons, things like robots.txt, etc
+  papers = papers_similar(request_pid)
+  ret = encode_json(papers, args.num_results) # encode the top few to json
+  return render_template('main.html', papers=ret, numpapers=len(db), msg='', render_format='paper')
 
 @app.route("/search", methods=['GET'])
 def search():
@@ -137,6 +208,94 @@ def search():
   papers = papers_search(q) # perform the query and get sorted documents
   ret = encode_json(papers, args.num_results) # encode the top few to json
   return render_template('main.html', papers=ret, numpapers=len(db), msg='', render_format="search") # weeee
+
+@app.route('/library')
+def library():
+  """ render user's library """
+  papers = papers_from_library()
+  ret = encode_json(papers, 100)
+  msg = 'Papers in your library:' if g.user else 'You must be logged in. Once you are, you can save papers to your library (with the save icon on the right of each paper) and they will show up here.'
+  return render_template('main.html', papers=ret, numpapers=len(db), msg=msg, render_format='recent')
+
+@app.route('/libtoggle', methods=['POST'])
+def review():
+  """ user wants to toggle a paper in his library """
+  
+  # make sure user is logged in
+  if not g.user:
+    return 'NO' # fail... (not logged in). JS should prevent from us getting here.
+
+  idvv = request.form['pid'] # includes version
+  if not isvalidid(idvv):
+    return 'NO' # fail, malformed id. weird.
+  pid = strip_version(idvv)
+  if not pid in db:
+    return 'NO' # we don't know this paper. wat
+
+  uid = session['user_id'] # id of logged in user
+
+  # check this user already has this paper in library
+  record = query_db('''select * from library where
+          user_id = ? and paper_id = ?''', [uid, pid], one=True)
+  print record
+
+  ret = 'NO'
+  if record:
+    # record exists, erase it.
+    g.db.execute('''delete from library where user_id = ? and paper_id = ?''', [uid, pid])
+    g.db.commit()
+    #print 'removed %s for %s' % (pid, uid)
+    ret = 'OFF'
+  else:
+    # record does not exist, add it.
+    rawpid = strip_version(pid)
+    g.db.execute('''insert into library (paper_id, user_id, update_time) values (?, ?, ?)''',
+        [rawpid, uid, int(time.time())])
+    g.db.commit()
+    #print 'added %s for %s' % (pid, uid)
+    ret = 'ON'
+
+  return ret
+
+@app.route('/login', methods=['POST'])
+def login():
+  """ logs in the user. if the username doesn't exist creates the account """
+  
+  if not request.form['username']:
+    flash('You have to enter a username')
+  elif not request.form['password']:
+    flash('You have to enter a password')
+  elif get_user_id(request.form['username']) is not None:
+    # username already exists, fetch all of its attributes
+    user = query_db('''select * from user where
+          username = ?''', [request.form['username']], one=True)
+    if check_password_hash(user['pw_hash'], request.form['password']):
+      # password is correct, log in the user
+      session['user_id'] = get_user_id(request.form['username'])
+      flash('User ' + request.form['username'] + ' logged in.')
+    else:
+      # incorrect password
+      flash('User ' + request.form['username'] + ' already exists, wrong password.')
+  else:
+    # create account and log in
+    creation_time = int(time.time())
+    g.db.execute('''insert into user (username, pw_hash, creation_time) values (?, ?, ?)''',
+      [request.form['username'], 
+      generate_password_hash(request.form['password']), 
+      creation_time])
+    user_id = g.db.execute('select last_insert_rowid()').fetchall()[0][0]
+    g.db.commit()
+
+    session['user_id'] = user_id
+    flash('New account %s created' % (request.form['username'], ))
+  
+  return redirect(url_for('intmain'))
+
+@app.route('/logout')
+def logout():
+  session.pop('user_id', None)
+  flash('You were logged out')
+  return redirect(url_for('intmain'))
 
 # -----------------------------------------------------------------------------
 # int main

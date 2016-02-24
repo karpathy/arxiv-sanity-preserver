@@ -16,6 +16,7 @@
 var papers = {{ papers | tojson }};
 var msg = "{{ msg }}";
 var render_format = "{{ render_format }}";
+var username = "{{ g.user.username }}";
 
 var urlq = '';
 
@@ -93,6 +94,12 @@ function arrangeDivs() {
     // rank by tfidf similarity
   	ldiv.append('span').classed('sim', true).attr('id', 'sim'+p.pid).html('rank by tf-idf similarity to this');
 
+    var lib_state_img = p.in_library === 1 ? 'static/saved.png' : 'static/save.png';
+    ldiv.append('img').attr('src', lib_state_img)
+                    .classed('save-icon', true)
+                    .attr('title', 'toggle save paper to library (requires login)')
+                    .attr('id', 'lib'+p.pid);
+
   	div.append('div').attr('style', 'clear:both');
 
   	if(typeof p.img !== 'undefined') {
@@ -125,10 +132,29 @@ $(document).ready(function(){
 
 	// user clicks on "rank by tf-idf similarity to this" button for some paper
 	$(".sim").click(function() {
-		similarTo = $(this).attr('id').substring(3); // get the id of clicked paper
+		var similarTo = $(this).attr('id').substring(3); // get the id of clicked paper
 		// redirect: requery the server
 		window.location.replace('/' + similarTo);
 	});
+
+  // user clicks save icon
+  $(".save-icon").click(function() {
+    if(username !== '') {
+      var pid = $(this).attr('id').substring(3); // get the id of clicked paper
+      var qq = $(this);
+      $.post("/libtoggle", {pid: pid})
+       .done(function(x) { return function(data){
+        // toggle state of the image to reflect the state of the server, as reported by response
+        if(data === 'ON') {
+          x.attr('src', 'static/saved.png');
+        } else if(data === 'OFF') {
+          x.attr('src', 'static/save.png');
+        }
+      }}(qq));
+    } else {
+      alert('you must be logged in to save papers to library.')
+    }
+  });
 
 });
 
@@ -140,6 +166,23 @@ $(document).ready(function(){
 
 <div id ="titdiv">
 
+  <!-- User account information on top right -->
+  <div id="userinfo">
+    {% if not g.user %}
+    <form action="{{ url_for('login') }}" method="post">
+      User:
+      <input type="text" name="username" class="input-no-border">
+      Pass:
+      <input type="password" name="password" class="input-no-border">
+      <input type="submit" value="Login or Create" class="btn-fancy">
+    </form>
+    {% else %}
+    {{ g.user.username }}
+    <a href="{{ url_for('logout') }}">log out</a>
+    {% endif %}
+  </div>
+
+  <!-- Site information/banner on top left -->
 	<a href="/">
 	<div id="tittxt">
 		<h1>Arxiv Sanity Preserver</h1>
@@ -166,6 +209,11 @@ $(document).ready(function(){
   	<input name="q" type="text" id="qfield">
   </form>
   <div id="search_hint"></div>
+</div>
+
+<div id="pagebar">
+  <div class="pagelink"><a href="/">most recent</a></div>
+  <div class="pagelink"><a href="/library">library</a></div>
 </div>
 
 <div id="maindiv">
