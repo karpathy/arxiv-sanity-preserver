@@ -20,6 +20,10 @@ def query_db(query, args=(), one=False):
   rv = cur.fetchall()
   return (rv[0] if rv else None) if one else rv
 
+users = query_db('''select * from user''')
+for u in users:
+  print u
+
 def strip_version(idstr):
   """ identity function if arxiv id has no version, otherwise strips it. """
   parts = idstr.split('v')
@@ -34,7 +38,6 @@ X = X.todense()
 xtoi = { strip_version(x):i for x,i in meta['ptoi'].iteritems() }
 
 user_sim = {}
-users = query_db('''select * from user''')
 for u in users:
   print 'building an SVM for ' + u['username']
   uid = u['user_id']
@@ -43,16 +46,16 @@ for u in users:
   posix = [xtoi[p] for p in pids]
   
   if not posix:
-    break # empty library for this user maybe?
+    continue # empty library for this user maybe?
 
-  print posix
+  print pids
 
   y = np.zeros(X.shape[0])
   for p in pids: 
     y[xtoi[p]] = 1
 
   #__init__(penalty='l2', loss='squared_hinge', dual=True, tol=0.0001, C=1.0, multi_class='ovr', fit_intercept=True, intercept_scaling=1, class_weight=None, verbose=0, random_state=None, max_iter=1000)[source]
-  clf = svm.LinearSVC(class_weight='auto', verbose=True, max_iter=10000, tol=1e-6)
+  clf = svm.LinearSVC(class_weight='auto', verbose=True, max_iter=10000, tol=1e-6, C=1)
   clf.fit(X,y)
   s = clf.decision_function(X)
 
