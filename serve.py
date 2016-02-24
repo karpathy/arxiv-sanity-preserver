@@ -323,6 +323,11 @@ if __name__ == "__main__":
   print 'precomputing papers date sorted...'
   DATE_SORTED_PAPERS = date_sort()
 
+  if not os.path.isfile('as.db'):
+    print 'did not find as.db, trying to create an empty database from schema.sql...'
+    print 'this needs sqlite3 to be installed!'
+    os.system('sqlite3 as.db < schema.sql')
+
   # compute min and max time for all papers
   tts = [time.mktime(dateutil.parser.parse(p['updated']).timetuple()) for pid,p in db.iteritems()]
   ttmin = min(tts)*1.0
