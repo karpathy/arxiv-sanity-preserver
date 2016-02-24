@@ -14,7 +14,7 @@ There are way too many arxiv papers, so I wrote a quick webapp that lets you sea
 This code is currently running live at [www.arxiv-sanity.com/](http://www.arxiv-sanity.com/). Right now it's serving ~13,000 arxiv papers from cs.[CV|CL|LG] over the last ~3 years, and more will be added in time as I build this out.
 
 ### Dependencies
-You will need numpy, feedparser (to process xml files), scikit learn (for tfidf vectorizer), and flask (for serving the results), and tornado (if you want to run the flask server in production). Also dateutil, and scipy. Most of these are easy to get through `pip`, e.g.:
+You will need numpy, feedparser (to process xml files), scikit learn (for tfidf vectorizer), and flask (for serving the results), and tornado (if you want to run the flask server in production). Also dateutil, and scipy. And sqlite3 for database (accounts, library support, etc.). Most of these are easy to get through `pip`, e.g.:
 
 ```bash
 $ virtualenv env                # optional: use virtualenv
@@ -26,6 +26,7 @@ $ pip install scikit-learn      # needed for sparse arrays
 $ pip install python-dateutil   # only in serve.py for some date utils
 $ pip install flask             # only in serve.py
 $ pip install tornado           # only in serve.py
+$ pip install sqlite3           # only in serve.py
 ```
 
 ### Processing pipeline
@@ -43,3 +44,6 @@ Right now this code requires reading code and getting your hands dirty. There ar
 
 If you'd like to run this flask server online (e.g. AWS/Terminal) run it as `python serve.py --prod`.
 
+The interface supports a simple creation of user accounts. A logged in user can save papers into their library, and view them later. 
+
+In a later release we will actually build a custom SVM for each user based on the list of papers in their library.
