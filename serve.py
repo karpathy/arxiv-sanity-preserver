@@ -2,6 +2,7 @@ from sqlite3 import dbapi2 as sqlite3
 from hashlib import md5
 from flask import Flask, request, session, url_for, redirect, \
      render_template, abort, g, flash, _app_ctx_stack
+from flask_limiter import Limiter
 from werkzeug import check_password_hash, generate_password_hash
 import cPickle as pickle
 import numpy as np
@@ -21,6 +22,7 @@ else:
   SECRET_KEY = 'devkey, should be in a file'
 app = Flask(__name__)
 app.config.from_object(__name__)
+limiter = Limiter(app, global_limits=["100 per hour", "20 per minute"])
 
 SEARCH_DICT = {}
 
@@ -148,7 +150,7 @@ def papers_from_svm(recent_days=None):
 
     uid = session['user_id']
     if not uid in user_sim:
-      break # abort, user has no SVM trained
+      return []
     
     user_library = query_db('''select * from library where user_id = ?''', [uid])
     libids = [strip_version(x['paper_id']) for x in user_library]

@@ -25,6 +25,7 @@ $ pip install scipy
 $ pip install scikit-learn      # needed for sparse arrays
 $ pip install python-dateutil   # only in serve.py for some date utils
 $ pip install flask             # only in serve.py
+$ pip install flask_limiter     # only in serve.py
 $ pip install tornado           # only in serve.py
 $ pip install sqlite3           # only in serve.py
 ```
