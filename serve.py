@@ -236,7 +236,7 @@ def recent_recommend():
   """ return user's svm sorted list, but only recent papers"""
   papers = papers_from_svm(recent_days=7)
   ret = encode_json(papers, 30)
-  msg = 'Recommended papers over last week: (based on your library, refreshed every day or so)' if g.user else 'You must be logged in and have some papers saved in your library.'
+  msg = 'Recommended papers over last week: (based on SVM trained on tfidf of papers in your library, refreshed every day or so)' if g.user else 'You must be logged in and have some papers saved in your library.'
   return render_template('main.html', papers=ret, numpapers=len(db), msg=msg, render_format='recent')
 
 @app.route('/recommend')
@@ -244,7 +244,7 @@ def recommend():
   """ return user's svm sorted list """
   papers = papers_from_svm()
   ret = encode_json(papers, 50)
-  msg = 'Recommended papers: (based on your library, refreshed every day or so)' if g.user else 'You must be logged in and have some papers saved in your library.'
+  msg = 'Recommended papers: (based on SVM trained on tfidf of papers in your library, refreshed every day or so)' if g.user else 'You must be logged in and have some papers saved in your library.'
   return render_template('main.html', papers=ret, numpapers=len(db), msg=msg, render_format='recent')
 
 @app.route('/library')
