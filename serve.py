@@ -251,8 +251,11 @@ def recommend():
 def library():
   """ render user's library """
   papers = papers_from_library()
-  ret = encode_json(papers, 100)
-  msg = 'Papers in your library:' if g.user else 'You must be logged in. Once you are, you can save papers to your library (with the save icon on the right of each paper) and they will show up here.'
+  ret = encode_json(papers, 150)
+  if g.user:
+    msg = '%d papers in your library:' % (len(ret), )
+  else:
+    msg = 'You must be logged in. Once you are, you can save papers to your library (with the save icon on the right of each paper) and they will show up here.'
   return render_template('main.html', papers=ret, numpapers=len(db), msg=msg, render_format='recent')
 
 @app.route('/libtoggle', methods=['POST'])

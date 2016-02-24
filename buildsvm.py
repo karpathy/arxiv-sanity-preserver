@@ -59,6 +59,5 @@ for u in users:
   sortix = np.argsort(-s)
   user_sim[uid] = [strip_version(meta['pids'][ix]) for ix in list(sortix)]
 
-print user_sim
 print 'writing user_sim.p'
 pickle.dump(user_sim, open("user_sim.p", "wb"))
