@@ -95,6 +95,8 @@ def papers_search(qraw):
   for pid in db:
     p = db[pid]
     score = sum(SEARCH_DICT[pid].get(q,0) for q in qparts)
+    if score == 0:
+      continue # no match whatsoever, dont include
     # give a small boost to more recent papers
     score += 0.0001*p['tscore']
     scores.append((score, p))
