@@ -60,16 +60,7 @@ function build_authors_html(authors) {
 function arrangeDivs() {
 
   var root = d3.select("#rtable");
-
-  if(msg !== '') {
-  	root.append('div').classed('msg', true).html(msg);
-  	// also display a search hint on top
-  	var sdiv = d3.select('#search_hint');
-  	sdiv.append('span').html('e.g.: ');
-  	sdiv.append('a').attr('href', '/search?q=Geoffrey+Hinton').html('Geoffrey Hinton');
-  	sdiv.append('a').attr('href', '/search?q=image+captioning').html('image captioning');
-  	sdiv.append('a').attr('href', '/search?q=deep+reinforcement+learning').html('deep reinforcement learning');
-  }
+  if(msg !== '') { root.append('div').classed('msg', true).html(msg); }
 
   for(var i=0,n=papers.length;i<n;i++) {
   	var p = papers[i];
@@ -213,10 +204,20 @@ $(document).ready(function(){
 
 <div id="pagebar">
   <div class="pagelink"><a href="/">most recent</a></div>
-  <div class="pagelink"><a href="/recent-recommend">recent & recommended</a></div>
   <div class="pagelink"><a href="/recommend">recommended</a></div>
   <div class="pagelink"><a href="/library">library</a></div>
 </div>
+
+{% if render_format == "recommend" %}
+<div id="recommend-time-choice" class="centerdiv">
+  <a href="/recommend?timefilter=day"><div class="timechoice">Last day</div></a>
+  <a href="/recommend?timefilter=3days"><div class="timechoice">Last 3 days</div></a>
+  <a href="/recommend?timefilter=week"><div class="timechoice">Last week</div></a>
+  <a href="/recommend?timefilter=month"><div class="timechoice">Last month</div></a>
+  <a href="/recommend?timefilter=year"><div class="timechoice">Last year</div></a>
+  <a href="/recommend?timefilter=alltime"><div class="timechoice">All time</div></a>
+</div>
+{% endif %}
 
 <div id="maindiv">
 

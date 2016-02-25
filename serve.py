@@ -233,21 +233,21 @@ def search():
   ret = encode_json(papers, args.num_results) # encode the top few to json
   return render_template('main.html', papers=ret, numpapers=len(db), msg='', render_format="search") # weeee
 
-@app.route('/recent-recommend')
-def recent_recommend():
-  """ return user's svm sorted list, but only recent papers"""
-  papers = papers_from_svm(recent_days=7)
-  ret = encode_json(papers, 30)
-  msg = 'Recommended papers over last week: (based on SVM trained on tfidf of papers in your library, refreshed every day or so)' if g.user else 'You must be logged in and have some papers saved in your library.'
-  return render_template('main.html', papers=ret, numpapers=len(db), msg=msg, render_format='recent')
-
-@app.route('/recommend')
+@app.route('/recommend', methods=['GET'])
 def recommend():
   """ return user's svm sorted list """
-  papers = papers_from_svm()
+  ttstr = request.args.get('timefilter', 'week') # default is week
+  legend = {'day':1, '3days':3, 'week':7, 'month':30, 'year':365}
+  tt = legend.get(ttstr, None)
+  papers = papers_from_svm(recent_days=tt)
+  num_results = 50
+  if tt <= 7:
+    num_results = 30
+  if tt == 1:
+    num_results = 15
   ret = encode_json(papers, 50)
   msg = 'Recommended papers: (based on SVM trained on tfidf of papers in your library, refreshed every day or so)' if g.user else 'You must be logged in and have some papers saved in your library.'
-  return render_template('main.html', papers=ret, numpapers=len(db), msg=msg, render_format='recent')
+  return render_template('main.html', papers=ret, numpapers=len(db), msg=msg, render_format='recommend')
 
 @app.route('/library')
 def library():

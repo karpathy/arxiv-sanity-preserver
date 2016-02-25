@@ -278,3 +278,22 @@ ul.flashes li {
 #pagebar a:visited{ text-decoration: none; color: #338;}
 #pagebar a:hover{ text-decoration: none; color: #338;}
 #pagebar a:active{ text-decoration: none; color: #338;}
+
+.centerdiv {
+	width: 970px;
+	padding: 10px 15px 0px 15px;
+	margin-left: auto;
+	margin-right: auto;
+	border-left: solid 1px #D6D3C5;
+	border-right: solid 1px #D6D3C5;
+}
+#recommend-time-choice {
+	background-color: #FFF;
+	text-align: center;
+}
+.timechoice{
+	display: inline-block;
+	background-color: #EEE;
+	padding: 10px;
+	border-radius: 5px;
+}
