@@ -50,7 +50,7 @@ for i,p in enumerate(pdfs):
   # spawn async. convert can unfortunately enter an infinite loop, have to handle this
   pp = Popen(['convert', "%s[0-7]" % (fullpath, ), "-thumbnail", "x156", "tmp/test.png"])
   t0 = time.time()
-  while time.time() - t0 < 5: # give it 5 seconds deadline
+  while time.time() - t0 < 15: # give it 15 seconds deadline
     ret = pp.poll()
     if not (ret is None):
       # process terminated
