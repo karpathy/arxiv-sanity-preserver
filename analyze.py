@@ -66,7 +66,7 @@ for i in xrange(0,len(pids),batch_size):
   i1 = min(len(pids), i+batch_size)
   xquery = X[i:i1] # BxD
   ds = -np.asarray(np.dot(X, xquery.T)) #NxD * DxB => NxB
-  IX = np.argsort(ds, axis=1) # NxB
+  IX = np.argsort(ds, axis=0) # NxB
   for j in xrange(i1-i):
     sim_dict[pids[i+j]] = [pids[q] for q in list(IX[:50,j])]
   print '%d/%d...' % (i, len(pids))
