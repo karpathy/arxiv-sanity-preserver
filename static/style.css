@@ -295,12 +295,15 @@ ul.flashes li {
 #recommend-time-choice a:visited{ text-decoration: none; color: #338;}
 #recommend-time-choice a:hover{ text-decoration: none; color: #338;}
 #recommend-time-choice a:active{ text-decoration: none; color: #338;}
-.timechoice{
+.timechoice {
 	display: inline-block;
 	background-color: #EEE;
 	padding: 10px;
 	border-radius: 5px;
 }
-.timechoice-selected{
+.timechoice-selected {
+	background-color: #CCE;
+}
+.tab-selected {
 	background-color: #CCE;
 }

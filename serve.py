@@ -83,7 +83,7 @@ def date_sort():
     p = db[pid]
     timestruct = dateutil.parser.parse(p['updated'])
     p['time_updated'] = int(timestruct.strftime("%s"))
-    scores.append((timestruct, p))
+    scores.append((p['time_updated'], p))
   scores.sort(reverse=True)
   out = [sp[1] for sp in scores]
   return out
@@ -245,9 +245,22 @@ def recommend():
     num_results = 30
   if tt == 1:
     num_results = 15
-  ret = encode_json(papers, 50)
+  ret = encode_json(papers, num_results)
   msg = 'Recommended papers: (based on SVM trained on tfidf of papers in your library, refreshed every day or so)' if g.user else 'You must be logged in and have some papers saved in your library.'
   return render_template('main.html', papers=ret, numpapers=len(db), msg=msg, render_format='recommend')
+
+@app.route('/top', methods=['GET'])
+def top():
+  """ return top papers """
+  ttstr = request.args.get('timefilter', 'week') # default is week
+  legend = {'day':1, '3days':3, 'week':7, 'month':30}
+  tt = legend.get(ttstr, 7)
+  curtime = int(time.time()) # in seconds
+  papers = [p for p in TOP_SORTED_PAPERS if curtime - p['time_updated'] < tt*24*60*60]
+
+  ret = encode_json(papers, 30)
+  msg = 'Top papers based on people\'s libraries:'
+  return render_template('main.html', papers=ret, numpapers=len(db), msg=msg, render_format='top')
 
 @app.route('/library')
 def library():
@@ -258,7 +271,7 @@ def library():
     msg = '%d papers in your library:' % (len(ret), )
   else:
     msg = 'You must be logged in. Once you are, you can save papers to your library (with the save icon on the right of each paper) and they will show up here.'
-  return render_template('main.html', papers=ret, numpapers=len(db), msg=msg, render_format='recent')
+  return render_template('main.html', papers=ret, numpapers=len(db), msg=msg, render_format='library')
 
 @app.route('/libtoggle', methods=['POST'])
 def review():
@@ -372,10 +385,26 @@ if __name__ == "__main__":
   print 'precomputing papers date sorted...'
   DATE_SORTED_PAPERS = date_sort()
 
-  if not os.path.isfile('as.db'):
+  if not os.path.isfile(DATABASE):
     print 'did not find as.db, trying to create an empty database from schema.sql...'
     print 'this needs sqlite3 to be installed!'
     os.system('sqlite3 as.db < schema.sql')
+
+  # compute top papers in peoples' libraries
+  print 'computing top papers...'
+  def get_popular():
+    sqldb = sqlite3.connect(DATABASE)
+    sqldb.row_factory = sqlite3.Row # to return dicts rather than tuples
+    libs = sqldb.execute('''select * from library''').fetchall()
+    counts = {}
+    for lib in libs:
+      pid = lib['paper_id']
+      counts[pid] = counts.get(pid, 0) + 1
+    return counts
+  top_counts = get_popular()
+  top_paper_counts = sorted([(v,k) for k,v in top_counts.iteritems() if v > 0], reverse=True)
+  print top_paper_counts[:10]
+  TOP_SORTED_PAPERS = [db[q[1]] for q in top_paper_counts]
 
   # compute min and max time for all papers
   tts = [time.mktime(dateutil.parser.parse(p['updated']).timetuple()) for pid,p in db.iteritems()]

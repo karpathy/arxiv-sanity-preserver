@@ -161,6 +161,24 @@ $(document).ready(function(){
     }
   }
 
+  // in top tab: color current choice
+  if( render_format === 'top') {
+    var tf = QueryString.timefilter;
+    if(typeof tf === 'undefined') { d3.select('#ttfweek').classed('timechoice-selected', true); }
+    else {
+      if(tf==='day') { d3.select('#ttfday').classed('timechoice-selected', true); }
+      if(tf==='3days') { d3.select('#ttf3day').classed('timechoice-selected', true); }
+      if(tf==='week') { d3.select('#ttfweek').classed('timechoice-selected', true); }
+      if(tf==='month') { d3.select('#ttfmonth').classed('timechoice-selected', true); }
+    }
+  }
+
+  // in top tab: color current choice
+  if( render_format === 'recent') { d3.select('#tabrecent').classed('tab-selected', true); }
+  if( render_format === 'top') { d3.select('#tabtop').classed('tab-selected', true); }
+  if( render_format === 'recommend') { d3.select('#tabrec').classed('tab-selected', true); }
+  if( render_format === 'library') { d3.select('#tablib').classed('tab-selected', true); }
+
 });
 
 </script>
@@ -217,9 +235,10 @@ $(document).ready(function(){
 </div>
 
 <div id="pagebar">
-  <div class="pagelink"><a href="/">most recent</a></div>
-  <div class="pagelink"><a href="/recommend">recommended</a></div>
-  <div class="pagelink"><a href="/library">library</a></div>
+  <div class="pagelink" id="tabrecent"><a href="/">most recent</a></div>
+  <div class="pagelink" id="tabtop"><a href="/top">top recent</a></div>
+  <div class="pagelink" id="tabrec"><a href="/recommend">recommended</a></div>
+  <div class="pagelink" id="tablib"><a href="/library">library</a></div>
 </div>
 
 {% if render_format == "recommend" %}
@@ -230,6 +249,15 @@ $(document).ready(function(){
   <a href="/recommend?timefilter=month"><div class="timechoice" id="rtfmonth">Last month</div></a>
   <a href="/recommend?timefilter=year"><div class="timechoice" id="rtfyear">Last year</div></a>
   <a href="/recommend?timefilter=alltime"><div class="timechoice" id="rtfall">All time</div></a>
+</div>
+{% endif %}
+
+{% if render_format == "top" %}
+<div id="recommend-time-choice" class="centerdiv">
+  <a href="/top?timefilter=day"><div class="timechoice" id="ttfday">Last day</div></a>
+  <a href="/top?timefilter=3days"><div class="timechoice" id="ttf3day">Last 3 days</div></a>
+  <a href="/top?timefilter=week"><div class="timechoice" id="ttfweek">Last week</div></a>
+  <a href="/top?timefilter=month"><div class="timechoice" id="ttfmonth">Last month</div></a>
 </div>
 {% endif %}
 
