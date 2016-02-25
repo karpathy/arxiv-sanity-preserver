@@ -36,7 +36,7 @@ v = TfidfVectorizer(input='content',
         encoding='utf-8', decode_error='replace', strip_accents='unicode', 
         lowercase=True, analyzer='word', stop_words='english', 
         token_pattern=r'(?u)\b[a-zA-Z_][a-zA-Z0-9_]+\b',
-        ngram_range=(1, 2), max_features = 10000, 
+        ngram_range=(1, 2), max_features = 20000, 
         norm='l2', use_idf=True, smooth_idf=True, sublinear_tf=False)
 
 X = v.fit_transform(txts)
@@ -58,15 +58,18 @@ out['ptoi'] = { x:i for i,x in enumerate(pids) } # pid to ix in X mapping
 print('writing tfidf_meta.p')
 pickle.dump(out, open("tfidf_meta.p", "wb"))
 
-print 'precomputing nearest neighbor queries...'
+print 'precomputing nearest neighbor queries in batches...'
 X = X.todense() # originally it's a sparse matrix
 sim_dict = {}
-for i,pid in enumerate(pids):
-  xquery = X[i, np.newaxis]
-  ds = np.asarray(np.dot(X, xquery.T)).ravel() # L2 normalized tfidf vectors
-  scores = [(ds[j], j) for j in xrange(X.shape[0])]
-  scores.sort(reverse=True) # descending by distance  
-  sim_dict[pids[i]] = [ pids[scores[j][1]] for j in xrange(50) ]
-  if i%10==0: print '%d/%d...' % (i, len(pids))
+batch_size = 500
+for i in xrange(0,len(pids),batch_size):
+  i1 = min(len(pids), i+batch_size)
+  xquery = X[i:i1] # BxD
+  ds = -np.asarray(np.dot(X, xquery.T)) #NxD * DxB => NxB
+  IX = np.argsort(ds, axis=1) # NxB
+  for j in xrange(i1-i):
+    sim_dict[pids[i+j]] = [pids[q] for q in list(IX[:50,j])]
+  print '%d/%d...' % (i, len(pids))
+
 print('writing sim_dict.p')
 pickle.dump(sim_dict, open("sim_dict.p", "wb"))
