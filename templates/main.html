@@ -147,6 +147,20 @@ $(document).ready(function(){
     }
   });
 
+  // in recommended tab: color current choice
+  if( render_format === 'recommend') {
+    var tf = QueryString.timefilter;
+    if(typeof tf === 'undefined') { d3.select('#rtfweek').classed('timechoice-selected', true); }
+    else {
+      if(tf==='day') { d3.select('#rtfday').classed('timechoice-selected', true); }
+      if(tf==='3days') { d3.select('#rtf3day').classed('timechoice-selected', true); }
+      if(tf==='week') { d3.select('#rtfweek').classed('timechoice-selected', true); }
+      if(tf==='month') { d3.select('#rtfmonth').classed('timechoice-selected', true); }
+      if(tf==='year') { d3.select('#rtfyear').classed('timechoice-selected', true); }
+      if(tf==='alltime') { d3.select('#rtfall').classed('timechoice-selected', true); }
+    }
+  }
+
 });
 
 </script>
@@ -210,12 +224,12 @@ $(document).ready(function(){
 
 {% if render_format == "recommend" %}
 <div id="recommend-time-choice" class="centerdiv">
-  <a href="/recommend?timefilter=day"><div class="timechoice">Last day</div></a>
-  <a href="/recommend?timefilter=3days"><div class="timechoice">Last 3 days</div></a>
-  <a href="/recommend?timefilter=week"><div class="timechoice">Last week</div></a>
-  <a href="/recommend?timefilter=month"><div class="timechoice">Last month</div></a>
-  <a href="/recommend?timefilter=year"><div class="timechoice">Last year</div></a>
-  <a href="/recommend?timefilter=alltime"><div class="timechoice">All time</div></a>
+  <a href="/recommend?timefilter=day"><div class="timechoice" id="rtfday">Last day</div></a>
+  <a href="/recommend?timefilter=3days"><div class="timechoice" id="rtf3day">Last 3 days</div></a>
+  <a href="/recommend?timefilter=week"><div class="timechoice" id="rtfweek">Last week</div></a>
+  <a href="/recommend?timefilter=month"><div class="timechoice" id="rtfmonth">Last month</div></a>
+  <a href="/recommend?timefilter=year"><div class="timechoice" id="rtfyear">Last year</div></a>
+  <a href="/recommend?timefilter=alltime"><div class="timechoice" id="rtfall">All time</div></a>
 </div>
 {% endif %}
 

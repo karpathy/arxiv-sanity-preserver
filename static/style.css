@@ -291,9 +291,16 @@ ul.flashes li {
 	background-color: #FFF;
 	text-align: center;
 }
+#recommend-time-choice a:link{ text-decoration: none; color: #338;}
+#recommend-time-choice a:visited{ text-decoration: none; color: #338;}
+#recommend-time-choice a:hover{ text-decoration: none; color: #338;}
+#recommend-time-choice a:active{ text-decoration: none; color: #338;}
 .timechoice{
 	display: inline-block;
 	background-color: #EEE;
 	padding: 10px;
 	border-radius: 5px;
+}
+.timechoice-selected{
+	background-color: #CCE;
 }
