@@ -19,15 +19,7 @@ You will need numpy, feedparser (to process xml files), scikit learn (for tfidf 
 ```bash
 $ virtualenv env                # optional: use virtualenv
 $ source env/bin/activate       # optional: use virtualenv
-$ pip install feedparser        # only if you want to scrape arxiv
-$ pip install numpy             
-$ pip install scipy             
-$ pip install scikit-learn      # needed for sparse arrays
-$ pip install python-dateutil   # only in serve.py for some date utils
-$ pip install flask             # only in serve.py
-$ pip install flask_limiter     # only in serve.py
-$ pip install tornado           # only in serve.py
-$ pip install sqlite3           # only in serve.py
+$ pip install -r requirements.txt
 ```
 
 ### Processing pipeline
