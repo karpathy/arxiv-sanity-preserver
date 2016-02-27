@@ -194,6 +194,8 @@ def encode_json(ps, n=10, send_images=True, send_abstracts=True):
     
     timestruct = dateutil.parser.parse(p['updated'])
     struct['published_time'] = '%s/%s/%s' % (timestruct.month, timestruct.day, timestruct.year)
+    timestruct = dateutil.parser.parse(p['published'])
+    struct['originally_published_time'] = '%s/%s/%s' % (timestruct.month, timestruct.day, timestruct.year)
 
     cc = p.get('arxiv_comment', '')
     if len(cc) > 100:
@@ -403,7 +405,7 @@ if __name__ == "__main__":
     return counts
   top_counts = get_popular()
   top_paper_counts = sorted([(v,k) for k,v in top_counts.iteritems() if v > 0], reverse=True)
-  print top_paper_counts[:10]
+  print top_paper_counts[:min(30, len(top_paper_counts))]
   TOP_SORTED_PAPERS = [db[q[1]] for q in top_paper_counts]
 
   # compute min and max time for all papers

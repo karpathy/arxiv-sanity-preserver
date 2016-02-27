@@ -72,6 +72,9 @@ function arrangeDivs() {
   	tdiv.append('span').classed('as', true).html(build_authors_html(p.authors));
   	tdiv.append('br');
   	tdiv.append('span').classed('ds', true).html(p.published_time);
+    if(p.originally_published_time !== p.published_time) {
+      tdiv.append('span').classed('ds2', true).html('(v1: ' + p.originally_published_time + ')');
+    }
   	tdiv.append('span').classed('cs', true).html(p.tags.join(' | '));
   	tdiv.append('br');
   	tdiv.append('span').classed('ccs', true).html(p.comment);
