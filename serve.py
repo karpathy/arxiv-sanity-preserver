@@ -167,6 +167,13 @@ def papers_from_svm(recent_days=None):
 
   return out
 
+def papers_filter_version(papers, v):
+  if v != '1': 
+    return papers # noop
+  intv = int(v)
+  filtered = [p for p in papers if p['_version'] == intv]
+  return filtered
+
 def encode_json(ps, n=10, send_images=True, send_abstracts=True):
 
   libids = []
@@ -215,7 +222,9 @@ def isvalidid(pid):
 
 @app.route("/")
 def intmain():
+  vstr = request.args.get('vfilter', 'all')
   papers = DATE_SORTED_PAPERS # precomputed
+  papers = papers_filter_version(papers, vstr)
   ret = encode_json(papers, 20)
   msg = 'Showing 20 most recent Arxiv papers:'
   return render_template('main.html', papers=ret, numpapers=len(db), msg=msg, render_format='recent')
@@ -239,9 +248,11 @@ def search():
 def recommend():
   """ return user's svm sorted list """
   ttstr = request.args.get('timefilter', 'week') # default is week
+  vstr = request.args.get('vfilter', 'all') # default is all (no filter)
   legend = {'day':1, '3days':3, 'week':7, 'month':30, 'year':365}
   tt = legend.get(ttstr, None)
   papers = papers_from_svm(recent_days=tt)
+  papers = papers_filter_version(papers, vstr)
   num_results = 50
   if tt <= 7:
     num_results = 30
@@ -255,10 +266,12 @@ def recommend():
 def top():
   """ return top papers """
   ttstr = request.args.get('timefilter', 'week') # default is week
+  vstr = request.args.get('vfilter', 'all') # default is all (no filter)
   legend = {'day':1, '3days':3, 'week':7, 'month':30}
   tt = legend.get(ttstr, 7)
   curtime = int(time.time()) # in seconds
   papers = [p for p in TOP_SORTED_PAPERS if curtime - p['time_updated'] < tt*24*60*60]
+  papers = papers_filter_version(papers, vstr)
 
   ret = encode_json(papers, 30)
   msg = 'Top papers based on people\'s libraries:'

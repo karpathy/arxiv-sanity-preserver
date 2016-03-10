@@ -305,10 +305,28 @@ ul.flashes li {
 	background-color: #EEE;
 	padding: 10px;
 	border-radius: 5px;
+	margin-right: 5px;
 }
 .timechoice-selected {
 	background-color: #CCE;
 }
+.vchoice {
+	display: inline-block;
+	background-color: #EEE;
+	padding: 10px;
+	border-radius: 5px;
+	margin-right: 5px;
+}
+.vchoice-selected {
+	background-color: #CEC;
+}
 .tab-selected {
 	background-color: #CCE;
+}
+.fdivider {
+	display: inline-block;
+	background-color: #FFF;
+	width: 10px;
+	margin-left: 5px;
+	margin-right: 5px;
 }

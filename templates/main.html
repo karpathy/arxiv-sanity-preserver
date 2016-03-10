@@ -150,29 +150,40 @@ $(document).ready(function(){
     }
   });
 
-  // in recommended tab: color current choice
-  if( render_format === 'recommend') {
-    var tf = QueryString.timefilter;
-    if(typeof tf === 'undefined') { d3.select('#rtfweek').classed('timechoice-selected', true); }
-    else {
-      if(tf==='day') { d3.select('#rtfday').classed('timechoice-selected', true); }
-      if(tf==='3days') { d3.select('#rtf3day').classed('timechoice-selected', true); }
-      if(tf==='week') { d3.select('#rtfweek').classed('timechoice-selected', true); }
-      if(tf==='month') { d3.select('#rtfmonth').classed('timechoice-selected', true); }
-      if(tf==='year') { d3.select('#rtfyear').classed('timechoice-selected', true); }
-      if(tf==='alltime') { d3.select('#rtfall').classed('timechoice-selected', true); }
+  var vf = QueryString.vfilter; if(typeof vf === 'undefined') { vf = 'all'; }
+  var tf = QueryString.timefilter; if(typeof tf === 'undefined') { tf = 'week'; }
+  var link_endpoint = '/';
+  if(render_format === 'recent') { link_endpoint = ''; }
+  if(render_format === 'top') { link_endpoint = 'top'; }
+  if(render_format === 'recommend') { link_endpoint = 'recommend'; }
+
+  var time_ranges = ['day', '3days', 'week', 'month', 'year', 'alltime'];
+  var time_txt = {'day':'Last day', '3days': 'Last 3 days', 'week': 'Last week', 'month': 'Last month', 'year': 'Last year', 'alltime': 'All time'}
+  var time_range = tf;
+
+  // set up time filtering options
+  if(render_format === 'recommend' || render_format === 'top' || render_format === 'recent') {
+    // insert version filtering options for these views
+    var elt = d3.select('#recommend-time-choice');
+    var vflink = vf === 'all' ? '1' : 'all'; // toggle only showing v1 or not
+    if(render_format === 'recent') {
+      var aelt = elt.append('a').attr('href', '/'+link_endpoint+'?'+'&vfilter='+vflink); // leave out timefilter from this page
+    } else {
+      var aelt = elt.append('a').attr('href', '/'+link_endpoint+'?'+'timefilter='+time_range+'&vfilter='+vflink);
     }
+    var delt = aelt.append('div').classed('vchoice', true).html('Only show v1');
+    if(vf === '1') { delt.classed('vchoice-selected', true); }
   }
 
-  // in top tab: color current choice
-  if( render_format === 'top') {
-    var tf = QueryString.timefilter;
-    if(typeof tf === 'undefined') { d3.select('#ttfweek').classed('timechoice-selected', true); }
-    else {
-      if(tf==='day') { d3.select('#ttfday').classed('timechoice-selected', true); }
-      if(tf==='3days') { d3.select('#ttf3day').classed('timechoice-selected', true); }
-      if(tf==='week') { d3.select('#ttfweek').classed('timechoice-selected', true); }
-      if(tf==='month') { d3.select('#ttfmonth').classed('timechoice-selected', true); }
+  if(render_format === 'recommend' || render_format === 'top') {
+    // insert time filtering options for these two views
+    var elt = d3.select('#recommend-time-choice');
+    elt.append('div').classed('fdivider', true).html('|');
+    for(var i=0;i<time_ranges.length;i++) {
+      var time_range = time_ranges[i];
+      var aelt = elt.append('a').attr('href', '/'+link_endpoint+'?'+'timefilter='+time_range+'&vfilter='+vf);
+      var delt = aelt.append('div').classed('timechoice', true).html(time_txt[time_range]);
+      if(tf == time_range) { delt.classed('timechoice-selected', true); } // also render as chosen
     }
   }
 
@@ -181,7 +192,6 @@ $(document).ready(function(){
   if( render_format === 'top') { d3.select('#tabtop').classed('tab-selected', true); }
   if( render_format === 'recommend') { d3.select('#tabrec').classed('tab-selected', true); }
   if( render_format === 'library') { d3.select('#tablib').classed('tab-selected', true); }
-
 });
 
 </script>
@@ -244,25 +254,8 @@ $(document).ready(function(){
   <div class="pagelink" id="tablib"><a href="/library">library</a></div>
 </div>
 
-{% if render_format == "recommend" %}
-<div id="recommend-time-choice" class="centerdiv">
-  <a href="/recommend?timefilter=day"><div class="timechoice" id="rtfday">Last day</div></a>
-  <a href="/recommend?timefilter=3days"><div class="timechoice" id="rtf3day">Last 3 days</div></a>
-  <a href="/recommend?timefilter=week"><div class="timechoice" id="rtfweek">Last week</div></a>
-  <a href="/recommend?timefilter=month"><div class="timechoice" id="rtfmonth">Last month</div></a>
-  <a href="/recommend?timefilter=year"><div class="timechoice" id="rtfyear">Last year</div></a>
-  <a href="/recommend?timefilter=alltime"><div class="timechoice" id="rtfall">All time</div></a>
-</div>
-{% endif %}
-
-{% if render_format == "top" %}
-<div id="recommend-time-choice" class="centerdiv">
-  <a href="/top?timefilter=day"><div class="timechoice" id="ttfday">Last day</div></a>
-  <a href="/top?timefilter=3days"><div class="timechoice" id="ttf3day">Last 3 days</div></a>
-  <a href="/top?timefilter=week"><div class="timechoice" id="ttfweek">Last week</div></a>
-  <a href="/top?timefilter=month"><div class="timechoice" id="ttfmonth">Last month</div></a>
-</div>
-{% endif %}
+<!-- this div will be rendered into dynamcially at init with JS -->
+<div id="recommend-time-choice" class="centerdiv"></div>
 
 <div id="maindiv">
 
