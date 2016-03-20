@@ -267,7 +267,7 @@ def top():
   """ return top papers """
   ttstr = request.args.get('timefilter', 'week') # default is week
   vstr = request.args.get('vfilter', 'all') # default is all (no filter)
-  legend = {'day':1, '3days':3, 'week':7, 'month':30}
+  legend = {'day':1, '3days':3, 'week':7, 'month':30, 'year':365, 'alltime':10000}
   tt = legend.get(ttstr, 7)
   curtime = int(time.time()) # in seconds
   papers = [p for p in TOP_SORTED_PAPERS if curtime - p['time_updated'] < tt*24*60*60]
