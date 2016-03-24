@@ -49,12 +49,37 @@ var QueryString = function () {
     } else {
       query_string[pair[0]].push(decodeURIComponent(pair[1]));
     }
-  } 
+  }
     return query_string;
 }();
 
 
 function jq( myid ) { return myid.replace( /(:|\.|\[|\]|,)/g, "\\$1" ); } // for dealing with ids that have . in them
+
+function build_ocoins_str(p) {
+  var ocoins_info = {
+    "ctx_ver": "Z39.88-2004",
+    "rft_val_fmt": "info:ofi/fmt:kev:mtx:journal",
+    "rfr_id": "info:sid/arxiv-sanity.com:arxiv-sanity",
+
+    "rft_id": p.link,
+    "rft.atitle": p.title,
+    "rft.jtitle": "arXiv:" + p.pid + " [" + p.category.substring(0, p.category.indexOf('.')) + "]",
+    "rft.date": p.published_time,
+    "rft.artnum": p.pid,
+    "rft.genre": "preprint",
+
+    // NB: Stolen from Dublin Core; Zotero understands this even though it's
+    // not part of COinS
+    "rft.description": p.abstract,
+  };
+  ocoins_info = $.param(ocoins_info);
+  ocoins_info += "&" + $.map(p.authors, function(a) {
+      return "rft.au=" + encodeURIComponent(a);
+    }).join("&");
+
+  return ocoins_info;
+}
 
 function build_authors_html(authors) {
 	var res = '';
@@ -88,6 +113,10 @@ function addPapers(num, dynamic) {
 
   	var p = papers[ix];
   	var div = root.append('div').classed('apaper', true).attr('id', p.pid);
+
+    // Generate OpenURL COinS metadata element -- readable by Zotero, Mendeley,
+    // etc.
+    var ocoins_span = div.append('span').classed('Z3988', true).attr('title', build_ocoins_str(p));
 
   	var tdiv = div.append('div').classed('paperdesc', true);
   	tdiv.append('span').classed('ts', true).append('a').attr('href', p.link).attr('target', '_blank').html(p.title);
