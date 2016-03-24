@@ -123,10 +123,8 @@ h1 {
 }
 #qfield {
   border: 5px solid white; 
-  padding: 10px;
-  width: 1000px;
+  width: 950px;
   border: solid 1px #999;
-  margin-bottom: 5px;
 
   height: 40px;
   font-size: 22px;
@@ -170,10 +168,6 @@ h1 {
 #search_hint a:visited{ color: #777; }
 #search_hint a:hover{ color: #777; }
 #search_hint a:active{ color: #777; }
-
-form {
-	margin-bottom: 5px;
-}
 
 #userinfo {
 	position: absolute;
