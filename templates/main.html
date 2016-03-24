@@ -1,3 +1,4 @@
+<!DOCTYPE HTML>
 <html>
 
 <head>
@@ -44,6 +45,9 @@ var QueryString = function () {
     return query_string;
 }();
 
+
+function jq( myid ) { return myid.replace( /(:|\.|\[|\]|,)/g, "\\$1" ); } // for dealing with ids that have . in them
+
 function build_authors_html(authors) {
 	var res = '';
 	for(var i=0,n=authors.length;i<n;i++) {
@@ -54,16 +58,27 @@ function build_authors_html(authors) {
 	return res;
 }
 
-// this permutes the divs (that contian 1 paper each) based on a custom sorting function
-// in our case, this sort is done as dot product based on the choices[] array
-// here we are guaranteed ldadist[] already sums to 1 for every paper
-function arrangeDivs() {
+// here we populate papers into #rtable
+var pointer_ix = 0; // points to next paper in line to be added to #rtable
+var showed_end_msg = false;
+function addPapers(num) {
+  if(papers.length === 0) { return; } // nothing to display
 
   var root = d3.select("#rtable");
-  if(msg !== '') { root.append('div').classed('msg', true).html(msg); }
 
-  for(var i=0,n=papers.length;i<n;i++) {
-  	var p = papers[i];
+  var base_ix = pointer_ix;
+  for(var i=0;i<num;i++) {
+    var ix = base_ix + i;
+    if(ix >= papers.length) {
+      if(!showed_end_msg) {
+        root.append('div').classed('msg', true).html('You hit the limit of number of papers to show is one result.');
+        showed_end_msg = true;
+      }
+      break;
+    }
+    pointer_ix++;
+
+  	var p = papers[ix];
   	var div = root.append('div').classed('apaper', true).attr('id', p.pid);
 
   	var tdiv = div.append('div').classed('paperdesc', true);
@@ -104,21 +119,34 @@ function arrangeDivs() {
   		div.append('span').classed('tt', true).html(p.abstract);
   	}
 
-    if(render_format == 'paper' && i === 0) {
+    if(render_format == 'paper' && ix === 0) {
       // lets insert a divider/message
       div.append('div').classed('paperdivider', true).html('Most similar papers:');
     }
   }
 }
 
-function jq( myid ) { return myid.replace( /(:|\.|\[|\]|,)/g, "\\$1" ); } // for dealing with ids that have . in them
-
 // when page loads...
 $(document).ready(function(){
 	
 	urlq = QueryString.q;
 
-	arrangeDivs();
+  // display message, if any
+  if(msg !== '') { d3.select("#rtable").append('div').classed('msg', true).html(msg); }
+
+  // add papers to #rtable
+	addPapers(20);
+
+  // set up inifinite scrolling for adding more papers
+  $(window).on('scroll', function(){
+    var scrollTop = $(document).scrollTop();
+    var windowHeight = $(window).height();
+    var bodyHeight = $(document).height() - windowHeight;
+    var scrollPercentage = (scrollTop / bodyHeight);
+    if(scrollPercentage > 0.9) {
+      addPapers(5);
+    }
+  });
 
 	if(!(typeof urlq == 'undefined')) {
 		d3.select("#qfield").attr('value', urlq.replace(/\+/g, " "));

@@ -225,8 +225,8 @@ def intmain():
   vstr = request.args.get('vfilter', 'all')
   papers = DATE_SORTED_PAPERS # precomputed
   papers = papers_filter_version(papers, vstr)
-  ret = encode_json(papers, 20)
-  msg = 'Showing 20 most recent Arxiv papers:'
+  ret = encode_json(papers, args.num_results)
+  msg = 'Showing most recent Arxiv papers:'
   return render_template('main.html', papers=ret, numpapers=len(db), msg=msg, render_format='recent')
 
 @app.route("/<request_pid>")
@@ -253,12 +253,7 @@ def recommend():
   tt = legend.get(ttstr, None)
   papers = papers_from_svm(recent_days=tt)
   papers = papers_filter_version(papers, vstr)
-  num_results = 50
-  if tt <= 7:
-    num_results = 30
-  if tt == 1:
-    num_results = 15
-  ret = encode_json(papers, num_results)
+  ret = encode_json(papers, args.num_results)
   msg = 'Recommended papers: (based on SVM trained on tfidf of papers in your library, refreshed every day or so)' if g.user else 'You must be logged in and have some papers saved in your library.'
   return render_template('main.html', papers=ret, numpapers=len(db), msg=msg, render_format='recommend')
 
@@ -273,7 +268,7 @@ def top():
   papers = [p for p in TOP_SORTED_PAPERS if curtime - p['time_updated'] < tt*24*60*60]
   papers = papers_filter_version(papers, vstr)
 
-  ret = encode_json(papers, 30)
+  ret = encode_json(papers, args.num_results)
   msg = 'Top papers based on people\'s libraries:'
   return render_template('main.html', papers=ret, numpapers=len(db), msg=msg, render_format='top')
 
@@ -281,7 +276,7 @@ def top():
 def library():
   """ render user's library """
   papers = papers_from_library()
-  ret = encode_json(papers, 150)
+  ret = encode_json(papers, 500) # cap at 500 papers in someone's library. that's a lot!
   if g.user:
     msg = '%d papers in your library:' % (len(ret), )
   else:
@@ -375,7 +370,7 @@ if __name__ == "__main__":
    
   parser = argparse.ArgumentParser()
   parser.add_argument('-p', '--prod', dest='prod', action='store_true', help='run in prod?')
-  parser.add_argument('-r', '--num_results', dest='num_results', type=int, default=20, help='number of results to return per query')
+  parser.add_argument('-r', '--num_results', dest='num_results', type=int, default=200, help='number of results to return per query')
   parser.add_argument('--port', dest='port', type=int, default=5000, help='port to serve on')
   args = parser.parse_args()
   print args
