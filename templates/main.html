@@ -5,6 +5,14 @@
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title>Arxiv Sanity Preserver</title>
 
+<!-- MathJax -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}});
+</script>
+<script type="text/javascript" async
+  src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_CHTML">
+</script>
+
 <!-- CSS -->
 <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
 
@@ -61,7 +69,7 @@ function build_authors_html(authors) {
 // here we populate papers into #rtable
 var pointer_ix = 0; // points to next paper in line to be added to #rtable
 var showed_end_msg = false;
-function addPapers(num) {
+function addPapers(num, dynamic) {
   if(papers.length === 0) { return; } // nothing to display
 
   var root = d3.select("#rtable");
@@ -116,7 +124,10 @@ function addPapers(num) {
   	}
 
   	if(typeof p.abstract !== 'undefined') {
-  		div.append('span').classed('tt', true).html(p.abstract);
+  		var abdiv = div.append('span').classed('tt', true).html(p.abstract);
+      if(dynamic) {
+        MathJax.Hub.Queue(["Typeset",MathJax.Hub,abdiv[0]]); //typeset the added paper
+      }
   	}
 
     if(render_format == 'paper' && ix === 0) {
@@ -135,7 +146,7 @@ $(document).ready(function(){
   if(msg !== '') { d3.select("#rtable").append('div').classed('msg', true).html(msg); }
 
   // add papers to #rtable
-	addPapers(20);
+	addPapers(20, false);
 
   // set up inifinite scrolling for adding more papers
   $(window).on('scroll', function(){
@@ -144,7 +155,7 @@ $(document).ready(function(){
     var bodyHeight = $(document).height() - windowHeight;
     var scrollPercentage = (scrollTop / bodyHeight);
     if(scrollPercentage > 0.9) {
-      addPapers(5);
+      addPapers(5, true);
     }
   });
 
