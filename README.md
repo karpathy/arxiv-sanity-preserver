@@ -42,3 +42,35 @@ I have a simple shell script that runs these commands one by one, and every day 
 If you'd like to run this flask server online (e.g. AWS) run it as `python serve.py --prod`. 
 
 You also want to create a `secret_key.txt` file and fill it with random text (see top of `serve.py`).
+
+### Current workflow
+
+Running the site live is not currently set up for a fully automatic plug and play operation. Instead it's a bit of a manual process and I thought I should document how I'm keeping this code alive right now. I have two machines: a **local** machine that does a lot of the updating and compute and a **remote** machine that hosts the site. 
+
+I have a script that performs the following update early morning on my local machine:
+
+```bash
+# pull the database (by default stored in as.db) from remote to local
+rsync -v karpathy@REMOTE:/home/karpathy/arxiv-sanity-preserver/as.db as.db
+
+# now perform the update and recomputation:
+python fetch_papers.py
+python download_pdfs.py
+python parse_pdf_to_text.py
+python thumb_pdf.py
+python analyze.py
+python buildsvm.py
+
+# now rsync the results and new thumbnails from local to remote
+rsync -v db.p tfidf_meta.p sim_dict.p user_sim.p karpathy@REMOTE:/home/karpathy/arxiv-sanity-preserver
+rsync -vr static/thumbs karpathy@REMOTE:/home/karpathy/arxiv-sanity-preserver/static
+
+```
+
+Of course, I had to set up the ssh keys so that rsync/ssh commands can run without needing password. I think log on to the remote machine and restart the server. I run the server in a screen session, so I `ssh` to REMOTE, `screen -r` the screen session, and restart the server:
+
+```bash
+python serve.py --prod --port 80
+```
+
+The server will load the new files and begin hosting the site. Yes, currently the server has to be restarted, so the site goes down for about 15 seconds. There are several ways to make this cleaner in the future.
