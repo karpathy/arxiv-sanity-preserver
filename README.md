@@ -25,7 +25,7 @@ $ pip install -r requirements.txt
 
 ### Processing pipeline
 
-Right now this project requires code reading and getting your hands dirty. I tried to keep it relatively clean, but I do encourage you to skim each script when you run it. In order, the processing pipeline is:
+I tried to keep the project code relatively clean, but I do encourage you to skim each script when you run it. There are a few magic numbers here and there. In order, the processing pipeline is:
 
 1. Run `fetch_papers.py` to query arxiv API and create a file `db.p` that contains all information for each paper
 2. Run `download_pdf.py`, which iterates over all papers in parsed pickle and downloads the papers into folder `pdf`
@@ -35,7 +35,9 @@ Right now this project requires code reading and getting your hands dirty. I tri
 6. Run `buildsvm.py` to train SVMs for all users (if any), exports a pickle `user_sim.p`
 7. Run the flask server with `serve.py`. Visit localhost:5000 and enjoy sane viewing of papers
 
-I have a simple shell script that runs these commands one by one, and every day I run this script to fetch new papers, incorporate them into the database, and recompute all tfidf vectors/classifiers.
+I have a simple shell script that runs these commands one by one, and every day I run this script to fetch new papers, incorporate them into the database, and recompute all tfidf vectors/classifiers. More details on this process below.
+
+**protip: numpy/BLAS**: The script `analyze.py` does quite a lot of heavy lifting with numpy. I recommend that you carefully set up your numpy to use BLAS (e.g. OpenBLAS), otherwise the computations will take a long time. With ~15,000 papers and ~500 users the script runs in about half an hour on my current machine with a BLAS-linked numpy.
 
 ### Running online
 
