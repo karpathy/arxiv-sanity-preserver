@@ -190,6 +190,7 @@ def encode_json(ps, n=10, send_images=True, send_abstracts=True):
     struct = {}
     struct['title'] = p['title']
     struct['pid'] = idvv
+    struct['category'] = p['arxiv_primary_category']['term']
     struct['authors'] = [a['name'] for a in p['authors']]
     struct['link'] = p['link']
     struct['in_library'] = 1 if p['_rawid'] in libids else 0
