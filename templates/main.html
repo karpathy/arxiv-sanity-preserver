@@ -187,6 +187,11 @@ $(document).ready(function(){
     }
   }
 
+  var xb = $("#xbanner");
+  if(xb.length !== 0) {
+    xb.click(function(){ $("#banner").slideUp('fast'); })
+  }
+
   // in top tab: color current choice
   if( render_format === 'recent') { d3.select('#tabrecent').classed('tab-selected', true); }
   if( render_format === 'top') { d3.select('#tabtop').classed('tab-selected', true); }
@@ -239,6 +244,13 @@ $(document).ready(function(){
     {% endif %}
 {% endwith %}
 </div>
+
+{% if render_format == "recent" and g.user.username is not defined %}
+<div id="banner">
+  <div style="float:right;cursor:pointer;" id="xbanner">X</div>
+  New to arxiv-sanity? Check out the <a href="https://youtu.be/S2GY3gh6qC8" target="_blank">introduction video</a>.
+</div>
+{% endif %}
 
 <div id="sbox">
   <form action="/search" method="get">
