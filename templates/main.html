@@ -114,8 +114,7 @@ function addPapers(num, dynamic) {
   	var p = papers[ix];
   	var div = root.append('div').classed('apaper', true).attr('id', p.pid);
 
-    // Generate OpenURL COinS metadata element -- readable by Zotero, Mendeley,
-    // etc.
+    // Generate OpenURL COinS metadata element -- readable by Zotero, Mendeley, etc.
     var ocoins_span = div.append('span').classed('Z3988', true).attr('title', build_ocoins_str(p));
 
   	var tdiv = div.append('div').classed('paperdesc', true);
@@ -139,12 +138,37 @@ function addPapers(num, dynamic) {
   	ldiv.append('a').attr('href', p.link).attr('target', '_blank').html('pdf');
     // rank by tfidf similarity
   	ldiv.append('span').classed('sim', true).attr('id', 'sim'+p.pid).html('rank by tf-idf similarity to this');
+    ldiv.on('click', function(pid){ // attach a click handler to redirect for similarity search
+      return function() { window.location.replace('/' + pid); }
+    }(p.pid)); // closer over the paper id
 
     var lib_state_img = p.in_library === 1 ? 'static/saved.png' : 'static/save.png';
-    ldiv.append('img').attr('src', lib_state_img)
+    var saveimg = ldiv.append('img').attr('src', lib_state_img)
                     .classed('save-icon', true)
                     .attr('title', 'toggle save paper to library (requires login)')
                     .attr('id', 'lib'+p.pid);
+    // attach a handler for in-library toggle
+    ldiv.on('click', function(pid, elt){
+      return function() {
+        if(username !== '') {
+          // issue the post request to the server
+          $.post("/libtoggle", {pid: pid})
+           .done(function(data){
+              // toggle state of the image to reflect the state of the server, as reported by response
+              console.log('libtoggle call done! data = ');
+              console.log(data);
+              console.log(elt);
+              if(data === 'ON') {
+                elt.attr('src', 'static/saved.png');
+              } else if(data === 'OFF') {
+                elt.attr('src', 'static/save.png');
+              }
+           });
+        } else {
+          alert('you must be logged in to save papers to library.')
+        }
+      }
+    }(p.pid, saveimg)); // close over the pid and handle to the image
 
   	div.append('div').attr('style', 'clear:both');
 
@@ -191,32 +215,6 @@ $(document).ready(function(){
 	if(!(typeof urlq == 'undefined')) {
 		d3.select("#qfield").attr('value', urlq.replace(/\+/g, " "));
 	}
-
-	// user clicks on "rank by tf-idf similarity to this" button for some paper
-	$(".sim").click(function() {
-		var similarTo = $(this).attr('id').substring(3); // get the id of clicked paper
-		// redirect: requery the server
-		window.location.replace('/' + similarTo);
-	});
-
-  // user clicks save icon
-  $(".save-icon").click(function() {
-    if(username !== '') {
-      var pid = $(this).attr('id').substring(3); // get the id of clicked paper
-      var qq = $(this);
-      $.post("/libtoggle", {pid: pid})
-       .done(function(x) { return function(data){
-        // toggle state of the image to reflect the state of the server, as reported by response
-        if(data === 'ON') {
-          x.attr('src', 'static/saved.png');
-        } else if(data === 'OFF') {
-          x.attr('src', 'static/save.png');
-        }
-      }}(qq));
-    } else {
-      alert('you must be logged in to save papers to library.')
-    }
-  });
 
   var vf = QueryString.vfilter; if(typeof vf === 'undefined') { vf = 'all'; }
   var tf = QueryString.timefilter; if(typeof tf === 'undefined') { tf = 'week'; }
