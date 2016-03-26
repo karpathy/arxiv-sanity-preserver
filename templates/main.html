@@ -137,8 +137,8 @@ function addPapers(num, dynamic) {
     // access PDF of the paper
   	ldiv.append('a').attr('href', p.link).attr('target', '_blank').html('pdf');
     // rank by tfidf similarity
-  	ldiv.append('span').classed('sim', true).attr('id', 'sim'+p.pid).html('rank by tf-idf similarity to this');
-    ldiv.on('click', function(pid){ // attach a click handler to redirect for similarity search
+  	var similar_span = ldiv.append('span').classed('sim', true).attr('id', 'sim'+p.pid).html('rank by tf-idf similarity to this');
+    similar_span.on('click', function(pid){ // attach a click handler to redirect for similarity search
       return function() { window.location.replace('/' + pid); }
     }(p.pid)); // closer over the paper id
 
@@ -148,7 +148,7 @@ function addPapers(num, dynamic) {
                     .attr('title', 'toggle save paper to library (requires login)')
                     .attr('id', 'lib'+p.pid);
     // attach a handler for in-library toggle
-    ldiv.on('click', function(pid, elt){
+    saveimg.on('click', function(pid, elt){
       return function() {
         if(username !== '') {
           // issue the post request to the server
