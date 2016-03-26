@@ -155,9 +155,6 @@ function addPapers(num, dynamic) {
           $.post("/libtoggle", {pid: pid})
            .done(function(data){
               // toggle state of the image to reflect the state of the server, as reported by response
-              console.log('libtoggle call done! data = ');
-              console.log(data);
-              console.log(elt);
               if(data === 'ON') {
                 elt.attr('src', 'static/saved.png');
               } else if(data === 'OFF') {
