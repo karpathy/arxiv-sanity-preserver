@@ -23,6 +23,8 @@ $ source env/bin/activate       # optional: use virtualenv
 $ pip install -r requirements.txt
 ```
 
+You will also need [ImageMagick](http://www.imagemagick.org/script/index.php), which you can insall on Ubuntu as `sudo apt-get install imagemagick`.
+
 ### Processing pipeline
 
 I tried to keep the project code relatively clean, but I do encourage you to skim each script when you run it. There are a few magic numbers here and there. In order, the processing pipeline is:
@@ -75,4 +77,4 @@ Of course, I had to set up the ssh keys so that rsync/ssh commands can run witho
 python serve.py --prod --port 80
 ```
 
-The server will load the new files and begin hosting the site. Yes, currently the server has to be restarted, so the site goes down for about 15 seconds. There are several ways to make this cleaner in the future.
+The server will load the new files and begin hosting the site. Yes, currently the server has to be restarted, so the site goes down for about 15 seconds. There are several ways to make this cleaner in the future. Note that on some systems you can't use port 80 without `sudo`. Your two options are to use `iptables` to reroute ports, or less recommended: you can use [setcap](http://stackoverflow.com/questions/413807/is-there-a-way-for-non-root-processes-to-bind-to-privileged-ports-1024-on-l) to elavate the permissions of your `python` interpreter that runs `serve.py`. In this case I'd recommend careful permissions and maybe virtualenv, etc.
