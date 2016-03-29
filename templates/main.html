@@ -91,6 +91,16 @@ function build_authors_html(authors) {
 	return res;
 }
 
+function build_categories_html(tags) {
+    var res = '';
+    for(var i=0,n=tags.length;i<n;i++) {
+        var link = '/search?q=' + tags[i].replace(/ /g, "+");
+        res += '<a href="' + link + '">' + tags[i] + '</a>';
+		if(i<n-1) res += ' | ';
+    }
+    return res;
+}
+
 // here we populate papers into #rtable
 var pointer_ix = 0; // points to next paper in line to be added to #rtable
 var showed_end_msg = false;
@@ -126,7 +136,7 @@ function addPapers(num, dynamic) {
     if(p.originally_published_time !== p.published_time) {
       tdiv.append('span').classed('ds2', true).html('(v1: ' + p.originally_published_time + ')');
     }
-  	tdiv.append('span').classed('cs', true).html(p.tags.join(' | '));
+  	tdiv.append('span').classed('cs', true).html(build_categories_html(p.tags));
   	tdiv.append('br');
   	tdiv.append('span').classed('ccs', true).html(p.comment);
 

@@ -464,11 +464,12 @@ if __name__ == "__main__":
       p = db[pid]
       dict_title = makedict(p['title'], forceidf=5, scale=3)
       dict_authors = makedict(' '.join(x['name'] for x in p['authors']), forceidf=5)
+      dict_categories = {x['term'].lower():5 for x in p['tags']}
       if 'and' in dict_authors: 
         # special case for "and" handling in authors list
         del dict_authors['and']
       dict_summary = makedict(p['summary'])
-      SEARCH_DICT[pid] = merge_dicts([dict_title, dict_authors, dict_summary])
+      SEARCH_DICT[pid] = merge_dicts([dict_title, dict_authors, dict_categories, dict_summary])
     # and cache it in file
     print 'writing search_dict.p as cache'
     pickle.dump(SEARCH_DICT, open('search_dict.p', 'wb'))
