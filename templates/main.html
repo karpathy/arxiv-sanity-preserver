@@ -85,7 +85,7 @@ function build_authors_html(authors) {
 	var res = '';
 	for(var i=0,n=authors.length;i<n;i++) {
 		var link = '/search?q=' + authors[i].replace(/ /g, "+");
-		res += '<a href="' + link + '" class="aa">' + authors[i] + '</a>';
+		res += '<a href="' + link + '">' + authors[i] + '</a>';
 		if(i<n-1) res += ', ';
 	}
 	return res;

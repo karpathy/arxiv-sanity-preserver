@@ -8,26 +8,28 @@ body {
 	font-size: 14px;
 	color: #900;
 }
-.aa {
-	font-size: 14px;
-	color: #900;
-}
-.as a:link{ text-decoration: none; color: #900; }
-.as a:visited{ text-decoration: none; color: #900; }
-.as a:hover{ text-decoration: none; color: #F00; }
-.as a:active{ text-decoration: none; color: #900; }
-.ts {
-	font-weight: bold;
-	font-size: 16px;
-}
-.ts a:link{ text-decoration: none; color: #333; }
-.ts a:visited{ text-decoration: none; color: #333; }
-.ts a:hover{ text-decoration: underline; color: #000; }
-.ts a:active{ text-decoration: none; color: #333; }
 .cs {
 	color: #009;
 	font-size: 14px;
 }
+.ts {
+	font-weight: bold;
+	font-size: 16px;
+}
+.as a:link{ text-decoration: none; color: #900; }
+.as a:visited{ text-decoration: none; color: #900; }
+.as a:hover{ text-decoration: underline; color: #F00; }
+.as a:active{ text-decoration: none; color: #900; }
+
+.ts a:link{ text-decoration: none; color: #333; }
+.ts a:visited{ text-decoration: none; color: #333; }
+.ts a:hover{ text-decoration: underline; color: #000; }
+.ts a:active{ text-decoration: none; color: #333; }
+
+.cs a:link{ text-decoration: none; color: #009; }
+.cs a:visited{ text-decoration: none; color: #009; }
+.cs a:hover{ text-decoration: underline; color: #00F; }
+.cs a:active{ text-decoration: none; color: #009; }
 .ds {
 	margin-right: 10px;
 	color: #090;
