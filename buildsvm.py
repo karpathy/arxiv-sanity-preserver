@@ -40,7 +40,7 @@ xtoi = { strip_version(x):i for x,i in meta['ptoi'].iteritems() }
 
 user_sim = {}
 for ii,u in enumerate(users):
-  print '%d/%d building an SVM for %s' % (ii, len(users), u['username'])
+  print '%d/%d building an SVM for %s' % (ii, len(users), u['username'].encode('utf-8'))
   uid = u['user_id']
   lib = query_db('''select * from library where user_id = ?''', [uid])
   pids = [x['paper_id'] for x in lib] # raw pids without version
