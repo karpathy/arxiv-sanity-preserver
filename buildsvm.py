@@ -24,8 +24,6 @@ users = query_db('''select * from user''')
 for u in users:
   print u
 print 'number of users: ', len(users)
-print 'PRESS ENTER TO CONTINUE'
-raw_input()
 
 def strip_version(idstr):
   """ identity function if arxiv id has no version, otherwise strips it. """
@@ -41,8 +39,8 @@ X = X.todense()
 xtoi = { strip_version(x):i for x,i in meta['ptoi'].iteritems() }
 
 user_sim = {}
-for u in users:
-  print 'building an SVM for ' + u['username']
+for ii,u in enumerate(users):
+  print '%d/%d building an SVM for %s' % (ii, len(users), u['username'])
   uid = u['user_id']
   lib = query_db('''select * from library where user_id = ?''', [uid])
   pids = [x['paper_id'] for x in lib] # raw pids without version
