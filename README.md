@@ -23,7 +23,7 @@ $ source env/bin/activate       # optional: use virtualenv
 $ pip install -r requirements.txt
 ```
 
-You will also need [ImageMagick](http://www.imagemagick.org/script/index.php), which you can insall on Ubuntu as `sudo apt-get install imagemagick`.
+You will also need [ImageMagick](http://www.imagemagick.org/script/index.php) and [pdftotext](https://poppler.freedesktop.org/), which you can install on Ubuntu as `sudo apt-get install imagemagick poppler-utils`.
 
 ### Processing pipeline
 
@@ -43,13 +43,13 @@ I have a simple shell script that runs these commands one by one, and every day 
 
 ### Running online
 
-If you'd like to run this flask server online (e.g. AWS) run it as `python serve.py --prod`. 
+If you'd like to run this flask server online (e.g. AWS) run it as `python serve.py --prod`.
 
 You also want to create a `secret_key.txt` file and fill it with random text (see top of `serve.py`).
 
 ### Current workflow
 
-Running the site live is not currently set up for a fully automatic plug and play operation. Instead it's a bit of a manual process and I thought I should document how I'm keeping this code alive right now. I have two machines: a **local** machine that does a lot of the updating and compute and a **remote** machine that hosts the site. 
+Running the site live is not currently set up for a fully automatic plug and play operation. Instead it's a bit of a manual process and I thought I should document how I'm keeping this code alive right now. I have two machines: a **local** machine that does a lot of the updating and compute and a **remote** machine that hosts the site.
 
 I have a script that performs the following update early morning on my local machine:
 
