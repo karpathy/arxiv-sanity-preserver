@@ -6,3 +6,4 @@ static/thumbs/
 *.pyc
 as.db
 secret_key.txt
+env/
