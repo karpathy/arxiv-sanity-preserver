@@ -35,7 +35,7 @@ I tried to keep the project code relatively clean, but I do encourage you to ski
 4. Run `thumb_pdf.py` to export thumbnails of all pdfs to `thumb`
 5. Run `analyze.py` to compute tfidf vectors for all documents based on bigrams. Saves a `tfidf.p`, `tfidf_meta.p` and `sim_dict.p` pickle files.
 6. Run `buildsvm.py` to train SVMs for all users (if any), exports a pickle `user_sim.p`
-7. Run the flask server with `serve.py`. Visit localhost:5000 and enjoy sane viewing of papers
+7. Run the flask server with `serve.py` (and make sure to run `sqlite3 as.db < schema.sql` if this is the very first time ever you're starting arxiv-sanity, which initializes an empty database). Visit localhost:5000 and enjoy sane viewing of papers!
 
 I have a simple shell script that runs these commands one by one, and every day I run this script to fetch new papers, incorporate them into the database, and recompute all tfidf vectors/classifiers. More details on this process below.
 
