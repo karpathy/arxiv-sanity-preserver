@@ -145,7 +145,10 @@ function addPapers(num, dynamic) {
     // show raw arxiv id
   	ldiv.append('span').classed('spid', true).html(p.pid);
     // access PDF of the paper
-  	ldiv.append('a').attr('href', p.link).attr('target', '_blank').html('pdf');
+    var pdf_link = p.link.replace("abs", "pdf"); // convert from /abs/ link to /pdf/ link. url hacking. slightly naughty
+    if(pdf_link === p.link) { var pdf_url = pdf_link } // replace failed, lets fall back on arxiv landing page
+    else { var pdf_url = pdf_link + '.pdf'; }
+  	ldiv.append('a').attr('href', pdf_url).attr('target', '_blank').html('pdf');
     // rank by tfidf similarity
   	var similar_span = ldiv.append('span').classed('sim', true).attr('id', 'sim'+p.pid).html('rank by tf-idf similarity to this');
     similar_span.on('click', function(pid){ // attach a click handler to redirect for similarity search
