@@ -150,7 +150,7 @@ function addPapers(num, dynamic) {
     else { var pdf_url = pdf_link + '.pdf'; }
   	ldiv.append('a').attr('href', pdf_url).attr('target', '_blank').html('pdf');
     // rank by tfidf similarity
-  	var similar_span = ldiv.append('span').classed('sim', true).attr('id', 'sim'+p.pid).html('rank by tf-idf similarity to this');
+  	var similar_span = ldiv.append('span').classed('sim', true).attr('id', 'sim'+p.pid).html('show similar papers');
     similar_span.on('click', function(pid){ // attach a click handler to redirect for similarity search
       return function() { window.location.replace('/' + pid); }
     }(p.pid)); // closer over the paper id
