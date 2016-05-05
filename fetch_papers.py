@@ -116,4 +116,4 @@ if __name__ == "__main__":
 
   # save the database before we quit
   print 'saving database with %d papers to %s' % (len(db), args.db_path)
-  pickle.dump(db, open(args.db_path, 'wb'))
+  pickle.dump(db, open(args.db_path, 'wb'), -1)
