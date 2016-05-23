@@ -7,3 +7,4 @@ static/thumbs/
 as.db
 secret_key.txt
 env/
+data
