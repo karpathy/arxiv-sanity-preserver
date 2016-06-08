@@ -114,7 +114,12 @@ function addPapers(num, dynamic) {
     var ix = base_ix + i;
     if(ix >= papers.length) {
       if(!showed_end_msg) {
-        root.append('div').classed('msg', true).html('You hit the limit of number of papers to show is one result.');
+        if (ix >= {{numresults}}){
+          var msg = 'Results complete.';
+        } else {
+          var msg = 'You hit the limit of number of papers to show in one result.';
+        }
+        root.append('div').classed('msg', true).html(msg);
         showed_end_msg = true;
       }
       break;
@@ -304,7 +309,7 @@ $(document).ready(function(){
 	<div id="tittxt">
 		<h1>Arxiv Sanity Preserver</h1>
 		Built by <a href="https://twitter.com/karpathy">@karpathy</a> to accelerate research.<br>
-		Serving last {{ numpapers }} papers from cs.[CV|CL|LG|NE]/stat.ML
+		Serving last {{ totpapers }} papers from cs.[CV|CL|LG|NE]/stat.ML
 	</div>
 	</a>
 </div>
