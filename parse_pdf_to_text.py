@@ -14,7 +14,7 @@ import random
 
 os.system('mkdir -p txt') # ?
 
-have = os.listdir('txt')
+have = set(os.listdir('txt'))
 files = os.listdir('pdf')
 for i,f in enumerate(files, start=1):
   pdf_path = os.path.join('pdf', f)

@@ -155,7 +155,7 @@ def papers_from_svm(recent_days=None):
       return []
     
     user_library = query_db('''select * from library where user_id = ?''', [uid])
-    libids = [strip_version(x['paper_id']) for x in user_library]
+    libids = {strip_version(x['paper_id']) for x in user_library}
 
     plist = user_sim[uid]
     out = [db[x] for x in plist if not x in libids]
@@ -176,12 +176,12 @@ def papers_filter_version(papers, v):
 
 def encode_json(ps, n=10, send_images=True, send_abstracts=True):
 
-  libids = []
+  libids = set()
   if g.user:
     # user is logged in, lets fetch their saved library data
     uid = session['user_id']
     user_library = query_db('''select * from library where user_id = ?''', [uid])
-    libids = [strip_version(x['paper_id']) for x in user_library]
+    libids = {strip_version(x['paper_id']) for x in user_library}
 
   ret = []
   for i in xrange(min(len(ps),n)):
