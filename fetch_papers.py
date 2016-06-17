@@ -11,6 +11,7 @@ import os
 import cPickle as pickle
 import argparse
 import random
+import utils
 
 def encode_feedparser_dict(d):
   """ 
@@ -116,4 +117,4 @@ if __name__ == "__main__":
 
   # save the database before we quit
   print 'saving database with %d papers to %s' % (len(db), args.db_path)
-  pickle.dump(db, open(args.db_path, 'wb'), -1)
+  utils.safe_pickle_dump(db, args.db_path)

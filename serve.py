@@ -13,6 +13,7 @@ import argparse
 from random import shuffle
 import re
 import os
+import utils
 
 # database configuration
 DATABASE = 'as.db'
@@ -479,7 +480,7 @@ if __name__ == "__main__":
       SEARCH_DICT[pid] = merge_dicts([dict_title, dict_authors, dict_categories, dict_summary])
     # and cache it in file
     print 'writing search_dict.p as cache'
-    pickle.dump(SEARCH_DICT, open('search_dict.p', 'wb'), -1)
+    utils.safe_pickle_dump(SEARCH_DICT, 'search_dict.p')
   else:
     print 'loading cached index for faster search...'
     SEARCH_DICT = pickle.load(open('search_dict.p', 'rb'))
