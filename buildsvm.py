@@ -10,6 +10,8 @@ import re
 import os
 from sklearn import svm
 
+import utils
+
 DATABASE = 'as.db'
 sqldb = sqlite3.connect(DATABASE)
 sqldb.row_factory = sqlite3.Row # to return dicts rather than tuples
@@ -63,4 +65,4 @@ for ii,u in enumerate(users):
   user_sim[uid] = [strip_version(meta['pids'][ix]) for ix in list(sortix)]
 
 print 'writing user_sim.p'
-pickle.dump(user_sim, open("user_sim.p", "wb"))
+utils.safe_pickle_dump(user_sim, "user_sim.p")
