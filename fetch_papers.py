@@ -104,12 +104,12 @@ if __name__ == "__main__":
     print 'Added %d papers, already had %d.' % (num_added, num_skipped)
 
     if len(parse.entries) == 0:
-      print 'Received no results from arxiv. Rate limiting? Exitting. Restart later maybe.'
+      print 'Received no results from arxiv. Rate limiting? Exiting. Restart later maybe.'
       print response
       break
 
     if num_added == 0 and args.break_on_no_added == 1:
-      print 'No new papers were added. Assuming no new papers exist. Exitting.'
+      print 'No new papers were added. Assuming no new papers exist. Exiting.'
       break
 
     print 'Sleeping for %i seconds' % (args.wait_time , )
