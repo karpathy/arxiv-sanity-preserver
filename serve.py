@@ -13,6 +13,7 @@ import argparse
 from random import shuffle
 import re
 import os
+import utils
 
 # database configuration
 DATABASE = 'as.db'
@@ -155,7 +156,7 @@ def papers_from_svm(recent_days=None):
       return []
     
     user_library = query_db('''select * from library where user_id = ?''', [uid])
-    libids = [strip_version(x['paper_id']) for x in user_library]
+    libids = {strip_version(x['paper_id']) for x in user_library}
 
     plist = user_sim[uid]
     out = [db[x] for x in plist if not x in libids]
@@ -176,12 +177,12 @@ def papers_filter_version(papers, v):
 
 def encode_json(ps, n=10, send_images=True, send_abstracts=True):
 
-  libids = []
+  libids = set()
   if g.user:
     # user is logged in, lets fetch their saved library data
     uid = session['user_id']
     user_library = query_db('''select * from library where user_id = ?''', [uid])
-    libids = [strip_version(x['paper_id']) for x in user_library]
+    libids = {strip_version(x['paper_id']) for x in user_library}
 
   ret = []
   for i in xrange(min(len(ps),n)):
@@ -221,29 +222,35 @@ def encode_json(ps, n=10, send_images=True, send_abstracts=True):
 def isvalidid(pid):
   return re.match('^\d+\.\d+(v\d+)?$', pid)
 
+def default_context(papers, **kws):
+  top_papers = encode_json(papers, args.num_results)
+  ans = dict(papers=top_papers, numresults=len(papers), totpapers=len(db), msg='')
+  ans.update(kws)
+  return ans
+
 @app.route("/")
 def intmain():
   vstr = request.args.get('vfilter', 'all')
   papers = DATE_SORTED_PAPERS # precomputed
   papers = papers_filter_version(papers, vstr)
-  ret = encode_json(papers, args.num_results)
-  msg = 'Showing most recent Arxiv papers:'
-  return render_template('main.html', papers=ret, numpapers=len(db), msg=msg, render_format='recent')
+  ctx = default_context(papers, render_format='recent',
+                        msg='Showing most recent Arxiv papers:')
+  return render_template('main.html', **ctx)
 
 @app.route("/<request_pid>")
 def rank(request_pid=None):
   if not isvalidid(request_pid):
     return '' # these are requests for icons, things like robots.txt, etc
   papers = papers_similar(request_pid)
-  ret = encode_json(papers, args.num_results) # encode the top few to json
-  return render_template('main.html', papers=ret, numpapers=len(db), msg='', render_format='paper')
+  ctx = default_context(papers, render_format='paper')
+  return render_template('main.html', **ctx)
 
 @app.route("/search", methods=['GET'])
 def search():
   q = request.args.get('q', '') # get the search request
   papers = papers_search(q) # perform the query and get sorted documents
-  ret = encode_json(papers, args.num_results) # encode the top few to json
-  return render_template('main.html', papers=ret, numpapers=len(db), msg='', render_format="search") # weeee
+  ctx = default_context(papers, render_format="search")
+  return render_template('main.html', **ctx)
 
 @app.route('/recommend', methods=['GET'])
 def recommend():
@@ -254,9 +261,9 @@ def recommend():
   tt = legend.get(ttstr, None)
   papers = papers_from_svm(recent_days=tt)
   papers = papers_filter_version(papers, vstr)
-  ret = encode_json(papers, args.num_results)
-  msg = 'Recommended papers: (based on SVM trained on tfidf of papers in your library, refreshed every day or so)' if g.user else 'You must be logged in and have some papers saved in your library.'
-  return render_template('main.html', papers=ret, numpapers=len(db), msg=msg, render_format='recommend')
+  ctx = default_context(papers, render_format='recommend',
+                        msg='Recommended papers: (based on SVM trained on tfidf of papers in your library, refreshed every day or so)' if g.user else 'You must be logged in and have some papers saved in your library.')
+  return render_template('main.html', **ctx)
 
 @app.route('/top', methods=['GET'])
 def top():
@@ -268,10 +275,9 @@ def top():
   curtime = int(time.time()) # in seconds
   papers = [p for p in TOP_SORTED_PAPERS if curtime - p['time_updated'] < tt*24*60*60]
   papers = papers_filter_version(papers, vstr)
-
-  ret = encode_json(papers, args.num_results)
-  msg = 'Top papers based on people\'s libraries:'
-  return render_template('main.html', papers=ret, numpapers=len(db), msg=msg, render_format='top')
+  ctx = default_context(papers, render_format='top',
+                        msg='Top papers based on people\'s libraries:')
+  return render_template('main.html', **ctx)
 
 @app.route('/library')
 def library():
@@ -282,7 +288,9 @@ def library():
     msg = '%d papers in your library:' % (len(ret), )
   else:
     msg = 'You must be logged in. Once you are, you can save papers to your library (with the save icon on the right of each paper) and they will show up here.'
-  return render_template('main.html', papers=ret, numpapers=len(db), msg=msg, render_format='library')
+  ctx = default_context(papers, render_format='library',
+                        msg=msg)
+  return render_template('main.html', **ctx)
 
 @app.route('/libtoggle', methods=['POST'])
 def review():
@@ -472,7 +480,7 @@ if __name__ == "__main__":
       SEARCH_DICT[pid] = merge_dicts([dict_title, dict_authors, dict_categories, dict_summary])
     # and cache it in file
     print 'writing search_dict.p as cache'
-    pickle.dump(SEARCH_DICT, open('search_dict.p', 'wb'))
+    utils.safe_pickle_dump(SEARCH_DICT, 'search_dict.p')
   else:
     print 'loading cached index for faster search...'
     SEARCH_DICT = pickle.load(open('search_dict.p', 'rb'))

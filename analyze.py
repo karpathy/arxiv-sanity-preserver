@@ -11,6 +11,8 @@ import os
 import random
 import numpy as np
 
+import utils
+
 # read database
 db = pickle.load(open('db.p', 'rb'))
 
@@ -47,7 +49,7 @@ print X.shape
 out = {}
 out['X'] = X # this one is heavy!
 print('writing tfidf.p')
-pickle.dump(out, open("tfidf.p", "wb"))
+utils.safe_pickle_dump(out, "tfidf.p")
 
 # writing lighter metadata information into a separate (smaller) file
 out = {}
@@ -56,7 +58,7 @@ out['idf'] = v._tfidf.idf_
 out['pids'] = pids # a full idvv string (id and version number)
 out['ptoi'] = { x:i for i,x in enumerate(pids) } # pid to ix in X mapping
 print('writing tfidf_meta.p')
-pickle.dump(out, open("tfidf_meta.p", "wb"))
+utils.safe_pickle_dump(out, "tfidf_meta.p")
 
 print 'precomputing nearest neighbor queries in batches...'
 X = X.todense() # originally it's a sparse matrix
@@ -72,4 +74,4 @@ for i in xrange(0,len(pids),batch_size):
   print '%d/%d...' % (i, len(pids))
 
 print('writing sim_dict.p')
-pickle.dump(sim_dict, open("sim_dict.p", "wb"))
+utils.safe_pickle_dump(sim_dict, "sim_dict.p")
