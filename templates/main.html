@@ -154,11 +154,16 @@ function addPapers(num, dynamic) {
     if(pdf_link === p.link) { var pdf_url = pdf_link } // replace failed, lets fall back on arxiv landing page
     else { var pdf_url = pdf_link + '.pdf'; }
   	ldiv.append('a').attr('href', pdf_url).attr('target', '_blank').html('pdf');
+    
     // rank by tfidf similarity
-  	var similar_span = ldiv.append('span').classed('sim', true).attr('id', 'sim'+p.pid).html('show similar papers');
+    ldiv.append('br');
+    var similar_span = ldiv.append('span').classed('sim', true).attr('id', 'sim'+p.pid).html('show similar');
     similar_span.on('click', function(pid){ // attach a click handler to redirect for similarity search
       return function() { window.location.replace('/' + pid); }
     }(p.pid)); // closer over the paper id
+
+    var review_span = ldiv.append('span').classed('sim', true).attr('style', 'margin-left:5px; padding-left: 5px; border-left: 1px solid black;').append('a').attr('href', 'http://www.shortscience.org/paper?bibtexKey='+p.pid).html('review');
+    ldiv.append('br');
 
     var lib_state_img = p.in_library === 1 ? 'static/saved.png' : 'static/save.png';
     var saveimg = ldiv.append('img').attr('src', lib_state_img)

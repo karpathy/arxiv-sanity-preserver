@@ -119,7 +119,7 @@ h1 {
 .sim {
 	cursor: pointer;
 	text-decoration: underline;
-	display: block;
+	display: inline-block;
 }
 .rev {
 	cursor: pointer;
