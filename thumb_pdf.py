@@ -10,7 +10,7 @@ from subprocess import Popen
 os.system('mkdir -p static/thumbs')
 os.system('mkdir -p tmp') # for intermediate files
 
-relpath = "pdf"
+relpath = "./pdf"
 allFiles = os.listdir(relpath)
 pdfs = [x for x in allFiles if x.endswith(".pdf")]
 
