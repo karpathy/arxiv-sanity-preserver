@@ -80,7 +80,8 @@ h1 {
 }
 
 #maindiv {
-	width: 970px;
+	box-sizing: border-box;
+	width: 1000px;
 	padding: 15px;
 	margin-left: auto;
 	margin-right: auto;
@@ -127,11 +128,11 @@ h1 {
 	display: block;
 }
 #qfield {
-  border: 5px solid white; 
-  width: 950px;
+  box-sizing: border-box;
+  width: 100%;
   border: solid 1px #999;
 
-  height: 40px;
+  height: 44px;
   font-size: 22px;
   color: "#333";
 
@@ -143,7 +144,10 @@ h1 {
 	outline:0;
 }
 #sbox {
-	margin-top: 10px;
+  width: 1000px;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 10px;
   text-align: center;
 }
 .msg {
@@ -257,7 +261,8 @@ ul.flashes li {
 }
 
 #pagebar {
-	width: 970px;
+	box-sizing: border-box;
+	width: 1000px;
 	padding: 10px 15px 0px 15px;
 	margin-left: auto;
 	margin-right: auto;
@@ -285,7 +290,8 @@ ul.flashes li {
 #pagebar a:active{ text-decoration: none; color: #338;}
 
 .centerdiv {
-	width: 970px;
+	box-sizing: border-box;
+	width: 1000px;
 	padding: 10px 15px 0px 15px;
 	margin-left: auto;
 	margin-right: auto;
@@ -331,9 +337,10 @@ ul.flashes li {
 	margin-right: 5px;
 }
 #banner {
+	box-sizing: border-box;
 	border: 1px solid #9C9;
 	background-color: #DFD;
-	width: 980px;
+	width: 1000px;
 	margin-left: auto;
 	margin-right: auto;
 	margin-top: 10px;
