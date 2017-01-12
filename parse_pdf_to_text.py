@@ -23,21 +23,24 @@ if not os.path.exists(txt_folder): os.makedirs(txt_folder)
 have = set(os.listdir(txt_folder))
 files = os.listdir(pdf_folder)
 for i,f in enumerate(files, start=1):
-  pdf_path = os.path.join(pdf_folder, f)
+
   txt_basename = f + '.txt'
+  if txt_basename in have:
+    print('skipping %s, already exists.' % (txt_basename, ))
+    continue
+
+  pdf_path = os.path.join(pdf_folder, f)
   txt_path = os.path.join(txt_folder, txt_basename)
-  if not txt_basename in have:
-    cmd = "pdftotext %s %s" % (pdf_path, txt_path)
-    os.system(cmd)
-    print('%d/%d %s' % (i, len(files), cmd))
+  cmd = "pdftotext %s %s" % (pdf_path, txt_path)
+  os.system(cmd)
 
-    # check output was made
-    if not os.path.isfile(txt_path):
-      # there was an error with converting the pdf
-      print('there was a problem with parsing %s to text, creating an empty text file.' % (pdf_path, ))
-      os.system('touch ' + txt_path) # create empty file, but it's a record of having tried to convert
+  print('%d/%d %s' % (i, len(files), cmd))
 
-    time.sleep(0.02) # silly way for allowing for ctrl+c termination
-  else:
-    print('skipping %s, already exists.' % (pdf_path, ))
+  # check output was made
+  if not os.path.isfile(txt_path):
+    # there was an error with converting the pdf
+    print('there was a problem with parsing %s to text, creating an empty text file.' % (pdf_path, ))
+    os.system('touch ' + txt_path) # create empty file, but it's a record of having tried to convert
+
+  time.sleep(0.01) # silly way for allowing for ctrl+c termination
 
