@@ -2,7 +2,7 @@ from contextlib import contextmanager
 
 import tempfile
 import os
-import cPickle as pickle
+import pickle
 
 # Context managers for atomic writes courtesy of
 # http://stackoverflow.com/questions/2333872/atomic-writing-to-file-with-python
