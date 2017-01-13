@@ -1,5 +1,12 @@
+from __future__ import print_function
+
 from sqlite3 import dbapi2 as sqlite3
-import cPickle as pickle
+
+try:
+  import pickle as pickle
+except:
+  import cPickle as pickle
+
 import numpy as np
 import json
 import time
@@ -24,8 +31,8 @@ def query_db(query, args=(), one=False):
 
 users = query_db('''select * from user''')
 for u in users:
-  print u
-print 'number of users: ', len(users)
+  print(u)
+print('number of users: ', len(users))
 
 def strip_version(idstr):
   """ identity function if arxiv id has no version, otherwise strips it. """
@@ -38,11 +45,11 @@ out = pickle.load(open("tfidf.p", "rb"))
 X = out['X']
 X = X.todense()
 
-xtoi = { strip_version(x):i for x,i in meta['ptoi'].iteritems() }
+xtoi = { strip_version(x):i for x,i in meta['ptoi'].items() }
 
 user_sim = {}
 for ii,u in enumerate(users):
-  print '%d/%d building an SVM for %s' % (ii, len(users), u['username'].encode('utf-8'))
+  print('%d/%d building an SVM for %s' % (ii, len(users), u['username'].encode('utf-8')))
   uid = u['user_id']
   lib = query_db('''select * from library where user_id = ?''', [uid])
   pids = [x['paper_id'] for x in lib] # raw pids without version
@@ -51,7 +58,7 @@ for ii,u in enumerate(users):
   if not posix:
     continue # empty library for this user maybe?
 
-  print pids
+  print(pids)
   y = np.zeros(X.shape[0])
   for ix in posix:
     y[ix] = 1
@@ -64,5 +71,5 @@ for ii,u in enumerate(users):
   sortix = np.argsort(-s)
   user_sim[uid] = [strip_version(meta['pids'][ix]) for ix in list(sortix)]
 
-print 'writing user_sim.p'
+print('writing user_sim.p')
 utils.safe_pickle_dump(user_sim, "user_sim.p")

@@ -2,9 +2,14 @@
 Reads txt files of all papers and computes tfidf vectors for all papers.
 Dumps results to file tfidf.p
 """
+from __future__ import print_function
+
 from sklearn.feature_extraction.text import TfidfVectorizer
-import cPickle as pickle
-import urllib2
+try:
+  import pickle as pickle
+except:
+  import cPickle as pickle
+
 import shutil
 import time
 import os
@@ -20,7 +25,7 @@ db = pickle.load(open('db.p', 'rb'))
 txts = []
 pids = []
 n=0
-for pid,j in db.iteritems():
+for pid,j in db.items():
   n+=1
   idvv = '%sv%d' % (j['_rawid'], j['_version'])
   fname = os.path.join('txt', idvv) + '.pdf.txt'
@@ -29,9 +34,9 @@ for pid,j in db.iteritems():
     if len(txt) > 100: # way too short and suspicious
       txts.append(txt) # todo later: maybe filter or something some of them
       pids.append(idvv)
-      print 'read %d/%d (%s) with %d chars' % (n, len(db), idvv, len(txt))
+      print('read %d/%d (%s) with %d chars' % (n, len(db), idvv, len(txt)))
     else:
-      print 'skipped %d/%d (%s) with %d chars: suspicious!' % (n, len(db), idvv, len(txt))
+      print('skipped %d/%d (%s) with %d chars: suspicious!' % (n, len(db), idvv, len(txt)))
 
 # compute tfidf vectors with scikits
 v = TfidfVectorizer(input='content', 
@@ -42,8 +47,8 @@ v = TfidfVectorizer(input='content',
         norm='l2', use_idf=True, smooth_idf=True, sublinear_tf=False)
 
 X = v.fit_transform(txts)
-print v.vocabulary_
-print X.shape
+print(v.vocabulary_)
+print(X.shape)
 
 # write full matrix out
 out = {}
@@ -60,18 +65,18 @@ out['ptoi'] = { x:i for i,x in enumerate(pids) } # pid to ix in X mapping
 print('writing tfidf_meta.p')
 utils.safe_pickle_dump(out, "tfidf_meta.p")
 
-print 'precomputing nearest neighbor queries in batches...'
+print('precomputing nearest neighbor queries in batches...')
 X = X.todense() # originally it's a sparse matrix
 sim_dict = {}
 batch_size = 200
-for i in xrange(0,len(pids),batch_size):
+for i in range(0,len(pids),batch_size):
   i1 = min(len(pids), i+batch_size)
   xquery = X[i:i1] # BxD
   ds = -np.asarray(np.dot(X, xquery.T)) #NxD * DxB => NxB
   IX = np.argsort(ds, axis=0) # NxB
-  for j in xrange(i1-i):
+  for j in range(i1-i):
     sim_dict[pids[i+j]] = [pids[q] for q in list(IX[:50,j])]
-  print '%d/%d...' % (i, len(pids))
+  print('%d/%d...' % (i, len(pids)))
 
 print('writing sim_dict.p')
 utils.safe_pickle_dump(sim_dict, "sim_dict.p")
