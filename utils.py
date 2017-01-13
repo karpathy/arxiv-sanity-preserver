@@ -1,8 +1,13 @@
+from __future__ import print_function
+
 from contextlib import contextmanager
 
 import tempfile
 import os
-import cPickle as pickle
+try:
+  import pickle as pickle
+except:
+  import cPickle as pickle
 
 # Context managers for atomic writes courtesy of
 # http://stackoverflow.com/questions/2333872/atomic-writing-to-file-with-python
