@@ -1,6 +1,7 @@
 # use imagemagick to convert 
 # them all to a sequence of thumbnail images
 # requires sudo apt-get install imagemagick
+from __future__ import print_function
 
 import os
 import os.path
@@ -19,10 +20,10 @@ for i,p in enumerate(pdfs):
   outpath = os.path.join('static', 'thumbs', p + '.jpg')
 
   if os.path.isfile(outpath): 
-    print 'skipping %s, exists.' % (fullpath, )
+    print('skipping %s, exists.' % (fullpath, ))
     continue
 
-  print "%d/%d processing %s" % (i, len(pdfs), p)
+  print("%d/%d processing %s" % (i, len(pdfs), p))
 
   # take first 8 pages of the pdf ([0-7]), since 9th page are references
   # tile them horizontally, use JPEG compression 80, trim the borders for each image
@@ -35,7 +36,7 @@ for i,p in enumerate(pdfs):
 
   # erase previous intermediate files test-*.png
   if os.path.isfile('tmp/test-0.png'):
-    for i in xrange(8):
+    for i in range(8):
       f = 'tmp/test-%d.png' % (i,)
       f2= 'tmp/testbuf-%d.png' % (i,)
       if os.path.isfile(f):
@@ -64,10 +65,10 @@ for i,p in enumerate(pdfs):
   if not os.path.isfile('tmp/test-0.png'):
     # failed to render pdf, replace with missing image
     os.system('cp %s %s' % ('static/thumbs/missing.jpg', outpath))
-    print 'could not render pdf, creating a missing image placeholder'
+    print('could not render pdf, creating a missing image placeholder')
   else:
     cmd = "montage -mode concatenate -quality 80 -tile x1 tmp/test-*.png %s" % (outpath, )
-    print cmd
+    print(cmd)
     os.system(cmd)
 
   time.sleep(0.01) # silly way for allowing for ctrl+c termination
