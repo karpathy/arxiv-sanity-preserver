@@ -8,3 +8,4 @@ as.db
 secret_key.txt
 env/
 data
+*.DS_Store
