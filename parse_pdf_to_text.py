@@ -16,12 +16,12 @@ if not shutil.which('pdftotext'): # needs Python 3.3+
   print('ERROR: you don\'t have pdftotext installed. Install it first before calling this script')
   sys.exit()
 
-txt_folder = os.path.join('data', 'txt')
-pdf_folder = os.path.join('data', 'pdf')
-if not os.path.exists(txt_folder): os.makedirs(txt_folder)
+txt_dir = os.path.join('data', 'txt')
+pdf_dir = os.path.join('data', 'pdf')
+if not os.path.exists(txt_dir): os.makedirs(txt_dir)
 
-have = set(os.listdir(txt_folder))
-files = os.listdir(pdf_folder)
+have = set(os.listdir(txt_dir))
+files = os.listdir(pdf_dir)
 for i,f in enumerate(files, start=1):
 
   txt_basename = f + '.txt'
@@ -29,8 +29,8 @@ for i,f in enumerate(files, start=1):
     print('skipping %s, already exists.' % (txt_basename, ))
     continue
 
-  pdf_path = os.path.join(pdf_folder, f)
-  txt_path = os.path.join(txt_folder, txt_basename)
+  pdf_path = os.path.join(pdf_dir, f)
+  txt_path = os.path.join(txt_dir, txt_basename)
   cmd = "pdftotext %s %s" % (pdf_path, txt_path)
   os.system(cmd)
 
