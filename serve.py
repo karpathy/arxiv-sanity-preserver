@@ -1,19 +1,23 @@
+import os
+import json
+import time
+import pickle
+import dateutil.parser
+import argparse
+from random import shuffle
+
+import numpy as np
 from sqlite3 import dbapi2 as sqlite3
 from hashlib import md5
 from flask import Flask, request, session, url_for, redirect, \
      render_template, abort, g, flash, _app_ctx_stack
 from flask_limiter import Limiter
 from werkzeug import check_password_hash, generate_password_hash
-import cPickle as pickle
-import numpy as np
-import json
-import time
-import dateutil.parser
-import argparse
-from random import shuffle
-import re
-import os
-import utils
+
+from utils import safe_pickle_dump, strip_version, isvalidid
+
+# various globals
+# -----------------------------------------------------------------------------
 
 # database configuration
 DATABASE = 'as.db'
@@ -36,6 +40,28 @@ def connect_db():
   sqlite_db.row_factory = sqlite3.Row # to return dicts rather than tuples
   return sqlite_db
 
+def query_db(query, args=(), one=False):
+  """Queries the database and returns a list of dictionaries."""
+  cur = g.db.execute(query, args)
+  rv = cur.fetchall()
+  return (rv[0] if rv else None) if one else rv
+
+def get_user_id(username):
+  """Convenience method to look up the id for a username."""
+  rv = query_db('select user_id from user where username = ?',
+                [username], one=True)
+  return rv[0] if rv else None
+
+def get_username(user_id):
+  """Convenience method to look up the username for a user."""
+  rv = query_db('select username from user where user_id = ?',
+                [user_id], one=True)
+  return rv[0] if rv else None
+
+# -----------------------------------------------------------------------------
+# connection handlers
+# -----------------------------------------------------------------------------
+
 @app.before_request
 def before_request():
   # this will always request database connection, even if we dont end up using it ;\
@@ -52,40 +78,16 @@ def teardown_request(exception):
   if db is not None:
     db.close()
 
-def query_db(query, args=(), one=False):
-    """Queries the database and returns a list of dictionaries."""
-    cur = g.db.execute(query, args)
-    rv = cur.fetchall()
-    return (rv[0] if rv else None) if one else rv
-
-def get_user_id(username):
-  """Convenience method to look up the id for a username."""
-  rv = query_db('select user_id from user where username = ?',
-                [username], one=True)
-  return rv[0] if rv else None
-
-def get_username(user_id):
-  """Convenience method to look up the username for a user."""
-  rv = query_db('select username from user where user_id = ?',
-                [user_id], one=True)
-  return rv[0] if rv else None
-
 # -----------------------------------------------------------------------------
 # search/sort functionality
 # -----------------------------------------------------------------------------
-def papers_shuffle():
-  ks = db.keys()
-  shuffle(ks)
-  return [db[k] for k in ks]
-
 def date_sort():
   scores = []
-  for pid in db:
-    p = db[pid]
+  for pid,p in db.items():
     timestruct = dateutil.parser.parse(p['updated'])
-    p['time_updated'] = int(timestruct.strftime("%s"))
+    p['time_updated'] = int(timestruct.strftime("%s")) # store in struct for future convenience
     scores.append((p['time_updated'], p))
-  scores.sort(reverse=True)
+  scores.sort(reverse=True, key=lambda x: x[0])
   out = [sp[1] for sp in scores]
   return out
 
@@ -93,22 +95,16 @@ def papers_search(qraw):
   qparts = qraw.lower().strip().split() # split by spaces
   # use reverse index and accumulate scores
   scores = []
-  for pid in db:
-    p = db[pid]
+  for pid,p in db.items():
     score = sum(SEARCH_DICT[pid].get(q,0) for q in qparts)
     if score == 0:
       continue # no match whatsoever, dont include
     # give a small boost to more recent papers
     score += 0.0001*p['tscore']
     scores.append((score, p))
-  scores.sort(reverse=True) # descending
+  scores.sort(reverse=True, key=lambda x: x[0]) # descending
   out = [x[1] for x in scores if x[0] > 0]
   return out
-
-def strip_version(idstr):
-  """ identity function if arxiv id has no version, otherwise strips it. """
-  parts = idstr.split('v')
-  return parts[0]
 
 def papers_similar(pid):
   rawpid = strip_version(pid)
@@ -126,8 +122,7 @@ def papers_similar(pid):
     # e.g. v1 of a paper, but due to an updated version of it we only have v2 on file
     # now. We want to use v2 in that case.
     # lets try to retrieve the most recent version of this paper we do have
-    ks = sim_dict.keys()
-    kok = [k for k in sim_dict.iterkeys() if rawpid in k]
+    kok = [k for k in sim_dict if rawpid in k]
     if kok:
       # ok we have at least one different version of this paper, lets use it instead
       id_use_instead = kok[0]
@@ -155,6 +150,7 @@ def papers_from_svm(recent_days=None):
     if not uid in user_sim:
       return []
     
+    # we want to exclude papers that are already in user library from the result, so fetch them.
     user_library = query_db('''select * from library where user_id = ?''', [uid])
     libids = {strip_version(x['paper_id']) for x in user_library}
 
@@ -185,7 +181,7 @@ def encode_json(ps, n=10, send_images=True, send_abstracts=True):
     libids = {strip_version(x['paper_id']) for x in user_library}
 
   ret = []
-  for i in xrange(min(len(ps),n)):
+  for i in range(min(len(ps),n)):
     p = ps[i]
     idvv = '%sv%d' % (p['_rawid'], p['_version'])
     struct = {}
@@ -217,10 +213,6 @@ def encode_json(ps, n=10, send_images=True, send_abstracts=True):
 # -----------------------------------------------------------------------------
 # flask request handling
 # -----------------------------------------------------------------------------
-
-# "1511.08198v1" is an example of a valid arxiv id that we accept
-def isvalidid(pid):
-  return re.match('^\d+\.\d+(v\d+)?$', pid)
 
 def default_context(papers, **kws):
   top_papers = encode_json(papers, args.num_results)
@@ -288,8 +280,7 @@ def library():
     msg = '%d papers in your library:' % (len(ret), )
   else:
     msg = 'You must be logged in. Once you are, you can save papers to your library (with the save icon on the right of each paper) and they will show up here.'
-  ctx = default_context(papers, render_format='library',
-                        msg=msg)
+  ctx = default_context(papers, render_format='library', msg=msg)
   return render_template('main.html', **ctx)
 
 @app.route('/libtoggle', methods=['POST'])
@@ -312,14 +303,14 @@ def review():
   # check this user already has this paper in library
   record = query_db('''select * from library where
           user_id = ? and paper_id = ?''', [uid, pid], one=True)
-  print record
+  print(record)
 
   ret = 'NO'
   if record:
     # record exists, erase it.
     g.db.execute('''delete from library where user_id = ? and paper_id = ?''', [uid, pid])
     g.db.commit()
-    #print 'removed %s for %s' % (pid, uid)
+    #print('removed %s for %s' % (pid, uid))
     ret = 'OFF'
   else:
     # record does not exist, add it.
@@ -327,7 +318,7 @@ def review():
     g.db.execute('''insert into library (paper_id, user_id, update_time) values (?, ?, ?)''',
         [rawpid, uid, int(time.time())])
     g.db.commit()
-    #print 'added %s for %s' % (pid, uid)
+    #print('added %s for %s' % (pid, uid))
     ret = 'ON'
 
   return ret
@@ -382,35 +373,35 @@ if __name__ == "__main__":
   parser.add_argument('-r', '--num_results', dest='num_results', type=int, default=200, help='number of results to return per query')
   parser.add_argument('--port', dest='port', type=int, default=5000, help='port to serve on')
   args = parser.parse_args()
-  print args
+  print(args)
 
-  print 'loading db.p...'
+  print('loading db.p...')
   db = pickle.load(open('db.p', 'rb'))
   
-  print 'loading tfidf_meta.p...'
+  print('loading tfidf_meta.p...')
   meta = pickle.load(open("tfidf_meta.p", "rb"))
   vocab = meta['vocab']
   idf = meta['idf']
 
-  print 'loading sim_dict.p...'
+  print('loading sim_dict.p...')
   sim_dict = pickle.load(open("sim_dict.p", "rb"))
 
-  print 'loading user_sim.p...'
+  print('loading user_sim.p...')
   if os.path.isfile('user_sim.p'):
     user_sim = pickle.load(open('user_sim.p', 'rb'))
   else:
     user_sim = {}
 
-  print 'precomputing papers date sorted...'
+  print('precomputing papers date sorted...')
   DATE_SORTED_PAPERS = date_sort()
 
   if not os.path.isfile(DATABASE):
-    print 'did not find as.db, trying to create an empty database from schema.sql...'
-    print 'this needs sqlite3 to be installed!'
+    print('did not find as.db, trying to create an empty database from schema.sql...')
+    print('this needs sqlite3 to be installed!')
     os.system('sqlite3 as.db < schema.sql')
 
   # compute top papers in peoples' libraries
-  print 'computing top papers...'
+  print('computing top papers...')
   def get_popular():
     sqldb = sqlite3.connect(DATABASE)
     sqldb.row_factory = sqlite3.Row # to return dicts rather than tuples
@@ -421,15 +412,15 @@ if __name__ == "__main__":
       counts[pid] = counts.get(pid, 0) + 1
     return counts
   top_counts = get_popular()
-  top_paper_counts = sorted([(v,k) for k,v in top_counts.iteritems() if v > 0], reverse=True)
-  print top_paper_counts[:min(30, len(top_paper_counts))]
+  top_paper_counts = sorted([(v,k) for k,v in top_counts.items() if v > 0], reverse=True)
+  print(top_paper_counts[:min(30, len(top_paper_counts))])
   TOP_SORTED_PAPERS = [db[q[1]] for q in top_paper_counts]
 
   # compute min and max time for all papers
-  tts = [time.mktime(dateutil.parser.parse(p['updated']).timetuple()) for pid,p in db.iteritems()]
+  tts = [time.mktime(dateutil.parser.parse(p['updated']).timetuple()) for pid,p in db.items()]
   ttmin = min(tts)*1.0
   ttmax = max(tts)*1.0
-  for pid,p in db.iteritems():
+  for pid,p in db.items():
     tt = time.mktime(dateutil.parser.parse(p['updated']).timetuple())
     p['tscore'] = (tt-ttmin)/(ttmax-ttmin)
 
@@ -454,7 +445,7 @@ if __name__ == "__main__":
   def merge_dicts(dlist):
     out = {}
     for d in dlist:
-      for k,v in d.iteritems():
+      for k,v in d.items():
         out[k] = out.get(k,0) + v
     return out
 
@@ -467,7 +458,7 @@ if __name__ == "__main__":
       # search index exists and is more recent, no need
       recompute_index = False
   if recompute_index:
-    print 'building an index for faster search...'
+    print('building an index for faster search...')
     for pid in db:
       p = db[pid]
       dict_title = makedict(p['title'], forceidf=5, scale=3)
@@ -479,16 +470,16 @@ if __name__ == "__main__":
       dict_summary = makedict(p['summary'])
       SEARCH_DICT[pid] = merge_dicts([dict_title, dict_authors, dict_categories, dict_summary])
     # and cache it in file
-    print 'writing search_dict.p as cache'
-    utils.safe_pickle_dump(SEARCH_DICT, 'search_dict.p')
+    print('writing search_dict.p as cache')
+    safe_pickle_dump(SEARCH_DICT, 'search_dict.p')
   else:
-    print 'loading cached index for faster search...'
+    print('loading cached index for faster search...')
     SEARCH_DICT = pickle.load(open('search_dict.p', 'rb'))
 
   # start
   if args.prod:
     # run on Tornado instead, since running raw Flask in prod is not recommended
-    print 'starting tornado!'
+    print('starting tornado!')
     from tornado.wsgi import WSGIContainer
     from tornado.httpserver import HTTPServer
     from tornado.ioloop import IOLoop
@@ -497,8 +488,7 @@ if __name__ == "__main__":
     http_server = HTTPServer(WSGIContainer(app))
     http_server.listen(args.port)
     IOLoop.instance().start()
-    #app.run(host='0.0.0.0', threaded=True)
   else:
-    print 'starting flask!'
+    print('starting flask!')
     app.debug = True
     app.run(port=args.port)

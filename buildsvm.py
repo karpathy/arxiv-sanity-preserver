@@ -7,7 +7,7 @@ import numpy as np
 from sklearn import svm
 from sqlite3 import dbapi2 as sqlite3
 # local imports
-import utils
+from utils import safe_pickle_dump, strip_version
 
 DATABASE = 'as.db'
 if not os.path.isfile(DATABASE):
@@ -22,11 +22,6 @@ def query_db(query, args=(), one=False):
   cur = sqldb.execute(query, args)
   rv = cur.fetchall()
   return (rv[0] if rv else None) if one else rv
-
-def strip_version(idstr):
-  """ identity function if arxiv id has no version, otherwise strips it. """
-  parts = idstr.split('v')
-  return parts[0]
 
 # -----------------------------------------------------------------------------
 
@@ -70,4 +65,4 @@ for ii,u in enumerate(users):
 
 user_sim_path = 'user_sim.p'
 print('writing', user_sim_path)
-utils.safe_pickle_dump(user_sim, user_sim_path)
+safe_pickle_dump(user_sim, user_sim_path)

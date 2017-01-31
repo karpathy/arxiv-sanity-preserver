@@ -46,7 +46,7 @@ if __name__ == "__main__":
 
   # parse input arguments
   parser = argparse.ArgumentParser()
-  parser.add_argument('--db-path', type=str, default='data/db.p', help='database pickle filename that we enrich')
+  parser.add_argument('--db-path', type=str, default='db.p', help='database pickle filename that we enrich')
   parser.add_argument('--search-query', type=str,
                       default='cat:cs.CV+OR+cat:cs.AI+OR+cat:cs.LG+OR+cat:cs.CL+OR+cat:cs.NE+OR+cat:stat.ML',
                       help='query used for arxiv API. See http://arxiv.org/help/api/user-manual#detailed_examples')
