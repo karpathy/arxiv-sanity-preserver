@@ -11,7 +11,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 import utils
 
 # read database
-db_path = os.path.join('data', 'db.p')
+db_path = 'db.p'
 db = pickle.load(open(db_path, 'rb'))
 
 # read all text files for all papers into memory

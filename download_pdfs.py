@@ -8,12 +8,12 @@ import random
 timeout_secs = 10 # after this many seconds we give up on a paper
 
 pdf_dir = os.path.join('data', 'pdf')
-db_file = os.path.join('data', 'db.p')
+db_path = 'db.p'
 if not os.path.exists(pdf_dir): os.makedirs(pdf_dir)
 
 numok = 0
 numtot = 0
-db = pickle.load(open(db_file, 'rb'))
+db = pickle.load(open(db_path, 'rb'))
 have = set(os.listdir(pdf_dir)) # get list of all pdfs we already have
 for pid,j in db.items():
   
