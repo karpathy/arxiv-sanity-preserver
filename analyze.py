@@ -36,8 +36,8 @@ v = TfidfVectorizer(input='content',
         encoding='utf-8', decode_error='replace', strip_accents='unicode', 
         lowercase=True, analyzer='word', stop_words='english', 
         token_pattern=r'(?u)\b[a-zA-Z_][a-zA-Z0-9_]+\b',
-        ngram_range=(1, 2), max_features = 1000, 
-        norm='l2', use_idf=True, smooth_idf=True, sublinear_tf=False,
+        ngram_range=(1, 2), max_features = 10000, 
+        norm='l2', use_idf=True, smooth_idf=True, sublinear_tf=True,
         max_df=1.0, min_df=1)
 
 X = v.fit_transform(txts)
