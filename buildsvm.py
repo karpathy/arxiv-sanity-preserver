@@ -1,18 +1,19 @@
-from sqlite3 import dbapi2 as sqlite3
-import cPickle as pickle
-import numpy as np
-import json
-import time
-import dateutil.parser
-import argparse
-from random import shuffle
-import re
+# standard imports
 import os
+import sys
+import pickle
+# non-standard imports
+import numpy as np
 from sklearn import svm
-
+from sqlite3 import dbapi2 as sqlite3
+# local imports
 import utils
 
 DATABASE = 'as.db'
+if not os.path.isfile(DATABASE):
+  print("the database file as.db should exist. You can create an empty database with sqlite3 as.db < schema.sql")
+  sys.exit()
+
 sqldb = sqlite3.connect(DATABASE)
 sqldb.row_factory = sqlite3.Row # to return dicts rather than tuples
 
@@ -22,27 +23,31 @@ def query_db(query, args=(), one=False):
   rv = cur.fetchall()
   return (rv[0] if rv else None) if one else rv
 
-users = query_db('''select * from user''')
-for u in users:
-  print u
-print 'number of users: ', len(users)
-
 def strip_version(idstr):
   """ identity function if arxiv id has no version, otherwise strips it. """
   parts = idstr.split('v')
   return parts[0]
 
-# fetch the tfidf matrix
-meta = pickle.load(open("tfidf_meta.p", "rb"))
-out = pickle.load(open("tfidf.p", "rb"))
+# -----------------------------------------------------------------------------
+
+# fetch all users
+users = query_db('''select * from user''')
+for u in users: print(u)
+print('number of users: ', len(users))
+
+# load the tfidf matrix
+tfidf_path = os.path.join('data', 'tfidf.p')
+meta_path = 'tfidf_meta.p'
+meta = pickle.load(open(meta_path, 'rb'))
+out = pickle.load(open(tfidf_path, 'rb'))
 X = out['X']
 X = X.todense()
 
-xtoi = { strip_version(x):i for x,i in meta['ptoi'].iteritems() }
+xtoi = { strip_version(x):i for x,i in meta['ptoi'].items() }
 
 user_sim = {}
 for ii,u in enumerate(users):
-  print '%d/%d building an SVM for %s' % (ii, len(users), u['username'].encode('utf-8'))
+  print("%d/%d building an SVM for %s" % (ii, len(users), u['username'].encode('utf-8')))
   uid = u['user_id']
   lib = query_db('''select * from library where user_id = ?''', [uid])
   pids = [x['paper_id'] for x in lib] # raw pids without version
@@ -51,18 +56,18 @@ for ii,u in enumerate(users):
   if not posix:
     continue # empty library for this user maybe?
 
-  print pids
+  print(pids)
   y = np.zeros(X.shape[0])
-  for ix in posix:
-    y[ix] = 1
+  for ix in posix: y[ix] = 1
 
-  #__init__(penalty='l2', loss='squared_hinge', dual=True, tol=0.0001, C=1.0, multi_class='ovr', fit_intercept=True, intercept_scaling=1, class_weight=None, verbose=0, random_state=None, max_iter=1000)[source]
-  clf = svm.LinearSVC(class_weight='auto', verbose=True, max_iter=10000, tol=1e-6, C=1)
+  clf = svm.LinearSVC(class_weight='balanced', verbose=True, max_iter=10000, tol=1e-6, C=0.1)
   clf.fit(X,y)
   s = clf.decision_function(X)
 
   sortix = np.argsort(-s)
+  sortix = sortix[:min(200, len(sortix))] # crop at 200 paper recommendations. That's quite a lot.
   user_sim[uid] = [strip_version(meta['pids'][ix]) for ix in list(sortix)]
 
-print 'writing user_sim.p'
-utils.safe_pickle_dump(user_sim, "user_sim.p")
+user_sim_path = 'user_sim.p'
+print('writing', user_sim_path)
+utils.safe_pickle_dump(user_sim, user_sim_path)
