@@ -4,14 +4,15 @@ The script is intended to enrich an existing database pickle (by default db.p),
 so this file will be loaded first, and then new results will be added to it.
 """
 
-import urllib.request
-import time
-import feedparser
 import os
+import time
 import pickle
-import argparse
 import random
-import utils
+import argparse
+import urllib.request
+import feedparser
+
+from utils import Config, safe_pickle_dump
 
 def encode_feedparser_dict(d):
   """ 
@@ -46,7 +47,6 @@ if __name__ == "__main__":
 
   # parse input arguments
   parser = argparse.ArgumentParser()
-  parser.add_argument('--db-path', type=str, default='db.p', help='database pickle filename that we enrich')
   parser.add_argument('--search-query', type=str,
                       default='cat:cs.CV+OR+cat:cs.AI+OR+cat:cs.LG+OR+cat:cs.CL+OR+cat:cs.NE+OR+cat:stat.ML',
                       help='query used for arxiv API. See http://arxiv.org/help/api/user-manual#detailed_examples')
@@ -63,7 +63,7 @@ if __name__ == "__main__":
 
   # lets load the existing database to memory
   try:
-    db = pickle.load(open(args.db_path, 'rb'))
+    db = pickle.load(open(Config.db_path, 'rb'))
   except Exception as e:
     print('error loading existing database:')
     print(e)
@@ -98,6 +98,7 @@ if __name__ == "__main__":
         db[rawid] = j
         print('Updated %s added %s' % (j['updated'].encode('utf-8'), j['title'].encode('utf-8')))
         num_added += 1
+        num_added_total += 1
       else:
         num_skipped += 1
 
@@ -116,7 +117,8 @@ if __name__ == "__main__":
     print('Sleeping for %i seconds' % (args.wait_time , ))
     time.sleep(args.wait_time + random.uniform(0, 3))
 
-  # save the database before we quit
-  print('Saving database with %d papers to %s' % (len(db), args.db_path))
-  utils.safe_pickle_dump(db, args.db_path)
+  # save the database before we quit, if we found anything new
+  if num_added_total > 0:
+    print('Saving database with %d papers to %s' % (len(db), Config.db_path))
+    safe_pickle_dump(db, Config.db_path)
 

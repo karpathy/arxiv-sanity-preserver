@@ -5,6 +5,11 @@ import re
 import pickle
 import tempfile
 
+# global settings
+# -----------------------------------------------------------------------------
+class Config(object):
+    db_path = 'db.p'
+
 # Context managers for atomic writes courtesy of
 # http://stackoverflow.com/questions/2333872/atomic-writing-to-file-with-python
 @contextmanager
