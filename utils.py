@@ -11,6 +11,8 @@ class Config(object):
     db_path = 'db.p'
     pdf_dir = os.path.join('data', 'pdf')
     txt_dir = os.path.join('data', 'txt')
+    thumbs_dir = os.path.join('static', 'thumbs')
+    tmp_dir = 'tmp'
 
 # Context managers for atomic writes courtesy of
 # http://stackoverflow.com/questions/2333872/atomic-writing-to-file-with-python

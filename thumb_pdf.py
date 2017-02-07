@@ -8,17 +8,17 @@ import time
 import shutil
 from subprocess import Popen
 
+from utils import Config
+
 # make sure imagemagick is installed
 if not shutil.which('convert'): # shutil.which needs Python 3.3+
   print("ERROR: you don\'t have imagemagick installed. Install it first before calling this script")
   sys.exit()
 
 # create if necessary the directories we're using for processing and output
-thumbs_dir = os.path.join('static', 'thumbs')
-tmp_dir = 'tmp'
 pdf_dir = os.path.join('data', 'pdf')
-if not os.path.exists(thumbs_dir): os.makedirs(thumbs_dir)
-if not os.path.exists(tmp_dir): os.makedirs(tmp_dir)
+if not os.path.exists(Config.thumbs_dir): os.makedirs(Config.thumbs_dir)
+if not os.path.exists(Config.tmp_dir): os.makedirs(Config.tmp_dir)
 
 # fetch all pdf filenames in the pdf directory
 files_in_pdf_dir = os.listdir(pdf_dir)
@@ -27,7 +27,7 @@ pdf_files = [x for x in files_in_pdf_dir if x.endswith('.pdf')] # filter to just
 # iterate over all pdf files and create the thumbnails
 for i,p in enumerate(pdf_files):
   pdf_path = os.path.join(pdf_dir, p)
-  thumb_path = os.path.join('static', 'thumbs', p + '.jpg')
+  thumb_path = os.path.join(Config.thumbs_dir, p + '.jpg')
 
   if os.path.isfile(thumb_path): 
     print("skipping %s, thumbnail already exists." % (pdf_path, ))
@@ -45,10 +45,10 @@ for i,p in enumerate(pdf_files):
   # that the version above, while more elegant, had some problem with it on some pdfs. I think.
 
   # erase previous intermediate files thumb-*.png in the tmp directory
-  if os.path.isfile(os.path.join(tmp_dir, 'thumb-0.png')):
+  if os.path.isfile(os.path.join(Config.tmp_dir, 'thumb-0.png')):
     for i in range(8):
-      f = os.path.join(tmp_dir, 'thumb-%d.png' % (i,))
-      f2= os.path.join(tmp_dir, 'thumbbuf-%d.png' % (i,))
+      f = os.path.join(Config.tmp_dir, 'thumb-%d.png' % (i,))
+      f2= os.path.join(Config.tmp_dir, 'thumbbuf-%d.png' % (i,))
       if os.path.isfile(f):
         cmd = 'mv %s %s' % (f, f2)
         os.system(cmd)
@@ -60,7 +60,7 @@ for i,p in enumerate(pdf_files):
 
   # spawn async. convert can unfortunately enter an infinite loop, have to handle this.
   # this command will generate 8 independent images thumb-0.png ... thumb-7.png of the thumbnails
-  pp = Popen(['convert', '%s[0-7]' % (pdf_path, ), '-thumbnail', 'x156', os.path.join(tmp_dir, 'thumb.png')])
+  pp = Popen(['convert', '%s[0-7]' % (pdf_path, ), '-thumbnail', 'x156', os.path.join(Config.tmp_dir, 'thumb.png')])
   t0 = time.time()
   while time.time() - t0 < 20: # give it 15 seconds deadline
     ret = pp.poll()
@@ -73,13 +73,13 @@ for i,p in enumerate(pdf_files):
     print("convert command did not terminate in 20 seconds, terminating.")
     pp.terminate() # give up
 
-  if not os.path.isfile(os.path.join(tmp_dir, 'thumb-0.png')):
+  if not os.path.isfile(os.path.join(Config.tmp_dir, 'thumb-0.png')):
     # failed to render pdf, replace with missing image
     missing_thumb_path = os.path.join('static', 'missing.jpg')
     os.system('cp %s %s' % (missing_thumb_path, thumb_path))
     print("could not render pdf, creating a missing image placeholder")
   else:
-    cmd = "montage -mode concatenate -quality 80 -tile x1 %s %s" % (os.path.join(tmp_dir, 'thumb-*.png'), thumb_path)
+    cmd = "montage -mode concatenate -quality 80 -tile x1 %s %s" % (os.path.join(Config.tmp_dir, 'thumb-*.png'), thumb_path)
     print(cmd)
     os.system(cmd)
 
