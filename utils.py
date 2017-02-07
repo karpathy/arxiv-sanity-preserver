@@ -9,6 +9,7 @@ import tempfile
 # -----------------------------------------------------------------------------
 class Config(object):
     db_path = 'db.p'
+    pdf_dir = os.path.join('data', 'pdf')
 
 # Context managers for atomic writes courtesy of
 # http://stackoverflow.com/questions/2333872/atomic-writing-to-file-with-python
