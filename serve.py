@@ -272,6 +272,14 @@ def top():
                         msg='Top papers based on people\'s libraries:')
   return render_template('main.html', **ctx)
 
+@app.route('/toptwtr', methods=['GET'])
+def toptwtr():
+  """ return top papers """
+  papers = TWITTER_TOP
+  ctx = default_context(papers, render_format='toptwtr',
+                        msg='Top papers mentioned on Twitter over last 5 days:')
+  return render_template('main.html', **ctx)
+
 @app.route('/library')
 def library():
   """ render user's library """
@@ -392,6 +400,13 @@ if __name__ == "__main__":
     user_sim = pickle.load(open(Config.user_sim_path, 'rb'))
   else:
     user_sim = {}
+
+  print('loading twitter top', Config.tweet_path)
+  if os.path.isfile(Config.tweet_path):
+    TWITTER_TOP = pickle.load(open(Config.tweet_path, 'rb'))
+    TWITTER_TOP = [db[pid] for count,pid in TWITTER_TOP]
+  else:
+    TWITTER_TOP = []
 
   print('precomputing papers date sorted...')
   DATE_SORTED_PAPERS = date_sort()

@@ -281,6 +281,7 @@ $(document).ready(function(){
   // in top tab: color current choice
   if( render_format === 'recent') { d3.select('#tabrecent').classed('tab-selected', true); }
   if( render_format === 'top') { d3.select('#tabtop').classed('tab-selected', true); }
+  if( render_format === 'toptwtr') { d3.select('#toptwtr').classed('tab-selected', true); }
   if( render_format === 'recommend') { d3.select('#tabrec').classed('tab-selected', true); }
   if( render_format === 'library') { d3.select('#tablib').classed('tab-selected', true); }
 });
@@ -348,6 +349,7 @@ $(document).ready(function(){
 <div id="pagebar">
   <div class="pagelink" id="tabrecent"><a href="/">most recent</a></div>
   <div class="pagelink" id="tabtop"><a href="/top">top recent</a></div>
+  <div class="pagelink" id="tabtwtr"><a href="/toptwtr">top on twitter</a></div>
   <div class="pagelink" id="tabrec"><a href="/recommend">recommended</a></div>
   <div class="pagelink" id="tablib"><a href="/library">library</a></div>
 </div>
