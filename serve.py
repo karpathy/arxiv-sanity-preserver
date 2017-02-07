@@ -14,13 +14,12 @@ from flask import Flask, request, session, url_for, redirect, \
 from flask_limiter import Limiter
 from werkzeug import check_password_hash, generate_password_hash
 
-from utils import safe_pickle_dump, strip_version, isvalidid
+from utils import safe_pickle_dump, strip_version, isvalidid, Config
 
 # various globals
 # -----------------------------------------------------------------------------
 
 # database configuration
-DATABASE = 'as.db'
 if os.path.isfile('secret_key.txt'):
   SECRET_KEY = open('secret_key.txt', 'r').read()
 else:
@@ -36,7 +35,7 @@ SEARCH_DICT = {}
 # -----------------------------------------------------------------------------
 # to initialize the database: sqlite3 as.db < schema.sql
 def connect_db():
-  sqlite_db = sqlite3.connect(DATABASE)
+  sqlite_db = sqlite3.connect(Config.database_path)
   sqlite_db.row_factory = sqlite3.Row # to return dicts rather than tuples
   return sqlite_db
 
@@ -375,27 +374,27 @@ if __name__ == "__main__":
   args = parser.parse_args()
   print(args)
 
-  print('loading db.p...')
-  db = pickle.load(open('db.p', 'rb'))
+  print('loading the paper database', Config.db_path)
+  db = pickle.load(open(Config.db_path, 'rb'))
   
-  print('loading tfidf_meta.p...')
-  meta = pickle.load(open("tfidf_meta.p", "rb"))
+  print('loading tfidf_meta', Config.meta_path)
+  meta = pickle.load(open(Config.meta_path, "rb"))
   vocab = meta['vocab']
   idf = meta['idf']
 
-  print('loading sim_dict.p...')
-  sim_dict = pickle.load(open("sim_dict.p", "rb"))
+  print('loading paper similarities', Config.sim_path)
+  sim_dict = pickle.load(open(Config.sim_path, "rb"))
 
-  print('loading user_sim.p...')
-  if os.path.isfile('user_sim.p'):
-    user_sim = pickle.load(open('user_sim.p', 'rb'))
+  print('loading user recommendations', Config.user_sim_path)
+  if os.path.isfile(Config.user_sim_path):
+    user_sim = pickle.load(open(Config.user_sim_path, 'rb'))
   else:
     user_sim = {}
 
   print('precomputing papers date sorted...')
   DATE_SORTED_PAPERS = date_sort()
 
-  if not os.path.isfile(DATABASE):
+  if not os.path.isfile(Config.database_path):
     print('did not find as.db, trying to create an empty database from schema.sql...')
     print('this needs sqlite3 to be installed!')
     os.system('sqlite3 as.db < schema.sql')
@@ -403,7 +402,7 @@ if __name__ == "__main__":
   # compute top papers in peoples' libraries
   print('computing top papers...')
   def get_popular():
-    sqldb = sqlite3.connect(DATABASE)
+    sqldb = sqlite3.connect(Config.database_path)
     sqldb.row_factory = sqlite3.Row # to return dicts rather than tuples
     libs = sqldb.execute('''select * from library''').fetchall()
     counts = {}
@@ -451,9 +450,9 @@ if __name__ == "__main__":
 
   # caching: check if db.p is younger than search_dict.p
   recompute_index = True
-  if os.path.isfile('search_dict.p'):
-    db_modified_time = os.path.getmtime('db.p')
-    search_modified_time = os.path.getmtime('search_dict.p')
+  if os.path.isfile(Config.search_dict_path):
+    db_modified_time = os.path.getmtime(Config.db_path)
+    search_modified_time = os.path.getmtime(Config.search_dict_path)
     if search_modified_time > db_modified_time:
       # search index exists and is more recent, no need
       recompute_index = False
@@ -470,11 +469,11 @@ if __name__ == "__main__":
       dict_summary = makedict(p['summary'])
       SEARCH_DICT[pid] = merge_dicts([dict_title, dict_authors, dict_categories, dict_summary])
     # and cache it in file
-    print('writing search_dict.p as cache')
-    safe_pickle_dump(SEARCH_DICT, 'search_dict.p')
+    print('writing ', Config.search_dict_path, ' as cache...')
+    safe_pickle_dump(SEARCH_DICT, Config.search_dict_path)
   else:
-    print('loading cached index for faster search...')
-    SEARCH_DICT = pickle.load(open('search_dict.p', 'rb'))
+    print('loading cached index for faster search from', Config.search_dict_path)
+    SEARCH_DICT = pickle.load(open(Config.search_dict_path, 'rb'))
 
   # start
   if args.prod:
