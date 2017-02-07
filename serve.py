@@ -85,6 +85,8 @@ def date_sort():
   for pid,p in db.items():
     timestruct = dateutil.parser.parse(p['updated'])
     p['time_updated'] = int(timestruct.strftime("%s")) # store in struct for future convenience
+    timestruct = dateutil.parser.parse(p['published'])
+    p['time_published'] = int(timestruct.strftime("%s")) # store in struct for future convenience
     scores.append((p['time_updated'], p))
   scores.sort(reverse=True, key=lambda x: x[0])
   out = [sp[1] for sp in scores]
@@ -159,7 +161,7 @@ def papers_from_svm(recent_days=None):
     if recent_days is not None:
       # filter as well to only most recent papers
       curtime = int(time.time()) # in seconds
-      out = [x for x in out if curtime - x['time_updated'] < recent_days*24*60*60]
+      out = [x for x in out if curtime - x['time_published'] < recent_days*24*60*60]
 
   return out
 
@@ -264,7 +266,7 @@ def top():
   legend = {'day':1, '3days':3, 'week':7, 'month':30, 'year':365, 'alltime':10000}
   tt = legend.get(ttstr, 7)
   curtime = int(time.time()) # in seconds
-  papers = [p for p in TOP_SORTED_PAPERS if curtime - p['time_updated'] < tt*24*60*60]
+  papers = [p for p in TOP_SORTED_PAPERS if curtime - p['time_published'] < tt*24*60*60]
   papers = papers_filter_version(papers, vstr)
   ctx = default_context(papers, render_format='top',
                         msg='Top papers based on people\'s libraries:')
