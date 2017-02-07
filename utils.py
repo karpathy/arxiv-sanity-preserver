@@ -19,6 +19,7 @@ class Config(object):
     meta_path = 'tfidf_meta.p'
     sim_path = 'sim_dict.p'
     user_sim_path = 'user_sim.p'
+    tweet_path = 'twitter.p' # written by twitter_daemon.py
     # sql database file
     database_path = 'as.db'
     search_dict_path = 'search_dict.p'
