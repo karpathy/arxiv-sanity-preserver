@@ -8,10 +8,17 @@ import tempfile
 # global settings
 # -----------------------------------------------------------------------------
 class Config(object):
+    # main paper information repo file
     db_path = 'db.p'
+    # intermediate processing folders
     pdf_dir = os.path.join('data', 'pdf')
     txt_dir = os.path.join('data', 'txt')
     thumbs_dir = os.path.join('static', 'thumbs')
+    # intermediate pickles
+    tfidf_path = 'tfidf.p'
+    meta_path = 'tfidf_meta.p'
+    sim_path = 'sim_dict.p'
+
     tmp_dir = 'tmp'
 
 # Context managers for atomic writes courtesy of
