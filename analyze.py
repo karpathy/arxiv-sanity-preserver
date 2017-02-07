@@ -86,7 +86,7 @@ safe_pickle_dump(out, Config.meta_path)
 print("precomputing nearest neighbor queries in batches...")
 X = X.todense() # originally it's a sparse matrix
 sim_dict = {}
-batch_size = 500
+batch_size = 200
 for i in range(0,len(pids),batch_size):
   i1 = min(len(pids), i+batch_size)
   xquery = X[i:i1] # BxD

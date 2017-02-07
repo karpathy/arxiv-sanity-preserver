@@ -7,14 +7,16 @@ import numpy as np
 from sklearn import svm
 from sqlite3 import dbapi2 as sqlite3
 # local imports
-from utils import safe_pickle_dump, strip_version
+from utils import safe_pickle_dump, strip_version, Config
 
-DATABASE = 'as.db'
-if not os.path.isfile(DATABASE):
+num_recommendations = 500 # papers to recommend per user
+# -----------------------------------------------------------------------------
+
+if not os.path.isfile(Config.database_path):
   print("the database file as.db should exist. You can create an empty database with sqlite3 as.db < schema.sql")
   sys.exit()
 
-sqldb = sqlite3.connect(DATABASE)
+sqldb = sqlite3.connect(Config.database_path)
 sqldb.row_factory = sqlite3.Row # to return dicts rather than tuples
 
 def query_db(query, args=(), one=False):
@@ -27,14 +29,11 @@ def query_db(query, args=(), one=False):
 
 # fetch all users
 users = query_db('''select * from user''')
-for u in users: print(u)
 print('number of users: ', len(users))
 
-# load the tfidf matrix
-tfidf_path = os.path.join('data', 'tfidf.p')
-meta_path = 'tfidf_meta.p'
-meta = pickle.load(open(meta_path, 'rb'))
-out = pickle.load(open(tfidf_path, 'rb'))
+# load the tfidf matrix and meta
+meta = pickle.load(open(Config.meta_path, 'rb'))
+out = pickle.load(open(Config.tfidf_path, 'rb'))
 X = out['X']
 X = X.todense()
 
@@ -55,14 +54,13 @@ for ii,u in enumerate(users):
   y = np.zeros(X.shape[0])
   for ix in posix: y[ix] = 1
 
-  clf = svm.LinearSVC(class_weight='balanced', verbose=True, max_iter=10000, tol=1e-6, C=0.1)
+  clf = svm.LinearSVC(class_weight='balanced', verbose=False, max_iter=10000, tol=1e-6, C=0.1)
   clf.fit(X,y)
   s = clf.decision_function(X)
 
   sortix = np.argsort(-s)
-  sortix = sortix[:min(200, len(sortix))] # crop at 200 paper recommendations. That's quite a lot.
+  sortix = sortix[:min(num_recommendations, len(sortix))] # crop paper recommendations to save space
   user_sim[uid] = [strip_version(meta['pids'][ix]) for ix in list(sortix)]
 
-user_sim_path = 'user_sim.p'
-print('writing', user_sim_path)
-safe_pickle_dump(user_sim, user_sim_path)
+print('writing', Config.user_sim_path)
+safe_pickle_dump(user_sim, Config.user_sim_path)
