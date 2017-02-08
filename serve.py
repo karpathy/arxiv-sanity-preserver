@@ -2,8 +2,8 @@ import os
 import json
 import time
 import pickle
-import dateutil.parser
 import argparse
+import dateutil.parser
 from random import shuffle
 
 import numpy as np
@@ -13,6 +13,7 @@ from flask import Flask, request, session, url_for, redirect, \
      render_template, abort, g, flash, _app_ctx_stack
 from flask_limiter import Limiter
 from werkzeug import check_password_hash, generate_password_hash
+import pymongo
 
 from utils import safe_pickle_dump, strip_version, isvalidid, Config
 
@@ -275,7 +276,8 @@ def top():
 @app.route('/toptwtr', methods=['GET'])
 def toptwtr():
   """ return top papers """
-  papers = TWITTER_TOP
+  cursor = tweets_top.find().sort([('vote', pymongo.DESCENDING)]).limit(100)
+  papers = [db[rec['pid']] for rec in cursor]
   ctx = default_context(papers, render_format='toptwtr',
                         msg='Top papers mentioned on Twitter over last 5 days:')
   return render_template('main.html', **ctx)
@@ -384,6 +386,11 @@ if __name__ == "__main__":
   args = parser.parse_args()
   print(args)
 
+  if not os.path.isfile(Config.database_path):
+    print('did not find as.db, trying to create an empty database from schema.sql...')
+    print('this needs sqlite3 to be installed!')
+    os.system('sqlite3 as.db < schema.sql')
+
   print('loading the paper database', Config.db_path)
   db = pickle.load(open(Config.db_path, 'rb'))
   
@@ -396,25 +403,18 @@ if __name__ == "__main__":
   sim_dict = pickle.load(open(Config.sim_path, "rb"))
 
   print('loading user recommendations', Config.user_sim_path)
+  user_sim = {}
   if os.path.isfile(Config.user_sim_path):
     user_sim = pickle.load(open(Config.user_sim_path, 'rb'))
-  else:
-    user_sim = {}
-
-  print('loading twitter top', Config.tweet_path)
-  if os.path.isfile(Config.tweet_path):
-    TWITTER_TOP = pickle.load(open(Config.tweet_path, 'rb'))
-    TWITTER_TOP = [db[pid] for count,pid in TWITTER_TOP]
-  else:
-    TWITTER_TOP = []
+    
+  print('connecting to mongodb...')
+  client = pymongo.MongoClient()
+  mdb = client.arxiv
+  tweets_top = mdb.tweets_top # "tweets_top" collection will have a single document. ah well
+  print('mongodb tweets_top collection size:', tweets_top.count())
 
   print('precomputing papers date sorted...')
   DATE_SORTED_PAPERS = date_sort()
-
-  if not os.path.isfile(Config.database_path):
-    print('did not find as.db, trying to create an empty database from schema.sql...')
-    print('this needs sqlite3 to be installed!')
-    os.system('sqlite3 as.db < schema.sql')
 
   # compute top papers in peoples' libraries
   print('computing top papers...')
