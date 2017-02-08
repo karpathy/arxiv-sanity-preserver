@@ -277,7 +277,7 @@ def top():
 def toptwtr():
   """ return top papers """
   cursor = tweets_top.find().sort([('vote', pymongo.DESCENDING)]).limit(100)
-  papers = [db[rec['pid']] for rec in cursor]
+  papers = [db[rec['pid']] for rec in cursor if rec['pid'] in db]
   ctx = default_context(papers, render_format='toptwtr',
                         msg='Top papers mentioned on Twitter over last 5 days:')
   return render_template('main.html', **ctx)
