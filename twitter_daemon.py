@@ -75,6 +75,15 @@ tweets_top = mdb.tweets_top # "tweets_top" collection will have a single documen
 print('mongodb tweets collection size:', tweets.count())
 print('mongodb tweets_top collection size:', tweets_top.count())
 
+# load banned accounts
+banned = {}
+if os.path.isfile(Config.banned_path):
+  with open(Config.banned_path, 'r') as f:
+    lines = f.read().split('\n')
+  for l in lines:
+    if l: banned[l] = 1 # mark banned
+  print('banning users:', list(banned.keys()))
+
 # main loop
 db_pids, last_db_load = None, 0
 while True:
@@ -92,6 +101,7 @@ while True:
     arxiv_pids = [p for p in arxiv_pids if p in db_pids] # filter to those that are in our paper db
     if not arxiv_pids: continue # nothing we know about here, lets move on
     if tweets.find_one({'id':r.id}): continue # we already have this item
+    if r.user.screen_name in banned: continue # banned user, very likely a bot
 
     # create the tweet. intentionally making it flat here without user nesting
     d = parser.parse(r.created_at) # datetime instance

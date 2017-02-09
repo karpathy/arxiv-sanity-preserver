@@ -24,6 +24,7 @@ class Config(object):
     database_path = 'as.db'
     serve_cache_path = 'serve_cache.p'
     
+    banned_path = 'banned.txt' # for twitter users who are banned
     tmp_dir = 'tmp'
 
 # Context managers for atomic writes courtesy of
