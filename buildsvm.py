@@ -9,7 +9,7 @@ from sqlite3 import dbapi2 as sqlite3
 # local imports
 from utils import safe_pickle_dump, strip_version, Config
 
-num_recommendations = 500 # papers to recommend per user
+num_recommendations = 1000 # papers to recommend per user
 # -----------------------------------------------------------------------------
 
 if not os.path.isfile(Config.database_path):
