@@ -20,6 +20,7 @@ from utils import Config
 # settings
 # -----------------------------------------------------------------------------
 sleep_time = 60*10 # in seconds, between twitter API calls. Default rate limit is 180 per 15 minutes
+max_tweet_records = 15
 
 # convenience functions
 # -----------------------------------------------------------------------------
@@ -128,16 +129,25 @@ while True:
   raw_votes, votes, records_dict = {}, {}, {}
   for tweet in relevant:
     # give people with more followers more vote, as it's seen by more people and contributes to more hype
-    float_vote = min(math.log10(tweet['user_followers_count'] + 1), 4.0)
+    float_vote = min(math.log10(tweet['user_followers_count'] + 1), 4.0)/2.0
     for pid in tweet['pids']:
       if not pid in records_dict: 
         records_dict[pid] = {'pid':pid, 'tweets':[], 'vote': 0.0, 'raw_vote': 0} # create a new entry for this pid
-      records_dict[pid]['tweets'].append({'screen_name':tweet['user_screen_name'], 'image_url':tweet['user_image_url'], 'text':tweet['text'] })
+      records_dict[pid]['tweets'].append({'screen_name':tweet['user_screen_name'], 'image_url':tweet['user_image_url'], 'text':tweet['text'], 'weight':float_vote })
       votes[pid] = votes.get(pid, 0.0) + float_vote
       raw_votes[pid] = raw_votes.get(pid, 0) + 1
-  for pid in votes: 
+  
+  # record the total amount of vote/raw_vote for each pid
+  for pid in votes:
     records_dict[pid]['vote'] = votes[pid] # record the total amount of vote across relevant tweets
     records_dict[pid]['raw_vote'] = raw_votes[pid] 
+
+  # crop the tweets to only some number of highest weight ones (for efficiency)
+  for pid, d in records_dict.items():
+    d['tweets'].sort(reverse=True, key=lambda x: x['weight'])
+    if len(d['tweets']) > max_tweet_records: d['tweets'] = d['tweets'][:max_tweet_records]
+
+  # some debugging information
   votes = [(v,k) for k,v in votes.items()]
   votes.sort(reverse=True, key=lambda x: x[0]) # sort descending by votes
   print('top votes:', votes[:min(len(votes), 10)])

@@ -22,6 +22,7 @@
 <script>
 
 // passed in from flask as json
+var tweets = {{ tweets | tojson }};
 var papers = {{ papers | tojson }};
 var msg = "{{ msg }}";
 var render_format = "{{ render_format }}";
@@ -203,6 +204,31 @@ function addPapers(num, dynamic) {
       }
   	}
 
+    if(ix < tweets.length) {
+      var ix_tweets = tweets[ix].tweets; // looks a little weird, i know
+      var tdiv = div.append('div').classed('twdiv', true);
+      var tcontentdiv = div.append('div').classed('twcont', true);
+      for(var j=0,m=ix_tweets.length;j<m;j++) {
+        var t = ix_tweets[j];
+        var timgdiv = tdiv.append('img').classed('twimg', true).attr('src', t.image_url);
+        var act_fun = function(elt, txt, tname, imgelt){  // mouseover handler: show tweet text.
+          return function() {
+            elt.attr('style', 'display:block;'); // make visible
+            elt.html(''); // clear it
+            elt.append('div').append('a').attr('href', 'https://twitter.com/' + tname).attr('target', '_blank')
+                                         .attr('style', 'font-weight:bold; color:#05f; text-decoration:none;').text('@' + tname + ':'); // show tweet source
+            elt.append('div').text(txt) // show tweet text
+            imgelt.attr('style', 'border: 2px solid #05f;'); 
+          }
+        }(tcontentdiv, t.text, t.screen_name, timgdiv)
+        timgdiv.on('mouseover', act_fun);
+        timgdiv.on('click', act_fun);
+        timgdiv.on('mouseout', function(elt){  // mouseover handler: show tweet text.
+          return function() { elt.attr('style', ''); }
+        }(timgdiv));
+      }
+    }
+
     if(render_format == 'paper' && ix === 0) {
       // lets insert a divider/message
       div.append('div').classed('paperdivider', true).html('Most similar papers:');
@@ -219,7 +245,7 @@ $(document).ready(function(){
   if(msg !== '') { d3.select("#rtable").append('div').classed('msg', true).html(msg); }
 
   // add papers to #rtable
-	addPapers(20, false);
+	addPapers(10, false);
 
   // set up inifinite scrolling for adding more papers
   $(window).on('scroll', function(){
@@ -231,6 +257,9 @@ $(document).ready(function(){
       addPapers(5, true);
     }
   });
+
+  // just in case scrolling is broken somehow, provide a button handler explicit
+  $("#loadmorebtn").on('click', function(){ addPapers(5, true); });
 
 	if(!(typeof urlq == 'undefined')) {
 		d3.select("#qfield").attr('value', urlq.replace(/\+/g, " "));
@@ -359,7 +388,10 @@ $(document).ready(function(){
 
 <div id="maindiv">
 
-<div id="rtable">
+<div id="rtable"></div>
+
+<div id="loadmore">
+  <button id="loadmorebtn">Load more</button>  
 </div>
 
 </div>

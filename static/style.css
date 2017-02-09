@@ -340,3 +340,27 @@ ul.flashes li {
 	padding: 10px;
 	text-align: center;
 }
+.twdiv {
+	margin-top:2px;
+}
+.twimg {
+	width: 36px;
+	height: 36px;
+	border: 2px solid #fff;
+}
+.twcont {
+	background-color: #e8f6ff;
+	border: 1px solid #e1e8ed;
+	padding: 4px;
+	font-size: 14px;
+	display: none;
+}
+#loadmore {
+	text-align: center;
+}
+#loadmorebtn {
+	height:50px;
+	width:200px;
+	margin-top:20px;
+	background-color: #fff;
+}
