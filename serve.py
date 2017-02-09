@@ -205,7 +205,7 @@ def encode_json(ps, n=10, send_images=True, send_abstracts=True):
 
 def default_context(papers, **kws):
   top_papers = encode_json(papers, args.num_results)
-  ans = dict(papers=top_papers, numresults=len(papers), totpapers=len(db), msg='')
+  ans = dict(papers=top_papers, numresults=len(papers), totpapers=len(db), tweets=[], msg='')
   ans.update(kws)
   return ans
 
@@ -265,8 +265,13 @@ def top():
 def toptwtr():
   """ return top papers """
   cursor = tweets_top.find().sort([('vote', pymongo.DESCENDING)]).limit(100)
-  papers = [db[rec['pid']] for rec in cursor if rec['pid'] in db]
-  ctx = default_context(papers, render_format='toptwtr',
+  papers, tweets = [], []
+  for rec in cursor:
+    if rec['pid'] in db:
+      papers.append(db[rec['pid']])
+      tweet = {k:v for k,v in rec.items() if k != '_id'}
+      tweets.append(tweet)
+  ctx = default_context(papers, render_format='toptwtr', tweets=tweets,
                         msg='Top papers mentioned on Twitter over last 5 days:')
   return render_template('main.html', **ctx)
 
