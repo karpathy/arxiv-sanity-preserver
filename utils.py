@@ -20,8 +20,9 @@ class Config(object):
     sim_path = 'sim_dict.p'
     user_sim_path = 'user_sim.p'
     # sql database file
+    db_serve_path = 'db2.p' # an enriched db.p with various preprocessing info
     database_path = 'as.db'
-    search_dict_path = 'search_dict.p'
+    serve_cache_path = 'serve_cache.p'
     
     tmp_dir = 'tmp'
 

@@ -35,7 +35,8 @@ The processing pipeline requires you to run a series of scripts, and at this sta
 4. Run `thumb_pdf.py` to export thumbnails of all pdfs to `thumb`
 5. Run `analyze.py` to compute tfidf vectors for all documents based on bigrams. Saves a `tfidf.p`, `tfidf_meta.p` and `sim_dict.p` pickle files.
 6. Run `buildsvm.py` to train SVMs for all users (if any), exports a pickle `user_sim.p`
-7. Run the flask server with `serve.py` (and make sure to run `sqlite3 as.db < schema.sql` if this is the very first time ever you're starting arxiv-sanity, which initializes an empty database). Visit localhost:5000 and enjoy sane viewing of papers!
+7. Run `make_cache.py` for various preprocessing so that server starts faster (and make sure to run `sqlite3 as.db < schema.sql` if this is the very first time ever you're starting arxiv-sanity, which initializes an empty database).
+8. Run the flask server with `serve.py`. Visit localhost:5000 and enjoy sane viewing of papers!
 
 Optionally you can also run the `twitter_daemon.py` in a screen session, which uses your Twitter API credentials (stored in `twitter.txt`) to query Twitter periodically looking for mentions of papers in the database, and writes the results to the pickle file `twitter.p`.
 
@@ -51,32 +52,22 @@ You also want to create a `secret_key.txt` file and fill it with random text (se
 
 ### Current workflow
 
-Running the site live is not currently set up for a fully automatic plug and play operation. Instead it's a bit of a manual process and I thought I should document how I'm keeping this code alive right now. I have two machines: a **local** machine that does a lot of the updating and compute and a **remote** machine that hosts the site.
-
-I have a script that performs the following update early morning on my local machine:
+Running the site live is not currently set up for a fully automatic plug and play operation. Instead it's a bit of a manual process and I thought I should document how I'm keeping this code alive right now. I have a script that performs the following update early morning after arxiv papers come out (~midnight PST):
 
 ```bash
-# pull the database (by default stored in as.db) from remote to local
-rsync -v karpathy@REMOTE:/home/karpathy/arxiv-sanity-preserver/as.db as.db
-
-# now perform the update and recomputation:
 python fetch_papers.py
 python download_pdfs.py
 python parse_pdf_to_text.py
 python thumb_pdf.py
 python analyze.py
 python buildsvm.py
-
-# now rsync the results and new thumbnails from local to remote
-rsync -v db.p tfidf_meta.p sim_dict.p user_sim.p karpathy@REMOTE:/home/karpathy/arxiv-sanity-preserver
-rsync -vr static/thumbs karpathy@REMOTE:/home/karpathy/arxiv-sanity-preserver/static
-
+python make_cache.py
 ```
 
-Of course, I had to set up the ssh keys so that rsync/ssh commands can run without needing password. I think log on to the remote machine and restart the server. I run the server in a screen session, so I `ssh` to REMOTE, `screen -r` the screen session, and restart the server:
+I run the server in a screen session, so `screen -S serve` to create it (or `-r` to reattach to it) and run:
 
 ```bash
 python serve.py --prod --port 80
 ```
 
-The server will load the new files and begin hosting the site. Yes, currently the server has to be restarted, so the site goes down for about 15 seconds. There are several ways to make this cleaner in the future. Note that on some systems you can't use port 80 without `sudo`. Your two options are to use `iptables` to reroute ports, or less recommended: you can use [setcap](http://stackoverflow.com/questions/413807/is-there-a-way-for-non-root-processes-to-bind-to-privileged-ports-1024-on-l) to elavate the permissions of your `python` interpreter that runs `serve.py`. In this case I'd recommend careful permissions and maybe virtualenv, etc.
+The server will load the new files and begin hosting the site. Note that on some systems you can't use port 80 without `sudo`. Your two options are to use `iptables` to reroute ports or you can use [setcap](http://stackoverflow.com/questions/413807/is-there-a-way-for-non-root-processes-to-bind-to-privileged-ports-1024-on-l) to elavate the permissions of your `python` interpreter that runs `serve.py`. In this case I'd recommend careful permissions and maybe virtualenv, etc.

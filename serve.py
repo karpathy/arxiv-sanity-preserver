@@ -29,8 +29,6 @@ app = Flask(__name__)
 app.config.from_object(__name__)
 limiter = Limiter(app, global_limits=["100 per hour", "20 per minute"])
 
-SEARCH_DICT = {}
-
 # -----------------------------------------------------------------------------
 # utilities for database interactions 
 # -----------------------------------------------------------------------------
@@ -81,17 +79,6 @@ def teardown_request(exception):
 # -----------------------------------------------------------------------------
 # search/sort functionality
 # -----------------------------------------------------------------------------
-def date_sort():
-  scores = []
-  for pid,p in db.items():
-    timestruct = dateutil.parser.parse(p['updated'])
-    p['time_updated'] = int(timestruct.strftime("%s")) # store in struct for future convenience
-    timestruct = dateutil.parser.parse(p['published'])
-    p['time_published'] = int(timestruct.strftime("%s")) # store in struct for future convenience
-    scores.append((p['time_updated'], p))
-  scores.sort(reverse=True, key=lambda x: x[0])
-  out = [sp[1] for sp in scores]
-  return out
 
 def papers_search(qraw):
   qparts = qraw.lower().strip().split() # split by spaces
@@ -225,7 +212,7 @@ def default_context(papers, **kws):
 @app.route("/")
 def intmain():
   vstr = request.args.get('vfilter', 'all')
-  papers = DATE_SORTED_PAPERS # precomputed
+  papers = [db[pid] for pid in DATE_SORTED_PIDS] # precomputed
   papers = papers_filter_version(papers, vstr)
   ctx = default_context(papers, render_format='recent',
                         msg='Showing most recent Arxiv papers:')
@@ -267,7 +254,8 @@ def top():
   legend = {'day':1, '3days':3, 'week':7, 'month':30, 'year':365, 'alltime':10000}
   tt = legend.get(ttstr, 7)
   curtime = int(time.time()) # in seconds
-  papers = [p for p in TOP_SORTED_PAPERS if curtime - p['time_published'] < tt*24*60*60]
+  top_sorted_papers = [db[p] for p in TOP_SORTED_PIDS]
+  papers = [p for p in top_sorted_papers if curtime - p['time_published'] < tt*24*60*60]
   papers = papers_filter_version(papers, vstr)
   ctx = default_context(papers, render_format='top',
                         msg='Top papers based on people\'s libraries:')
@@ -391,8 +379,8 @@ if __name__ == "__main__":
     print('this needs sqlite3 to be installed!')
     os.system('sqlite3 as.db < schema.sql')
 
-  print('loading the paper database', Config.db_path)
-  db = pickle.load(open(Config.db_path, 'rb'))
+  print('loading the paper database', Config.db_serve_path)
+  db = pickle.load(open(Config.db_serve_path, 'rb'))
   
   print('loading tfidf_meta', Config.meta_path)
   meta = pickle.load(open(Config.meta_path, "rb"))
@@ -406,91 +394,18 @@ if __name__ == "__main__":
   user_sim = {}
   if os.path.isfile(Config.user_sim_path):
     user_sim = pickle.load(open(Config.user_sim_path, 'rb'))
-    
+  
+  print('loading serve cache...', Config.serve_cache_path)
+  cache = pickle.load(open(Config.serve_cache_path, "rb"))
+  DATE_SORTED_PIDS = cache['date_sorted_pids']
+  TOP_SORTED_PIDS = cache['top_sorted_pids']
+  SEARCH_DICT = cache['search_dict']
+
   print('connecting to mongodb...')
   client = pymongo.MongoClient()
   mdb = client.arxiv
   tweets_top = mdb.tweets_top # "tweets_top" collection will have a single document. ah well
   print('mongodb tweets_top collection size:', tweets_top.count())
-
-  print('precomputing papers date sorted...')
-  DATE_SORTED_PAPERS = date_sort()
-
-  # compute top papers in peoples' libraries
-  print('computing top papers...')
-  def get_popular():
-    sqldb = sqlite3.connect(Config.database_path)
-    sqldb.row_factory = sqlite3.Row # to return dicts rather than tuples
-    libs = sqldb.execute('''select * from library''').fetchall()
-    counts = {}
-    for lib in libs:
-      pid = lib['paper_id']
-      counts[pid] = counts.get(pid, 0) + 1
-    return counts
-  top_counts = get_popular()
-  top_paper_counts = sorted([(v,k) for k,v in top_counts.items() if v > 0], reverse=True)
-  print(top_paper_counts[:min(30, len(top_paper_counts))])
-  TOP_SORTED_PAPERS = [db[q[1]] for q in top_paper_counts]
-
-  # compute min and max time for all papers
-  tts = [time.mktime(dateutil.parser.parse(p['updated']).timetuple()) for pid,p in db.items()]
-  ttmin = min(tts)*1.0
-  ttmax = max(tts)*1.0
-  for pid,p in db.items():
-    tt = time.mktime(dateutil.parser.parse(p['updated']).timetuple())
-    p['tscore'] = (tt-ttmin)/(ttmax-ttmin)
-
-  # some utilities for creating a search index for faster search
-  punc = "'!\"#$%&\'()*+,./:;<=>?@[\\]^_`{|}~'" # removed hyphen from string.punctuation
-  trans_table = {ord(c): None for c in punc}
-  def makedict(s, forceidf=None, scale=1.0):
-    words = set(s.lower().translate(trans_table).strip().split())
-    out = {}
-    for w in words: # todo: if we're using bigrams in vocab then this won't search over them
-      if forceidf is None:
-        if w in vocab:
-          # we have idf for this
-          idfval = idf[vocab[w]]*scale
-        else:
-          idfval = 1.0*scale # assume idf 1.0 (low)
-      else:
-        idfval = forceidf
-      out[w] = idfval
-    return out
-
-  def merge_dicts(dlist):
-    out = {}
-    for d in dlist:
-      for k,v in d.items():
-        out[k] = out.get(k,0) + v
-    return out
-
-  # caching: check if db.p is younger than search_dict.p
-  recompute_index = True
-  if os.path.isfile(Config.search_dict_path):
-    db_modified_time = os.path.getmtime(Config.db_path)
-    search_modified_time = os.path.getmtime(Config.search_dict_path)
-    if search_modified_time > db_modified_time:
-      # search index exists and is more recent, no need
-      recompute_index = False
-  if recompute_index:
-    print('building an index for faster search...')
-    for pid in db:
-      p = db[pid]
-      dict_title = makedict(p['title'], forceidf=5, scale=3)
-      dict_authors = makedict(' '.join(x['name'] for x in p['authors']), forceidf=5)
-      dict_categories = {x['term'].lower():5 for x in p['tags']}
-      if 'and' in dict_authors: 
-        # special case for "and" handling in authors list
-        del dict_authors['and']
-      dict_summary = makedict(p['summary'])
-      SEARCH_DICT[pid] = merge_dicts([dict_title, dict_authors, dict_categories, dict_summary])
-    # and cache it in file
-    print('writing ', Config.search_dict_path, ' as cache...')
-    safe_pickle_dump(SEARCH_DICT, Config.search_dict_path)
-  else:
-    print('loading cached index for faster search from', Config.search_dict_path)
-    SEARCH_DICT = pickle.load(open(Config.search_dict_path, 'rb'))
 
   # start
   if args.prod:
@@ -506,5 +421,5 @@ if __name__ == "__main__":
     IOLoop.instance().start()
   else:
     print('starting flask!')
-    app.debug = True
-    app.run(port=args.port)
+    app.debug = False
+    app.run(port=args.port, host='0.0.0.0')
