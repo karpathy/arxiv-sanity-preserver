@@ -264,6 +264,8 @@ def top():
 @app.route('/toptwtr', methods=['GET'])
 def toptwtr():
   """ return top papers """
+  ttstr = request.args.get('timefilter', 'day') # default is day
+  tweets_top = {'day':tweets_top1, 'week':tweets_top7, 'month':tweets_top30}[ttstr]
   cursor = tweets_top.find().sort([('vote', pymongo.DESCENDING)]).limit(100)
   papers, tweets = [], []
   for rec in cursor:
@@ -272,7 +274,7 @@ def toptwtr():
       tweet = {k:v for k,v in rec.items() if k != '_id'}
       tweets.append(tweet)
   ctx = default_context(papers, render_format='toptwtr', tweets=tweets,
-                        msg='Top papers mentioned on Twitter over last 5 days:')
+                        msg='Top papers mentioned on Twitter over last ' + ttstr + ':')
   return render_template('main.html', **ctx)
 
 @app.route('/library')
@@ -409,8 +411,12 @@ if __name__ == "__main__":
   print('connecting to mongodb...')
   client = pymongo.MongoClient()
   mdb = client.arxiv
-  tweets_top = mdb.tweets_top # "tweets_top" collection will have a single document. ah well
-  print('mongodb tweets_top collection size:', tweets_top.count())
+  tweets_top1 = mdb.tweets_top1
+  tweets_top7 = mdb.tweets_top7
+  tweets_top30 = mdb.tweets_top30
+  print('mongodb tweets_top1 collection size:', tweets_top1.count())
+  print('mongodb tweets_top7 collection size:', tweets_top7.count())
+  print('mongodb tweets_top30 collection size:', tweets_top30.count())
 
   # start
   if args.prod:
