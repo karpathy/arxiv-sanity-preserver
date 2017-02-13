@@ -6,6 +6,10 @@ scipy
 # sciki-learn is only for sparse arrays
 scikit-learn
 
+# twitter
+twitter
+pytz
+
 # the following are only for serve.py
 python-dateutil
 flask
