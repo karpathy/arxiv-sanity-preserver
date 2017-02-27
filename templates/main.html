@@ -85,7 +85,10 @@ function build_authors_html(authors) {
 	var res = '';
 	for(var i=0,n=authors.length;i<n;i++) {
 		var link = '/search?q=' + authors[i].replace(/ /g, "+");
-		res += '<a href="' + link + '">' + authors[i] + '</a>';
+        var node = document.createElement('a');
+        node.setAttribute('href', link);
+        node.textContent = authors[i];
+        res += node.outerHTML;
 		if(i<n-1) res += ', ';
 	}
 	return res;
@@ -95,7 +98,10 @@ function build_categories_html(tags) {
     var res = '';
     for(var i=0,n=tags.length;i<n;i++) {
         var link = '/search?q=' + tags[i].replace(/ /g, "+");
-        res += '<a href="' + link + '">' + tags[i] + '</a>';
+        var node = document.createElement('a');
+        node.setAttribute('href', link);
+        node.textContent = tags[i];
+        res += node.outerHTML;
 		if(i<n-1) res += ' | ';
     }
     return res;
