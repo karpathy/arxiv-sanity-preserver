@@ -222,6 +222,7 @@ function addPapers(num, dynamic) {
       var ix_tweets = tweets[ix].tweets; // looks a little weird, i know
       var tdiv = div.append('div').classed('twdiv', true);
       var tcontentdiv = div.append('div').classed('twcont', true);
+      tdiv.append('div').classed('tweetcount', true).text(tweets[ix].num_tweets + ' tweets:');
       for(var j=0,m=ix_tweets.length;j<m;j++) {
         var t = ix_tweets[j];
         var border_col = t.ok ? '#3c3' : '#fff'; // distinguish non-boring tweets visually making their border green

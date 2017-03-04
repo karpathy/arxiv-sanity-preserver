@@ -170,6 +170,7 @@ while True:
 
     # crop the tweets to only some number of highest weight ones (for efficiency)
     for pid, d in records_dict.items():
+      d['num_tweets'] = len(d['tweets']) # back this up before we crop
       d['tweets'].sort(reverse=True, key=lambda x: x['weight'])
       if len(d['tweets']) > max_tweet_records: d['tweets'] = d['tweets'][:max_tweet_records]
 

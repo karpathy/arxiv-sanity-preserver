@@ -364,3 +364,12 @@ ul.flashes li {
 	margin-top:20px;
 	background-color: #fff;
 }
+.tweetcount {
+	height: 26px;
+	border: 2px solid #fff;
+	background-color: #eee;
+	display: inline-block;
+	vertical-align: top;
+	padding: 10px 4px 0px 4px;
+	font-size: 14px;
+}
