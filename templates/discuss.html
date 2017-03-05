@@ -78,6 +78,52 @@ function renderPost() {
   if (typeof MathJax !== 'undefined') { MathJax.Hub.Queue(["Typeset",MathJax.Hub]); }
 }
 
+function doPost() {
+  // lets put together a POST request to submit a new post in the discussion.
+  var txt = $("#post-text").val();
+  // do some checks etc
+  if(txt.length <= 5) { 
+    $("#errors-etc").html('Post is too short. Come on, what are you doing?').slideDown("fast");
+    return; 
+  }
+  if(txt.length > 10000) { 
+    $("#errors-etc").html('Post is too long! What are you doing?').slideDown("fast");
+    return; 
+  }
+
+  var conf = '';
+  var sel = document.querySelector('input[name="conf"]:checked');
+  if(sel !== null) { conf = sel.value; }
+
+  var anon = 0;
+  var sel = document.querySelector('input[name="anon"]:checked');
+  if(sel !== null) { anon = 1; }
+
+  var request_data = {}
+  request_data.txt = txt;
+  request_data.conf = conf;
+  request_data.anon = anon;
+  console.log('request data:');
+  console.log(request_data);
+
+  $.post("/comment", request_data)
+   .done(function(data){
+      // toggle state of the image to reflect the state of the server, as reported by response
+      if(data === 'OK') {
+        $("#errors-etc").html('Posted!').slideDown("fast");
+        setInterval(function(){location.reload(false);}, 1000);
+      } else {
+        $("#errors-etc").html(data).slideDown("fast");
+      }
+   })
+   .fail(function(xhr, status, error) {
+      console.log(xhr);
+      console.log(status);
+      console.log(error);
+      $("#errors-etc").html('Request failed, sorry. See console to maybe debug.').slideDown("fast");
+   });
+}
+
 // when page loads...
 $(document).ready(function(){
 	urlq = QueryString.q;
@@ -94,12 +140,10 @@ $(document).ready(function(){
   });
 
   $("#btnpost").click(function(){
-    console.log('okay posting.');
+    doPost();
   })
-
   // periodically try to render a preview of the post
   setInterval(renderPost, 250);
-
 });
 
 </script>
@@ -152,8 +196,8 @@ $(document).ready(function(){
   <!-- contains the paper of interest -->
   <div id="rtable"></div>
   <!-- functionality to add new comments -->
-  <div id="pitchin-cfa" style="background-color: #ffd299; border-radius: 5px 5px 0px 0px; padding: 5px; margin-top: 5px; cursor: pointer;">Pitch in!</div>
-  <div id="pitchin" style="background-color: #f0f4ff; padding: 5px 5px 10px 5px; border-radius: 0px 0px 5px 5px; display: none;">
+  <div id="pitchin-cfa" style="background-color:#d7e5ff; border-radius: 5px 5px 0px 0px; padding: 5px; margin-top: 5px; cursor: pointer;">Pitch in!</div>
+  <div id="pitchin" style="padding: 5px 5px 10px 5px; border-radius: 0px 0px 5px 5px; display: none;">
     <div>
       <div class="piitemdo">- <b>DO</b>: Add helpful links to code, project page, or related discussion.</div>
       <div class="piitemdo">- <b>DO</b>: Offer <u>constructive</u> comments on this work.</div>
@@ -170,11 +214,23 @@ $(document).ready(function(){
           <div style="margin-top: 5px;padding-top: 5px;font-size: 20px;">Live preview:</div>
           <div id="preview" style="background-color: #fff;padding: 5px;border: 1px solid #999;"></div>
         </div>
+        <div style="background-color: #eee; padding:5px;">
+          <form action="">
+            On this paper's topic, I:
+            <input type="radio" name="conf" value="publish"> publish
+            <input type="radio" name="conf" value="read"> read
+            <input type="radio" name="conf" value="skim"> skim
+            <input type="radio" name="conf" value="new" checked> new
+            <br>
+            <input type="checkbox" name="anon" value="anon"> Post anonymously
+          </form>
+        </div>
         <div><button id="btnpost" style="margin-top:5px;" class="ppbutton">Post</button></div>
+        <div id="errors-etc" style="display:none; background-color:#fee; padding:5px; margin-top:5px;"></div>
       </div>
     </div>
   </div>
-
+  
   <!-- contains the discussion -->
   <div id="discussion">
     <div style="padding:5px; margin-top:10px; font-size:20px;">Discussion:</div>
