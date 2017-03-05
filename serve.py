@@ -236,6 +236,20 @@ def discuss():
   ctx = default_context(papers, render_format='default', comments=comments)
   return render_template('discuss.html', **ctx)
 
+@app.route('/comment', methods=['POST'])
+def comment():
+  """ user wants to post a comment """
+
+  username = 'anon'
+  if g.user:
+    username = get_username(session['user_id'])
+
+  conf = request.form['conf']
+  anon = request.form['anon']
+  print(username, conf, anon)
+  
+  return 'OK'
+
 @app.route("/search", methods=['GET'])
 def search():
   q = request.args.get('q', '') # get the search request
