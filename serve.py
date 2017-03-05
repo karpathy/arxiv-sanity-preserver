@@ -241,7 +241,7 @@ def discuss():
 @app.route('/comment', methods=['POST'])
 def comment():
   """ user wants to post a comment """
-  anon = request.form['anon']
+  anon = int(request.form['anon'])
 
   if g.user and (not anon):
     username = get_username(session['user_id'])
