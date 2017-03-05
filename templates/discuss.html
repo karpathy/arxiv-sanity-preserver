@@ -44,8 +44,7 @@ var msg = "{{ msg }}";
 var render_format = "{{ render_format }}";
 var username = "{{ g.user.username }}";
 var numresults = "{{ numresults }}";
-
-var urlq = ''; // global will be read in to QueryString when load is done
+var pidv = "{{ pidv }}"
 
 function renderComments() {
   var root = d3.select("#discussion");
@@ -54,10 +53,15 @@ function renderComments() {
   for(var i=0;i<n;i++) {
     // show the comment
     var c = comments[i];
+    if(typeof c.text === 'undefined') { var text = ''; } else { var text = c.text; }
+    var time_text = timeConverter(c.time_posted);
     var cdiv = root.append('div').classed('comment', true);
-    cdiv.append('div').classed('cuser', true).html('@'+c.user);
-    cdiv.append('div').classed('ctime', true).html(c.time);
-    cdiv.append('div').classed('ctext', true).html(c.text);
+    var cdiv_header = cdiv.append('div').classed('cheader', true);
+    cdiv_header.append('div').classed('cuser', true).html('@'+c.user);
+    cdiv_header.append('div').classed('ctime', true).html(time_text);
+    cdiv_header.append('div').classed('cver', true).html('v'+c.version);
+    cdiv_header.append('div').classed('cconf', true).html(c.conf);
+    cdiv.append('div').classed('ctext', true).html(marked(text));
   } 
 }
 
@@ -100,9 +104,10 @@ function doPost() {
   if(sel !== null) { anon = 1; }
 
   var request_data = {}
-  request_data.txt = txt;
+  request_data.text = txt;
   request_data.conf = conf;
   request_data.anon = anon;
+  request_data.pidv = pidv;
   console.log('request data:');
   console.log(request_data);
 
@@ -126,7 +131,7 @@ function doPost() {
 
 // when page loads...
 $(document).ready(function(){
-	urlq = QueryString.q;
+
   // display message, if any
   if(msg !== '') { d3.select("#rtable").append('div').classed('msg', true).html(msg); }
   // display the subject-of-disussion paper on top
@@ -196,12 +201,13 @@ $(document).ready(function(){
   <!-- contains the paper of interest -->
   <div id="rtable"></div>
   <!-- functionality to add new comments -->
-  <div id="pitchin-cfa" style="background-color:#d7e5ff; border-radius: 5px 5px 0px 0px; padding: 5px; margin-top: 5px; cursor: pointer;">Pitch in!</div>
+  <div id="pitchin-cfa" style="background-color:#d7e5ff; padding: 10px; margin-top: 5px; border: 1px solid #b7c5e0; cursor: pointer;">Pitch in!</div>
   <div id="pitchin" style="padding: 5px 5px 10px 5px; border-radius: 0px 0px 5px 5px; display: none;">
     <div>
       <div class="piitemdo">- <b>DO</b>: Add helpful links to code, project page, or related discussion.</div>
       <div class="piitemdo">- <b>DO</b>: Offer <u>constructive</u> comments on this work.</div>
-      <div class="piitemdo">- <b>DON'T</b>: troll, call people names, be disrespectful. Pretty please.</div>
+      <div class="piitemdo">- <b>DON'T</b>: Post generic comments of little value, e.g. "this is great.", "nice", etc.</div>
+      <div class="piitemdo">- <b>DON'T</b>: Troll, call people names, be disrespectful. Pretty please.</div>
     </div>
     <div>
       <!-- form for submitting a new discussion -->
@@ -210,17 +216,16 @@ $(document).ready(function(){
         <div style="color:#555">(You can use $\LaTeX$ and markdown)</div>
       </div>
       <div>
-        <div id="preview-wrap" style="display:none;">
+        <div id="preview-wrap" style="display:none; margin-bottom:5px;">
           <div style="margin-top: 5px;padding-top: 5px;font-size: 20px;">Live preview:</div>
           <div id="preview" style="background-color: #fff;padding: 5px;border: 1px solid #999;"></div>
         </div>
         <div style="background-color: #eee; padding:5px;">
           <form action="">
-            On this paper's topic, I:
-            <input type="radio" name="conf" value="publish"> publish
-            <input type="radio" name="conf" value="read"> read
-            <input type="radio" name="conf" value="skim"> skim
-            <input type="radio" name="conf" value="new" checked> new
+            On this paper's topic, I am:
+            <input type="radio" name="conf" value="expert"> expert
+            <input type="radio" name="conf" value="confident"> confident
+            <input type="radio" name="conf" value="uncertain"> uncertain
             <br>
             <input type="checkbox" name="anon" value="anon"> Post anonymously
           </form>

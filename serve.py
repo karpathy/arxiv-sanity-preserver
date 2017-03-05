@@ -4,7 +4,7 @@ import time
 import pickle
 import argparse
 import dateutil.parser
-from random import shuffle
+from random import shuffle, randrange
 
 import numpy as np
 from sqlite3 import dbapi2 as sqlite3
@@ -229,25 +229,52 @@ def rank(request_pid=None):
 @app.route('/discuss', methods=['GET'])
 def discuss():
   """ return discussion related to a paper """
-  pid = request.args.get('id', '') # paper id of paper we wish to discuss
-  pid_raw = strip_version(pid) # strip version, if any
-  papers = [db[pid_raw]] if pid_raw in db else []
-  comments = [] # TODO
-  ctx = default_context(papers, render_format='default', comments=comments)
+  pidv = request.args.get('id', '') # paper id of paper we wish to discuss
+  pid = strip_version(pidv) # strip version, if any
+  papers = [db[pid]] if pid in db else []
+  comms_cursor = comments.find({ 'pid':pid }).sort([('time_posted', pymongo.DESCENDING)])
+  comms = list(comms_cursor)
+  for c in comms:
+    c['_id'] = str(c['_id']) # have to convert these to strs from ObjectId, and backwards later http://api.mongodb.com/python/current/tutorial.html
+  ctx = default_context(papers, render_format='default', comments=comms, pidv=pidv)
   return render_template('discuss.html', **ctx)
 
 @app.route('/comment', methods=['POST'])
 def comment():
   """ user wants to post a comment """
-
-  username = 'anon'
-  if g.user:
-    username = get_username(session['user_id'])
-
-  conf = request.form['conf']
   anon = request.form['anon']
-  print(username, conf, anon)
-  
+
+  if g.user and (not anon):
+    username = get_username(session['user_id'])
+  else:
+    # generate a unique username if user wants to be anon, or user not logged in.
+    username = 'anon-%s-%s' % (str(int(time.time())), str(randrange(1000)))
+
+  # process the raw pid and validate it, etc
+  try:
+    pidv = request.form['pidv']
+    pid, version_str = pidv.split('v')
+    version = int(version_str)
+    if not pid in db: raise Exception("invalid pid")
+  except Exception as e:
+    print(e)
+    return 'bad pid. This is most likely Andrej\'s fault.'
+
+  # create the entry
+  entry = {
+    'user': username,
+    'pidv': pidv, # pid with version attached
+    'pid': pid, # raw pid with no version, for search convenience
+    'version': version, # version as int, again as convenience
+    'conf': request.form['conf'],
+    'anon': anon,
+    'time_posted': time.time(),
+    'text': request.form['text'],
+  }
+
+  # enter into database
+  print(entry)
+  comments.insert_one(entry)
   return 'OK'
 
 @app.route("/search", methods=['GET'])
@@ -438,9 +465,11 @@ if __name__ == "__main__":
   tweets_top1 = mdb.tweets_top1
   tweets_top7 = mdb.tweets_top7
   tweets_top30 = mdb.tweets_top30
+  comments = mdb.comments
   print('mongodb tweets_top1 collection size:', tweets_top1.count())
   print('mongodb tweets_top7 collection size:', tweets_top7.count())
   print('mongodb tweets_top30 collection size:', tweets_top30.count())
+  print('mongodb comments collection size:', comments.count())
 
   # start
   if args.prod:

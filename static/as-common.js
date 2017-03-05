@@ -133,7 +133,8 @@ function addPapers(num, dynamic) {
       return function() { window.location.replace('/' + pid); }
     }(p.pid)); // closer over the paper id
 
-    var review_span = ldiv.append('span').classed('sim', true).attr('style', 'margin-left:5px; padding-left: 5px; border-left: 1px solid black;').append('a').attr('href', 'http://www.shortscience.org/paper?bibtexKey='+p.pid).html('review');
+    // var review_span = ldiv.append('span').classed('sim', true).attr('style', 'margin-left:5px; padding-left: 5px; border-left: 1px solid black;').append('a').attr('href', 'http://www.shortscience.org/paper?bibtexKey='+p.pid).html('review');
+    var review_span = ldiv.append('span').classed('sim', true).attr('style', 'margin-left:5px; padding-left: 5px; border-left: 1px solid black;').append('a').attr('href', 'discuss?id='+p.pid).html('discuss');
     ldiv.append('br');
 
     var lib_state_img = p.in_library === 1 ? 'static/saved.png' : 'static/save.png';
@@ -208,4 +209,20 @@ function addPapers(num, dynamic) {
       div.append('div').classed('paperdivider', true).html('Most similar papers:');
     }
   }
+}
+
+function timeConverter(UNIX_timestamp){
+  var a = new Date(UNIX_timestamp * 1000);
+  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var year = a.getFullYear();
+  var month = months[a.getMonth()];
+  var date = a.getDate().toString();
+  var hour = a.getHours().toString();
+  var min = a.getMinutes().toString();
+  var sec = a.getSeconds().toString();
+  if(hour.length === 1) { hour = '0' + hour; }
+  if(min.length === 1) { min = '0' + min; }
+  if(sec.length === 1) { sec = '0' + sec; }
+  var time = date + ' ' + month + ' ' + year + ', ' + hour + ':' + min + ':' + sec ;
+  return time;
 }
