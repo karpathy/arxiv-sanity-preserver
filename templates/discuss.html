@@ -45,6 +45,8 @@ var render_format = "{{ render_format }}";
 var username = "{{ g.user.username }}";
 var numresults = "{{ numresults }}";
 var gpid = "{{ gpid }}";
+var tags = {{ tags | tojson }};
+var tag_counts = {{ tag_counts | tojson }};
 
 function renderComments() {
   var root = d3.select("#discussion");
@@ -56,12 +58,44 @@ function renderComments() {
     if(typeof c.text === 'undefined') { var text = ''; } else { var text = c.text; }
     var time_text = timeConverter(c.time_posted);
     var cdiv = root.append('div').classed('comment', true);
+    // header information: user/time/version
     var cdiv_header = cdiv.append('div').classed('cheader', true);
     cdiv_header.append('div').classed('cuser', true).html('@'+c.user);
     cdiv_header.append('div').classed('ctime', true).html(time_text);
     cdiv_header.append('div').classed('cver', true).html('v'+c.version);
     cdiv_header.append('div').classed('cconf', true).html(c.conf);
+    // actual comment
     cdiv.append('div').classed('ctext', true).html(marked(text));
+    // error div
+    var cerr = cdiv.append('div').classed('cerr', true); // hidden initially
+    // tags
+    var cdiv_tags = cdiv.append('div').classed('ctags', true);
+    for(var j=0,m=tags.length;j<m;j++) {
+      var tag_count = tag_counts[i][j];
+      var cdiv_tag_count = cdiv_tags.append('div').classed('ctag-count', true).html(tag_count);
+      if(tag_count === 0) { cdiv_tag_count.classed('ctag-count-zero', true); }
+      var cdiv_tag = cdiv_tags.append('div').classed('ctag', true).html(tags[j]);
+      // attach a click handler
+      cdiv_tag.on('click', function(elt, celt, cid, errelt){return function(){
+        // inform the server with a POST request
+        var request_data = {}
+        request_data.tag_name = elt.html();
+        request_data.comment_id = cid;
+        request_data.pid = gpid;
+        $.post("/toggletag", request_data).done(function(data){ 
+          if(data != 'OK') { errelt.html(data); }
+          else {
+            // toggle the visual state
+            var is_active = !elt.classed('ctag-active');
+            elt.classed('ctag-active', is_active);
+            // also (de/in)crement the count
+            var new_count = parseInt(celt.html()) + (is_active ? 1.0 : -1.0);
+            if(new_count < 0) { new_count = 0; } // should never happen
+            celt.html(new_count);    
+          }
+        });
+      }}(cdiv_tag, cdiv_tag_count, c._id, cerr));
+    }
   } 
 }
 

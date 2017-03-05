@@ -402,7 +402,6 @@ ul.flashes li {
 	background-color: #fff;
 	border: 1px solid #eee;
 	padding: 0px 5px 0px 5px;
-	margin: 0px 0px 5px 0px;
 }
 .ppbutton {
     background-color: #4CAF50; /* Green */
@@ -414,4 +413,32 @@ ul.flashes li {
     display: inline-block;
     font-size: 16px;
     cursor: pointer;
+}
+.ctags {
+	margin: 2px 0px 10px 0px;
+}
+.ctag {
+	display: inline-block;
+	padding: 2px 5px 2px 5px;
+	margin: 0px 5px 0px 0px;
+	background-color: #ffffd5;
+	border-radius: 0px 3px 3px 0px;
+	cursor: pointer;
+	font-size: 12px;
+}
+.ctag-count {
+	display: inline-block;
+	padding: 2px;
+	background-color: #97ff97;
+	border-radius: 3px 0px 0px 3px;
+	font-size: 12px;
+}
+.ctag-count-zero {
+	background-color: #fff !important;
+}
+.ctag-active {
+	background-color: #ff5050 !important;
+}
+.cerr {
+	background-color: #fdd;
 }

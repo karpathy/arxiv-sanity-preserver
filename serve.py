@@ -231,11 +231,21 @@ def discuss():
   """ return discussion related to a paper """
   pid = request.args.get('id', '') # paper id of paper we wish to discuss
   papers = [db[pid]] if pid in db else []
+
+  # fetch the comments
   comms_cursor = comments.find({ 'pid':pid }).sort([('time_posted', pymongo.DESCENDING)])
   comms = list(comms_cursor)
   for c in comms:
     c['_id'] = str(c['_id']) # have to convert these to strs from ObjectId, and backwards later http://api.mongodb.com/python/current/tutorial.html
-  ctx = default_context(papers, render_format='default', comments=comms, gpid=pid)
+
+  # fetch the counts for all tags
+  tag_counts = []
+  for c in comms:
+    cc = [tags_collection.count({ 'comment_id':c['_id'], 'tag_name':t }) for t in TAGS]
+    tag_counts.append(cc);
+
+  # and render
+  ctx = default_context(papers, render_format='default', comments=comms, gpid=pid, tags=TAGS, tag_counts=tag_counts)
   return render_template('discuss.html', **ctx)
 
 @app.route('/comment', methods=['POST'])
@@ -272,6 +282,41 @@ def comment():
   # enter into database
   print(entry)
   comments.insert_one(entry)
+  return 'OK'
+
+@app.route('/toggletag', methods=['POST'])
+def toggletag():
+
+  if not g.user: 
+    return 'You have to be logged in to tag. Sorry - otherwise things could get out of hand FAST.'
+
+  # get the tag and validate it as an allowed tag
+  tag_name = request.form['tag_name']
+  if not tag_name in TAGS:
+    print('tag name %s is not in allowed tags.' % (tag_name, ))
+    return "Bad tag name. This is most likely Andrej's fault."
+
+  pid = request.form['pid']
+  comment_id = request.form['comment_id']
+  username = get_username(session['user_id'])
+  time_toggled = time.time()
+  entry = {
+    'username': username,
+    'pid': pid,
+    'comment_id': comment_id,
+    'tag_name': tag_name,
+    'time': time_toggled,
+  }
+
+  # remove any existing entries for this user/comment/tag
+  result = tags_collection.delete_one({ 'username':username, 'comment_id':comment_id, 'tag_name':tag_name })
+  if result.deleted_count > 0:
+    print('cleared an existing entry from database')
+  else:
+    print('no entry existed, so this is a toggle ON. inserting:')
+    print(entry)
+    tags_collection.insert_one(entry)
+
   return 'OK'
 
 @app.route("/search", methods=['GET'])
@@ -463,10 +508,14 @@ if __name__ == "__main__":
   tweets_top7 = mdb.tweets_top7
   tweets_top30 = mdb.tweets_top30
   comments = mdb.comments
+  tags_collection = mdb.tags
   print('mongodb tweets_top1 collection size:', tweets_top1.count())
   print('mongodb tweets_top7 collection size:', tweets_top7.count())
   print('mongodb tweets_top30 collection size:', tweets_top30.count())
   print('mongodb comments collection size:', comments.count())
+  print('mongodb tags collection size:', tags_collection.count())
+
+  TAGS = ['insightful!', 'thank you', 'inaccurate', 'not constructive', 'troll', 'spam']
 
   # start
   if args.prod:
