@@ -374,10 +374,13 @@ ul.flashes li {
 	font-size: 14px;
 }
 /* comments-specific */
+.cheader {
+	background-color: #eee;
+	padding: 5px;
+}
 .cuser {
 	display: inline-block;
-	color: #3a3aff;
-	font-weight: bold;
+	color: #0000ad;
 	margin-left: 5px;
 }
 .ctime {
@@ -385,11 +388,21 @@ ul.flashes li {
 	display: inline-block;
 	margin-left: 10px;
 }
+.cver {
+	color: #9e2a3f;
+	display: inline-block;
+	margin-left: 10px;
+}
+.cconf {
+	color: #c316ea;
+	display: inline-block;
+	margin-left: 10px;
+}
 .ctext {
 	background-color: #fff;
-	border: 1px solid #ccc;
-	padding: 5px;
-	margin: 5px;
+	border: 1px solid #eee;
+	padding: 0px 5px 0px 5px;
+	margin: 0px 0px 5px 0px;
 }
 .ppbutton {
     background-color: #4CAF50; /* Green */
