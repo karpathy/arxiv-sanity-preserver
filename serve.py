@@ -229,14 +229,13 @@ def rank(request_pid=None):
 @app.route('/discuss', methods=['GET'])
 def discuss():
   """ return discussion related to a paper """
-  pidv = request.args.get('id', '') # paper id of paper we wish to discuss
-  pid = strip_version(pidv) # strip version, if any
+  pid = request.args.get('id', '') # paper id of paper we wish to discuss
   papers = [db[pid]] if pid in db else []
   comms_cursor = comments.find({ 'pid':pid }).sort([('time_posted', pymongo.DESCENDING)])
   comms = list(comms_cursor)
   for c in comms:
     c['_id'] = str(c['_id']) # have to convert these to strs from ObjectId, and backwards later http://api.mongodb.com/python/current/tutorial.html
-  ctx = default_context(papers, render_format='default', comments=comms, pidv=pidv)
+  ctx = default_context(papers, render_format='default', comments=comms, gpid=pid)
   return render_template('discuss.html', **ctx)
 
 @app.route('/comment', methods=['POST'])
@@ -252,10 +251,9 @@ def comment():
 
   # process the raw pid and validate it, etc
   try:
-    pidv = request.form['pidv']
-    pid, version_str = pidv.split('v')
-    version = int(version_str)
+    pid = request.form['pid']
     if not pid in db: raise Exception("invalid pid")
+    version = db[pid]['_version'] # most recent version of this paper
   except Exception as e:
     print(e)
     return 'bad pid. This is most likely Andrej\'s fault.'
@@ -263,7 +261,6 @@ def comment():
   # create the entry
   entry = {
     'user': username,
-    'pidv': pidv, # pid with version attached
     'pid': pid, # raw pid with no version, for search convenience
     'version': version, # version as int, again as convenience
     'conf': request.form['conf'],

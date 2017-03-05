@@ -71,6 +71,11 @@ function build_categories_html(tags) {
   return res;
 }
 
+function strip_version(pidv) {
+  var lst = pidv.split('v');
+  return lst[0];
+}
+
 // populate papers into #rtable
 // we have some global state here, which is gross and we should get rid of later.
 var pointer_ix = 0; // points to next paper in line to be added to #rtable
@@ -134,7 +139,7 @@ function addPapers(num, dynamic) {
     }(p.pid)); // closer over the paper id
 
     // var review_span = ldiv.append('span').classed('sim', true).attr('style', 'margin-left:5px; padding-left: 5px; border-left: 1px solid black;').append('a').attr('href', 'http://www.shortscience.org/paper?bibtexKey='+p.pid).html('review');
-    var review_span = ldiv.append('span').classed('sim', true).attr('style', 'margin-left:5px; padding-left: 5px; border-left: 1px solid black;').append('a').attr('href', 'discuss?id='+p.pid).html('discuss');
+    var review_span = ldiv.append('span').classed('sim', true).attr('style', 'margin-left:5px; padding-left: 5px; border-left: 1px solid black;').append('a').attr('href', 'discuss?id='+strip_version(p.pid)).html('discuss');
     ldiv.append('br');
 
     var lib_state_img = p.in_library === 1 ? 'static/saved.png' : 'static/save.png';
