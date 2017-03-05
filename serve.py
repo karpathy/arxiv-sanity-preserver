@@ -186,11 +186,16 @@ def encode_json(ps, n=10, send_images=True, send_abstracts=True):
       struct['img'] = '/static/thumbs/' + idvv + '.pdf.jpg'
     struct['tags'] = [t['term'] for t in p['tags']]
     
+    # render time information nicely
     timestruct = dateutil.parser.parse(p['updated'])
     struct['published_time'] = '%s/%s/%s' % (timestruct.month, timestruct.day, timestruct.year)
     timestruct = dateutil.parser.parse(p['published'])
     struct['originally_published_time'] = '%s/%s/%s' % (timestruct.month, timestruct.day, timestruct.year)
 
+    # fetch amount of discussion on this paper
+    struct['num_discussion'] = comments.count({ 'pid': p['_rawid'] })
+
+    # arxiv comments from the authors (when they submit the paper)
     cc = p.get('arxiv_comment', '')
     if len(cc) > 100:
       cc = cc[:100] + '...' # crop very long comments
