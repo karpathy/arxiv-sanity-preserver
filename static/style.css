@@ -373,3 +373,32 @@ ul.flashes li {
 	padding: 10px 4px 0px 4px;
 	font-size: 14px;
 }
+/* comments-specific */
+.cuser {
+	display: inline-block;
+	color: #3a3aff;
+	font-weight: bold;
+	margin-left: 5px;
+}
+.ctime {
+	color: #2a9e3f;
+	display: inline-block;
+	margin-left: 10px;
+}
+.ctext {
+	background-color: #fff;
+	border: 1px solid #ccc;
+	padding: 5px;
+	margin: 5px;
+}
+.ppbutton {
+    background-color: #4CAF50; /* Green */
+    border: none;
+    color: white;
+    padding: 15px 32px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    cursor: pointer;
+}

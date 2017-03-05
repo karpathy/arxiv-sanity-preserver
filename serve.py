@@ -226,6 +226,16 @@ def rank(request_pid=None):
   ctx = default_context(papers, render_format='paper')
   return render_template('main.html', **ctx)
 
+@app.route('/discuss', methods=['GET'])
+def discuss():
+  """ return discussion related to a paper """
+  pid = request.args.get('id', '') # paper id of paper we wish to discuss
+  pid_raw = strip_version(pid) # strip version, if any
+  papers = [db[pid_raw]] if pid_raw in db else []
+  comments = [] # TODO
+  ctx = default_context(papers, render_format='default', comments=comments)
+  return render_template('discuss.html', **ctx)
+
 @app.route("/search", methods=['GET'])
 def search():
   q = request.args.get('q', '') # get the search request
