@@ -44,7 +44,7 @@ var msg = "{{ msg }}";
 var render_format = "{{ render_format }}";
 var username = "{{ g.user.username }}";
 var numresults = "{{ numresults }}";
-var pidv = "{{ pidv }}"
+var gpid = "{{ gpid }}";
 
 function renderComments() {
   var root = d3.select("#discussion");
@@ -107,7 +107,7 @@ function doPost() {
   request_data.text = txt;
   request_data.conf = conf;
   request_data.anon = anon;
-  request_data.pidv = pidv;
+  request_data.pid = gpid;
   console.log('request data:');
   console.log(request_data);
 
@@ -225,7 +225,7 @@ $(document).ready(function(){
             On this paper's topic, I am:
             <input type="radio" name="conf" value="expert"> expert
             <input type="radio" name="conf" value="confident"> confident
-            <input type="radio" name="conf" value="uncertain"> uncertain
+            <input type="radio" name="conf" value="uncertain" checked> uncertain
             <br>
             <input type="checkbox" name="anon" value="anon"> Post anonymously
           </form>
