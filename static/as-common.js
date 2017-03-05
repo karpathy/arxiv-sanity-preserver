@@ -139,7 +139,10 @@ function addPapers(num, dynamic) {
     }(p.pid)); // closer over the paper id
 
     // var review_span = ldiv.append('span').classed('sim', true).attr('style', 'margin-left:5px; padding-left: 5px; border-left: 1px solid black;').append('a').attr('href', 'http://www.shortscience.org/paper?bibtexKey='+p.pid).html('review');
-    var review_span = ldiv.append('span').classed('sim', true).attr('style', 'margin-left:5px; padding-left: 5px; border-left: 1px solid black;').append('a').attr('href', 'discuss?id='+strip_version(p.pid)).html('discuss');
+    var discuss_text = p.num_discussion === 0 ? 'discuss' : 'discuss [' + p.num_discussion + ']';
+    var discuss_color = p.num_discussion === 0 ? 'black' : 'red';
+    var review_span = ldiv.append('span').classed('sim', true).attr('style', 'margin-left:5px; padding-left: 5px; border-left: 1px solid black;')
+                      .append('a').attr('href', 'discuss?id='+strip_version(p.pid)).attr('style', 'color:'+discuss_color).html(discuss_text);
     ldiv.append('br');
 
     var lib_state_img = p.in_library === 1 ? 'static/saved.png' : 'static/save.png';
