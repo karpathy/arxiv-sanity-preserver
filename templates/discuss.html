@@ -66,10 +66,11 @@ function renderComments() {
     cdiv_header.append('div').classed('cconf', true).html(c.conf);
     // actual comment
     cdiv.append('div').classed('ctext', true).html(marked(text));
-    // error div
-    var cerr = cdiv.append('div').classed('cerr', true); // hidden initially
     // tags
     var cdiv_tags = cdiv.append('div').classed('ctags', true);
+    // error div
+    var cerr = cdiv.append('div').classed('cerr', true); // hidden initially
+    // now insert tags into tags div
     for(var j=0,m=tags.length;j<m;j++) {
       var tag_count = tag_counts[i][j];
       var cdiv_tag_count = cdiv_tags.append('div').classed('ctag-count', true).html(tag_count);

@@ -377,6 +377,7 @@ ul.flashes li {
 .cheader {
 	background-color: #eee;
 	padding: 5px;
+	font-size: 12px;
 }
 .cuser {
 	display: inline-block;
@@ -402,6 +403,7 @@ ul.flashes li {
 	background-color: #fff;
 	border: 1px solid #eee;
 	padding: 0px 5px 0px 5px;
+	font-size: 14px;
 }
 .ppbutton {
     background-color: #4CAF50; /* Green */
@@ -415,26 +417,27 @@ ul.flashes li {
     cursor: pointer;
 }
 .ctags {
-	margin: 2px 0px 10px 0px;
+	margin: -2px 0px 10px 0px;
+	color: #555;
 }
 .ctag {
 	display: inline-block;
 	padding: 2px 5px 2px 5px;
 	margin: 0px 5px 0px 0px;
-	background-color: #ffffd5;
-	border-radius: 0px 3px 3px 0px;
+	background-color: #eee;
 	cursor: pointer;
 	font-size: 12px;
+	border-radius: 0px 0px 3px 0px;
 }
 .ctag-count {
 	display: inline-block;
 	padding: 2px;
-	background-color: #97ff97;
-	border-radius: 3px 0px 0px 3px;
+	background-color: #83ff00;
 	font-size: 12px;
+	border-radius: 0px 0px 0px 3px;
 }
 .ctag-count-zero {
-	background-color: #fff !important;
+	background-color: #ddd !important;
 }
 .ctag-active {
 	background-color: #ff5050 !important;
