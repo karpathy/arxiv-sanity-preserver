@@ -445,3 +445,12 @@ ul.flashes li {
 .cerr {
 	background-color: #fdd;
 }
+.caction {
+	display:inline-block;
+	float:right; 
+	padding:2px;
+}
+.caction img {
+	width: 20px;
+	height: 20px;
+}
