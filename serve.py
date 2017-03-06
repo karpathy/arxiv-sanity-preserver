@@ -289,6 +289,23 @@ def comment():
   comments.insert_one(entry)
   return 'OK'
 
+@app.route("/discussions", methods=['GET'])
+def discussions():
+  # return most recently discussed papers
+  comms_cursor = comments.find().sort([('time_posted', pymongo.DESCENDING)]).limit(100)
+
+  # get the (unique) set of papers.
+  papers = []
+  have = set()
+  for e in comms_cursor:
+    pid = e['pid']
+    if pid in db and not pid in have:
+      have.add(pid)
+      papers.append(db[pid])
+
+  ctx = default_context(papers, render_format="discussions")
+  return render_template('main.html', **ctx)
+
 @app.route('/toggletag', methods=['POST'])
 def toggletag():
 
