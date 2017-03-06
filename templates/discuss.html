@@ -48,6 +48,9 @@ var gpid = "{{ gpid }}";
 var tags = {{ tags | tojson }};
 var tag_counts = {{ tag_counts | tojson }};
 
+var cid_highlight;
+var node_scroll_to;
+
 function renderComments() {
   var root = d3.select("#discussion");
   var n = comments.length;
@@ -58,8 +61,16 @@ function renderComments() {
     if(typeof c.text === 'undefined') { var text = ''; } else { var text = c.text; }
     var time_text = timeConverter(c.time_posted);
     var cdiv = root.append('div').classed('comment', true);
+    // add action items
+    cdiv.append('div').classed('caction', true)
+        .append('a').attr('href', 'discuss?id='+gpid+'&cid='+c._id)
+        .append('img').attr('src', 'static/linkto.png').attr('alt', 'link to this comment');
     // header information: user/time/version
     var cdiv_header = cdiv.append('div').classed('cheader', true);
+    if(typeof cid_highlight !== 'undefined' && cid_highlight === c._id) {
+      cdiv_header.attr('style', 'background-color:#ff0'); // highlight this comment specifically
+      node_scroll_to = cdiv_header[0][0]; // raw dom element
+    }
     cdiv_header.append('div').classed('cuser', true).html('@'+c.user);
     cdiv_header.append('div').classed('ctime', true).html(time_text);
     cdiv_header.append('div').classed('cver', true).html('v'+c.version);
@@ -167,6 +178,8 @@ function doPost() {
 // when page loads...
 $(document).ready(function(){
 
+  cid_highlight = QueryString.cid;
+
   // display message, if any
   if(msg !== '') { d3.select("#rtable").append('div').classed('msg', true).html(msg); }
   // display the subject-of-disussion paper on top
@@ -184,6 +197,13 @@ $(document).ready(function(){
   })
   // periodically try to render a preview of the post
   setInterval(renderPost, 250);
+
+  // scroll to a comment if any
+  if(typeof node_scroll_to !== 'undefined') {
+    $('html, body').animate({
+        scrollTop: $(node_scroll_to).offset().top
+    }, 1000);
+  }
 });
 
 </script>
