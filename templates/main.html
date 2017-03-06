@@ -41,6 +41,7 @@ var papers = {{ papers | tojson }};
 var msg = "{{ msg }}";
 var render_format = "{{ render_format }}";
 var username = "{{ g.user.username }}";
+var numresults = "{{ numresults }}";
 
 var urlq = ''; // global will be read in to QueryString when load is done
 
@@ -53,8 +54,9 @@ $(document).ready(function(){
   if(msg !== '') { d3.select("#rtable").append('div').classed('msg', true).html(msg); }
 
   // add papers to #rtable
-	addPapers(10, false);
-
+	var done = addPapers(10, false);
+  if(done) { $("#loadmorebtn").hide(); }
+  
   // set up inifinite scrolling for adding more papers
   $(window).on('scroll', function(){
     var scrollTop = $(document).scrollTop();
@@ -62,12 +64,16 @@ $(document).ready(function(){
     var bodyHeight = $(document).height() - windowHeight;
     var scrollPercentage = (scrollTop / bodyHeight);
     if(scrollPercentage > 0.9) {
-      addPapers(5, true);
+      var done = addPapers(5, true);
+      if(done) { $("#loadmorebtn").hide(); }
     }
   });
 
   // just in case scrolling is broken somehow, provide a button handler explicit
-  $("#loadmorebtn").on('click', function(){ addPapers(5, true); });
+  $("#loadmorebtn").on('click', function(){ 
+    var done = addPapers(5, true); 
+    if(done) { $("#loadmorebtn").hide(); }
+  });
 
 	if(!(typeof urlq == 'undefined')) {
 		d3.select("#qfield").attr('value', urlq.replace(/\+/g, " "));
@@ -80,6 +86,7 @@ $(document).ready(function(){
   if(render_format === 'top') { link_endpoint = 'top'; }
   if(render_format === 'recommend') { link_endpoint = 'recommend'; }
   if(render_format === 'toptwtr') { link_endpoint = 'toptwtr'; }
+  if(render_format === 'discussions') { link_endpoint = 'discussions'; }
 
   var time_ranges = ['day', '3days', 'week', 'month', 'year', 'alltime'];
   var time_txt = {'day':'Last day', '3days': 'Last 3 days', 'week': 'Last week', 'month': 'Last month', 'year': 'Last year', 'alltime': 'All time'}
@@ -133,6 +140,7 @@ $(document).ready(function(){
   if( render_format === 'recent') { d3.select('#tabrecent').classed('tab-selected', true); }
   if( render_format === 'top') { d3.select('#tabtop').classed('tab-selected', true); }
   if( render_format === 'toptwtr') { d3.select('#tabtwtr').classed('tab-selected', true); }
+  if( render_format === 'discussions') { d3.select('#tabdiscussions').classed('tab-selected', true); }
   if( render_format === 'recommend') { d3.select('#tabrec').classed('tab-selected', true); }
   if( render_format === 'library') { d3.select('#tablib').classed('tab-selected', true); }
 });
@@ -201,6 +209,7 @@ $(document).ready(function(){
   <div class="pagelink" id="tabrecent"><a href="/">most recent</a></div>
   <div class="pagelink" id="tabtop"><a href="/top">top recent</a></div>
   <div class="pagelink" id="tabtwtr"><a href="/toptwtr">top hype</a></div>
+  <div class="pagelink" id="tabdiscussions"><a href="/discussions">recent discussions</a></div>
   <div class="pagelink" id="tabrec"><a href="/recommend">recommended</a></div>
   <div class="pagelink" id="tablib"><a href="/library">library</a></div>
 </div>

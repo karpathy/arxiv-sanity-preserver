@@ -217,6 +217,8 @@ function addPapers(num, dynamic) {
       div.append('div').classed('paperdivider', true).html('Most similar papers:');
     }
   }
+
+  return pointer_ix >= papers.length; // are we done?
 }
 
 function timeConverter(UNIX_timestamp){
