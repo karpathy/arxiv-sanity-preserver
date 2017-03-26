@@ -537,7 +537,7 @@ if __name__ == "__main__":
   print('mongodb comments collection size:', comments.count())
   print('mongodb tags collection size:', tags_collection.count())
 
-  TAGS = ['insightful!', 'thank you', 'inaccurate', 'not constructive', 'troll', 'spam']
+  TAGS = ['insightful!', 'thank you', 'agree', 'disagree', 'not constructive', 'troll', 'spam']
 
   # start
   if args.prod:
