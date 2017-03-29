@@ -7,7 +7,7 @@ scipy
 scikit-learn
 
 # twitter
-twitter
+python-twitter
 pytz
 
 # the following are only for serve.py
