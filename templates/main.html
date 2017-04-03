@@ -16,6 +16,9 @@
 <!-- CSS -->
 <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
 
+<!-- Favicon -->
+<link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}" />
+
 <!-- JS -->
 <script src="{{ url_for('static', filename='jquery-1.8.3.min.js') }}"></script>
 <script src="{{ url_for('static', filename='d3.min.js') }}"></script>
@@ -56,7 +59,7 @@ $(document).ready(function(){
   // add papers to #rtable
 	var done = addPapers(10, false);
   if(done) { $("#loadmorebtn").hide(); }
-  
+
   // set up inifinite scrolling for adding more papers
   $(window).on('scroll', function(){
     var scrollTop = $(document).scrollTop();
@@ -70,8 +73,8 @@ $(document).ready(function(){
   });
 
   // just in case scrolling is broken somehow, provide a button handler explicit
-  $("#loadmorebtn").on('click', function(){ 
-    var done = addPapers(5, true); 
+  $("#loadmorebtn").on('click', function(){
+    var done = addPapers(5, true);
     if(done) { $("#loadmorebtn").hide(); }
   });
 
@@ -222,7 +225,7 @@ $(document).ready(function(){
 <div id="rtable"></div>
 
 <div id="loadmore">
-  <button id="loadmorebtn">Load more</button>  
+  <button id="loadmorebtn">Load more</button>
 </div>
 
 </div>
