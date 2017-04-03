@@ -16,6 +16,9 @@
 <!-- CSS -->
 <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
 
+<!-- Favicon -->
+<link rel="shortcut icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}" />
+
 <!-- JS -->
 <script src="{{ url_for('static', filename='jquery-1.8.3.min.js') }}"></script>
 <script src="{{ url_for('static', filename='d3.min.js') }}"></script>
@@ -94,7 +97,7 @@ function renderComments() {
         request_data.tag_name = elt.html();
         request_data.comment_id = cid;
         request_data.pid = gpid;
-        $.post("/toggletag", request_data).done(function(data){ 
+        $.post("/toggletag", request_data).done(function(data){
           if(data != 'OK') { errelt.html(data); }
           else {
             // toggle the visual state
@@ -103,12 +106,12 @@ function renderComments() {
             // also (de/in)crement the count
             var new_count = parseInt(celt.html()) + (is_active ? 1.0 : -1.0);
             if(new_count < 0) { new_count = 0; } // should never happen
-            celt.html(new_count);    
+            celt.html(new_count);
           }
         });
       }}(cdiv_tag, cdiv_tag_count, c._id, cerr));
     }
-  } 
+  }
 }
 
 var prev_txt = '';
@@ -132,13 +135,13 @@ function doPost() {
   // lets put together a POST request to submit a new post in the discussion.
   var txt = $("#post-text").val();
   // do some checks etc
-  if(txt.length <= 5) { 
+  if(txt.length <= 5) {
     $("#errors-etc").html('Post is too short. Come on, what are you doing?').slideDown("fast");
-    return; 
+    return;
   }
-  if(txt.length > 10000) { 
+  if(txt.length > 10000) {
     $("#errors-etc").html('Post is too long! What are you doing?').slideDown("fast");
-    return; 
+    return;
   }
 
   var conf = '';
@@ -290,7 +293,7 @@ $(document).ready(function(){
       </div>
     </div>
   </div>
-  
+
   <!-- contains the discussion -->
   <div id="discussion">
     <div style="padding:5px; margin-top:10px; font-size:20px;">Discussion:</div>
