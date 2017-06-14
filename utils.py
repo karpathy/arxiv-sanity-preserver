@@ -24,6 +24,7 @@ class Config(object):
     database_path = 'as.db'
     serve_cache_path = 'serve_cache.p'
     
+    beg_for_hosting_money = 1 # do we beg the active users randomly for money? 0 = no.
     banned_path = 'banned.txt' # for twitter users who are banned
     tmp_dir = 'tmp'
 

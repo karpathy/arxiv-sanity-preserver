@@ -4,7 +4,7 @@ import time
 import pickle
 import argparse
 import dateutil.parser
-from random import shuffle, randrange
+from random import shuffle, randrange, uniform
 
 import numpy as np
 from sqlite3 import dbapi2 as sqlite3
@@ -210,9 +210,35 @@ def encode_json(ps, n=10, send_images=True, send_abstracts=True):
 
 def default_context(papers, **kws):
   top_papers = encode_json(papers, args.num_results)
-  ans = dict(papers=top_papers, numresults=len(papers), totpapers=len(db), tweets=[], msg='')
+
+  # prompt logic
+  show_prompt = 'no'
+  try:
+    if Config.beg_for_hosting_money and g.user and uniform(0,1) < 0.05:
+      uid = session['user_id']
+      entry = goaway_collection.find_one({ 'uid':uid })
+      if not entry:
+        lib_count = query_db('''select count(*) from library where user_id = ?''', [uid], one=True)
+        lib_count = lib_count['count(*)']
+        if lib_count > 0: # user has some items in their library too
+          show_prompt = 'yes'
+  except Exception as e:
+    print(e)
+
+  ans = dict(papers=top_papers, numresults=len(papers), totpapers=len(db), tweets=[], msg='', show_prompt=show_prompt)
   ans.update(kws)
   return ans
+
+@app.route('/goaway', methods=['POST'])
+def goaway():
+  if not g.user: return # weird
+  uid = session['user_id']
+  entry = goaway_collection.find_one({ 'uid':uid })
+  if not entry: # ok record this user wanting it to stop
+    username = get_username(session['user_id'])
+    print('adding', uid, username, 'to goaway.')
+    goaway_collection.insert_one({ 'uid':uid, 'time':int(time.time()) })
+  return 'OK'
 
 @app.route("/")
 def intmain():
@@ -531,12 +557,14 @@ if __name__ == "__main__":
   tweets_top30 = mdb.tweets_top30
   comments = mdb.comments
   tags_collection = mdb.tags
+  goaway_collection = mdb.goaway
   print('mongodb tweets_top1 collection size:', tweets_top1.count())
   print('mongodb tweets_top7 collection size:', tweets_top7.count())
   print('mongodb tweets_top30 collection size:', tweets_top30.count())
   print('mongodb comments collection size:', comments.count())
   print('mongodb tags collection size:', tags_collection.count())
-
+  print('mongodb goaway collection size:', goaway_collection.count())
+  
   TAGS = ['insightful!', 'thank you', 'agree', 'disagree', 'not constructive', 'troll', 'spam']
 
   # start
