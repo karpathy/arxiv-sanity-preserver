@@ -173,7 +173,7 @@ $(document).ready(function(){
       <input type="submit" value="Login or Create" class="btn-fancy">
     </form>
     {% else %}
-    {{ g.user.username }}
+    <a href="{{ url_for('account') }}">{{ g.user.username }}</a>
     <a href="{{ url_for('logout') }}">log out</a>
     {% endif %}
   </div>

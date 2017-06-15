@@ -470,6 +470,85 @@ def review():
 
   return ret
 
+@app.route('/account')
+def account():
+    ctx = { 'totpapers':len(db) }
+
+    followers = []
+    following = []
+    # fetch all followers/following of the logged in user
+    if g.user:
+        username = get_username(session['user_id'])
+        
+        following_db = list(follow_collection.find({ 'who':username }))
+        for e in following_db:
+            following.append({ 'user':e['whom'], 'active':e['active'] })
+
+        followers_db = list(follow_collection.find({ 'whom':username }))
+        for e in followers_db:
+            followers.append({ 'user':e['who'], 'active':e['active'] })
+
+    ctx['followers'] = followers
+    ctx['following'] = following
+    return render_template('account.html', **ctx)
+
+@app.route('/requestfollow', methods=['POST'])
+def requestfollow():
+    if request.form['newf'] and g.user:
+        # add an entry: this user is requesting to follow a second user
+        who = get_username(session['user_id'])
+        whom = request.form['newf']
+        # make sure whom exists in our database
+        whom_id = get_user_id(whom)
+        if whom_id is not None:
+            e = { 'who':who, 'whom':whom, 'active':0, 'time_request':int(time.time()) }
+            print('adding request follow:')
+            print(e)
+            follow_collection.insert_one(e)
+
+    return redirect(url_for('account'))
+
+@app.route('/removefollow', methods=['POST'])
+def removefollow():
+    user = request.form['user']
+    lst = request.form['lst']
+    if user and lst:
+        username = get_username(session['user_id'])
+        if lst == 'followers':
+            # user clicked "X" in their followers list. Erase the follower of this user
+            who = user
+            whom = username
+        elif lst == 'following':
+            # user clicked "X" in their following list. Stop following this user.
+            who = username
+            whom = user
+        else:
+            return 'NOTOK'
+
+        delq = { 'who':who, 'whom':whom }
+        print('deleting from follow collection:', delq)
+        follow_collection.delete_one(delq)
+        return 'OK'
+    else:
+        return 'NOTOK'
+
+@app.route('/addfollow', methods=['POST'])
+def addfollow():
+    user = request.form['user']
+    lst = request.form['lst']
+    if user and lst:
+        username = get_username(session['user_id'])
+        if lst == 'followers':
+            # user clicked "OK" in the followers list, wants to approve some follower. make active.
+            who = user
+            whom = username
+            delq = { 'who':who, 'whom':whom }
+            print('making active in follow collection:', delq)
+            follow_collection.update_one(delq, {'$set':{'active':1}})
+            return 'OK'
+        
+    return 'NOTOK'
+
 @app.route('/login', methods=['POST'])
 def login():
   """ logs in the user. if the username doesn't exist creates the account """
@@ -558,12 +637,14 @@ if __name__ == "__main__":
   comments = mdb.comments
   tags_collection = mdb.tags
   goaway_collection = mdb.goaway
+  follow_collection = mdb.follow
   print('mongodb tweets_top1 collection size:', tweets_top1.count())
   print('mongodb tweets_top7 collection size:', tweets_top7.count())
   print('mongodb tweets_top30 collection size:', tweets_top30.count())
   print('mongodb comments collection size:', comments.count())
   print('mongodb tags collection size:', tags_collection.count())
   print('mongodb goaway collection size:', goaway_collection.count())
+  print('mongodb follow collection size:', follow_collection.count())
   
   TAGS = ['insightful!', 'thank you', 'agree', 'disagree', 'not constructive', 'troll', 'spam']
 

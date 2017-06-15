@@ -1,0 +1,242 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Arxiv Sanity Preserver</title>
+
+<!-- CSS -->
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+
+<!-- Favicon -->
+<link rel="shortcut icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}" />
+
+<style>
+.userlst {
+  margin-top: 20px;
+  border: 1px solid #000;
+  width: 300px;
+}
+.userlst-title {
+  padding: 5px;
+  font-size: 18px;
+  font-weight: bold;
+  border-bottom: 1px solid #000;
+  padding: 5px;
+  background-color: #eee;
+}
+.user-li{
+  border-bottom: 1px solid #aaa;
+}
+.li-no-border {
+  border: none !important;
+}
+#addfollowing {
+  margin-top: 10px;
+  border: 1px solid black;
+  padding: 10px;
+  width: 280px;
+}
+.fdu {
+  padding: 5px;
+}
+.fdx {
+  float: right;
+  cursor: pointer;
+  color: #f00;
+  font-size: 16px;
+  border: 1px solid #f00;
+  padding: 2px;
+  margin: 2px;
+  background-color: #fff;
+}
+.fdok {
+  float: right;
+  cursor: pointer;
+  color: #090;
+  font-size: 16px;
+  border: 1px solid #090;
+  padding: 2px;
+  margin: 2px;
+  background-color: #fff;
+}
+.li-active {
+  background-color: #efe;
+}
+.li-inactive {
+  background-color: #fee;
+}
+</style>
+
+<!-- JS -->
+<script src="{{ url_for('static', filename='jquery-1.8.3.min.js') }}"></script>
+<script src="{{ url_for('static', filename='d3.min.js') }}"></script>
+<script src="{{ url_for('static', filename='as-common.js') }}"></script>
+
+<!-- Google Analytics JS -->
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-3698471-25', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+<script>
+var username = "{{ g.user.username }}";
+var followers = {{ followers | tojson }};
+var following = {{ following | tojson }};
+
+function populateList(lstid, msg, lst) {
+
+  var div = d3.select('#'+lstid);
+  var n = lst.length;
+  div.append('div').classed('userlst-title', true).html(n + msg);
+  if(n === 0) {
+    var fd = div.append('div').classed('user-li', true).html('None so far.');
+    fd.classed('li-no-border', true);
+  } else {
+    for(var i=0;i<n;i++) {
+      var f = lst[i];
+      
+      var fd = div.append('div').classed('user-li', true);
+      if(f.active === 1){ fd.classed('li-active', true);
+      } else { fd.classed('li-inactive', true); }
+
+      var fdx = fd.append('div').classed('fdx', true).html('X');
+
+      // attach event handler to X, to remove this user
+      var jfd = $(fd.node());
+      var jfdx = $(fdx.node());
+      var request_data = { user:f.user, lst:lstid };
+      jfdx.on('click', function(rootnode, jdict) {
+        return function() {
+          $.post("/removefollow", jdict).done(function(elt){
+            return function(data){
+              if(data === 'OK') { elt.slideUp('fast'); } // remove the element from the UI
+            }
+          }(rootnode));
+        }
+      }(jfd, request_data));
+
+      // attach an event handler to OK, allow this user to follow me      
+      if(lstid === 'followers' && f.active == 0) {
+        var fdok = fd.append('div').classed('fdok', true).html('OK');
+        var jfdok = $(fdok.node());
+        var request_data = { user:f.user, lst:lstid };
+        jfdok.on('click', function(rootnode, oknode, jdict) {
+          return function() {
+            $.post("/addfollow", jdict).done(function(elt, elt2){ // dont think closure in closure is necessary here, being lazy
+              return function(data){
+                if(data === 'OK') { 
+                  // ok we can follow this user
+                  fd.classed('li-active', true);
+                  fd.classed('li-inactive', false);
+                  elt2.remove(); // take out the OK button.
+                }
+              }
+            }(rootnode, oknode));
+          }
+        }(fd, fdok, request_data));
+      }
+
+      // // attach an event handler to OK, allow this user to follow me
+      // if(lstid === 'followers') {
+      //   if(f.active === 1) {
+      //     // people who follow us (display an X)
+      //   } else {
+      //     // people who asked to follow us (display an X and a OK)
+      //   }
+      // } else if(lstid === 'following') {
+      //   if(f.active === 1) {
+      //     // people who we follow (display an X)
+      //   } else {
+      //     // people who we asked to follow but they didnt confirom (display an X)
+      //   }
+      // }
+
+      // attach the actual username of the person
+      var fdu = fd.append('div').classed('fdu', true).html(f.user);
+
+      if(i === n-1) { fd.classed('li-no-border', true); }
+    }
+  }
+}
+
+// when page loads...
+$(document).ready(function(){
+  populateList('followers', ' followers:', followers);
+  populateList('following', ' following:', following);
+});
+
+</script>
+</head>
+
+<body>
+<a href="https://github.com/karpathy/arxiv-sanity-preserver"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/38ef81f8aca64bb9a64448d0d70f1308ef5341ab/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6461726b626c75655f3132313632312e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png"></a>
+
+<div id ="titdiv">
+
+  <!-- User account information on top right -->
+  <div id="userinfo">
+    {% if not g.user %}
+    <form action="{{ url_for('login') }}" method="post">
+      User:
+      <input type="text" name="username" class="input-no-border">
+      Pass:
+      <input type="password" name="password" class="input-no-border">
+      <input type="submit" value="Login or Create" class="btn-fancy">
+    </form>
+    {% else %}
+    {{ g.user.username }}
+    <a href="{{ url_for('logout') }}">log out</a>
+    {% endif %}
+  </div>
+
+  <!-- Site information/banner on top left -->
+  <a href="/">
+  <div id="tittxt">
+    <h1>Arxiv Sanity Preserver</h1>
+    Built in spare time by <a href="https://twitter.com/karpathy">@karpathy</a> to accelerate research.<br>
+    Serving last {{ totpapers }} papers from cs.[CV|CL|LG|AI|NE]/stat.ML
+  </div>
+  </a>
+</div>
+
+<div id="maindiv">
+
+  {% if g.user %}
+  <div>
+    <h1>Friends</h1>
+    <div id="ffdesc">
+      You can follow your friends on arxiv-sanity. This will populate the "friends"
+      tab of arxiv-sanity, which shows recent papers sorted by how popular they are
+      with your friends. In the lists below, <span style="color:#090">green background</span> indicates an active connection,
+      and <span style="color:#f00">red background</span> indicates a pending connection.
+    </div>
+
+    <div id="followers" class='userlst'>
+    </div>
+
+    <div id="following" class='userlst'>
+    </div>
+
+    <div id="addfollowing">
+      Ask for permission to follow:
+      <form action="/requestfollow" method="post">
+        <input type="input" name="newf" value="" class="newf-input">
+        <input type="submit" value="Add" class="newf-btn" style="width:100px;">
+      </form>
+    </div>
+  </div>
+  {% endif %}
+  
+</div>
+
+<br><br><br><br><br><br>
+</body>
+
+</html>
