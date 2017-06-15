@@ -81,7 +81,7 @@ function strip_version(pidv) {
 var pointer_ix = 0; // points to next paper in line to be added to #rtable
 var showed_end_msg = false;
 function addPapers(num, dynamic) {
-  if(papers.length === 0) { return; } // nothing to display
+  if(papers.length === 0) { return true; } // nothing to display, and we're done
 
   var root = d3.select("#rtable");
 
@@ -180,6 +180,14 @@ function addPapers(num, dynamic) {
       var abdiv = div.append('span').classed('tt', true).html(p.abstract);
       if(dynamic) {
         MathJax.Hub.Queue(["Typeset",MathJax.Hub,abdiv[0]]); //typeset the added paper
+      }
+    }
+
+    // in friends tab, list users who the user follows who had these papers in libary
+    if(render_format === 'friends') {
+      if(pid_to_users.hasOwnProperty(p.rawpid)) {
+        var usrtxt = pid_to_users[p.rawpid].join(', ');
+        div.append('div').classed('inlibsof', true).html('In libraries of: ' + usrtxt);
       }
     }
 

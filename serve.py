@@ -176,6 +176,7 @@ def encode_json(ps, n=10, send_images=True, send_abstracts=True):
     struct = {}
     struct['title'] = p['title']
     struct['pid'] = idvv
+    struct['rawpid'] = p['_rawid']
     struct['category'] = p['arxiv_primary_category']['term']
     struct['authors'] = [a['name'] for a in p['authors']]
     struct['link'] = p['link']
@@ -225,7 +226,7 @@ def default_context(papers, **kws):
   except Exception as e:
     print(e)
 
-  ans = dict(papers=top_papers, numresults=len(papers), totpapers=len(db), tweets=[], msg='', show_prompt=show_prompt)
+  ans = dict(papers=top_papers, numresults=len(papers), totpapers=len(db), tweets=[], msg='', show_prompt=show_prompt, pid_to_users={})
   ans.update(kws)
   return ans
 
@@ -469,6 +470,53 @@ def review():
     ret = 'ON'
 
   return ret
+
+@app.route('/friends', methods=['GET'])
+def friends():
+    
+    ttstr = request.args.get('timefilter', 'week') # default is week
+    legend = {'day':1, '3days':3, 'week':7, 'month':30, 'year':365}
+    tt = legend.get(ttstr, 7)
+
+    papers = []
+    pid_to_users = {}
+    if g.user:
+        # gather all the people we are following
+        username = get_username(session['user_id'])
+        edges = list(follow_collection.find({ 'who':username }))
+        # fetch all papers in all of their libraries, and count the top ones
+        counts = {}
+        for edict in edges:
+            whom = edict['whom']
+            uid = get_user_id(whom)
+            user_library = query_db('''select * from library where user_id = ?''', [uid])
+            libids = [strip_version(x['paper_id']) for x in user_library]
+            for lid in libids:
+                if not lid in counts:
+                    counts[lid] = []
+                counts[lid].append(whom)
+
+        keys = list(counts.keys())
+        keys.sort(key=lambda k: len(counts[k]), reverse=True) # descending by count
+        papers = [db[x] for x in keys]
+        # finally filter by date
+        curtime = int(time.time()) # in seconds
+        papers = [x for x in papers if curtime - x['time_published'] < tt*24*60*60]
+        # trim at like 100
+        if len(papers) > 100: papers = papers[:100]
+        # trim counts as well correspondingly
+        pid_to_users = { p['_rawid'] : counts.get(p['_rawid'], []) for p in papers }
+
+    if not g.user:
+        msg = "You must be logged in and follow some people to enjoy this tab."
+    else:
+        if len(papers) == 0:
+            msg = "No friend papers present. Try to extend the time range, or add friends by clicking on your account name (top, right)"
+        else:
+            msg = "Papers in your friend's libraries:"
+
+    ctx = default_context(papers, render_format='friends', pid_to_users=pid_to_users, msg=msg)
+    return render_template('main.html', **ctx)
 
 @app.route('/account')
 def account():

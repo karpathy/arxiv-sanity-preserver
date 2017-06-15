@@ -41,6 +41,7 @@
 // passed in from flask as json
 var tweets = {{ tweets | tojson }};
 var papers = {{ papers | tojson }};
+var pid_to_users = {{ pid_to_users | tojson }};
 var msg = "{{ msg }}";
 var render_format = "{{ render_format }}";
 var username = "{{ g.user.username }}";
@@ -79,6 +80,8 @@ $(document).ready(function(){
     if(done) { $("#loadmorebtn").hide(); }
   });
 
+  if(papers.length === 0) { $("#loadmorebtn").hide(); }
+
 	if(!(typeof urlq == 'undefined')) {
 		d3.select("#qfield").attr('value', urlq.replace(/\+/g, " "));
 	}
@@ -89,6 +92,7 @@ $(document).ready(function(){
   if(render_format === 'recent') { link_endpoint = ''; }
   if(render_format === 'top') { link_endpoint = 'top'; }
   if(render_format === 'recommend') { link_endpoint = 'recommend'; }
+  if(render_format === 'friends') { link_endpoint = 'friends'; }
   if(render_format === 'toptwtr') { link_endpoint = 'toptwtr'; }
   if(render_format === 'discussions') { link_endpoint = 'discussions'; }
 
@@ -97,7 +101,7 @@ $(document).ready(function(){
   var time_range = tf;
 
   // set up time filtering options
-  if(render_format === 'recommend' || render_format === 'top' || render_format === 'recent') {
+  if(render_format === 'recommend' || render_format === 'top' || render_format === 'recent' || render_format === 'friends') {
     // insert version filtering options for these views
     var elt = d3.select('#recommend-time-choice');
     var vflink = vf === 'all' ? '1' : 'all'; // toggle only showing v1 or not
@@ -110,7 +114,8 @@ $(document).ready(function(){
     if(vf === '1') { delt.classed('vchoice-selected', true); }
   }
 
-  if(render_format === 'recommend' || render_format === 'top') {
+  // time choices for recommend/top
+  if(render_format === 'recommend' || render_format === 'top' || render_format === 'friends') {
     // insert time filtering options for these two views
     var elt = d3.select('#recommend-time-choice');
     elt.append('div').classed('fdivider', true).html('|');
@@ -144,6 +149,7 @@ $(document).ready(function(){
   if( render_format === 'recent') { d3.select('#tabrecent').classed('tab-selected', true); }
   if( render_format === 'top') { d3.select('#tabtop').classed('tab-selected', true); }
   if( render_format === 'toptwtr') { d3.select('#tabtwtr').classed('tab-selected', true); }
+  if( render_format === 'friends') { d3.select('#tabfriends').classed('tab-selected', true); }
   if( render_format === 'discussions') { d3.select('#tabdiscussions').classed('tab-selected', true); }
   if( render_format === 'recommend') { d3.select('#tabrec').classed('tab-selected', true); }
   if( render_format === 'library') { d3.select('#tablib').classed('tab-selected', true); }
@@ -232,7 +238,8 @@ To nuke this message away for a long time click <span id="goaway" style="text-de
   <div class="pagelink" id="tabrecent"><a href="/">most recent</a></div>
   <div class="pagelink" id="tabtop"><a href="/top">top recent</a></div>
   <div class="pagelink" id="tabtwtr"><a href="/toptwtr">top hype</a></div>
-  <div class="pagelink" id="tabdiscussions"><a href="/discussions">recent discussions</a></div>
+  <div class="pagelink" id="tabfriends"><a href="/friends">friends</a></div>
+  <div class="pagelink" id="tabdiscussions"><a href="/discussions">discussions</a></div>
   <div class="pagelink" id="tabrec"><a href="/recommend">recommended</a></div>
   <div class="pagelink" id="tablib"><a href="/library">library</a></div>
 </div>
