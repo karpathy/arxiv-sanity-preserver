@@ -133,8 +133,8 @@ function populateList(lstid, msg, lst) {
               return function(data){
                 if(data === 'OK') { 
                   // ok we can follow this user
-                  fd.classed('li-active', true);
-                  fd.classed('li-inactive', false);
+                  elt.classed('li-active', true);
+                  elt.classed('li-inactive', false);
                   elt2.remove(); // take out the OK button.
                 }
               }
