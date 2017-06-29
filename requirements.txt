@@ -16,3 +16,6 @@ flask
 flask_limiter
 tornado
 pymongo
+
+# for fetch_papers.py
+urllib
