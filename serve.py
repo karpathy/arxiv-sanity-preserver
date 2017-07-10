@@ -3,6 +3,7 @@ import json
 import time
 import pickle
 import argparse
+import datetime
 import dateutil.parser
 from random import shuffle, randrange, uniform
 
@@ -206,8 +207,46 @@ def encode_json(ps, n=10, send_images=True, send_abstracts=True):
   return ret
 
 # -----------------------------------------------------------------------------
+# A class to store values for RSS feed
+# -----------------------------------------------------------------------------
+
+class RssValues(object):
+  def __init__(self, title, link, summary):
+    self.title = title
+    self.link = link
+    self.summary = summary
+  def __repr__(self):
+    return "%s at %s" % (self.title, self.link)
+
+# -----------------------------------------------------------------------------
 # flask request handling
 # -----------------------------------------------------------------------------
+@app.route("/recent_rss.xml")
+def recent_rss():
+  vstr = request.args.get('vfilter', 'all')
+  papers = [db[pid] for pid in DATE_SORTED_PIDS]  # precomputed
+  papers = papers_filter_version(papers, vstr)
+  render_paper = []
+  for paper in papers:
+    if 'updated' in paper:
+      updated_dt = datetime.datetime.strptime(paper['updated'], "%Y-%m-%dT%H:%M:%SZ")
+      yesterday_dt = datetime.datetime.today() - datetime.timedelta(days=1)
+      if updated_dt > yesterday_dt:
+        continue
+    summary = ''
+    title = ''
+    link = ''
+    if 'link' in paper:
+      link = paper['link']
+    else:
+      continue  # if link does not exist, do not add to list
+    if 'summary' in paper:
+      summary = paper['summary']
+    if 'title' in paper:
+      title = paper['title']
+    render_paper.append(RssValues(title, link, summary))
+  print("render_paper=", render_paper)
+  return render_template('rss.xml', papers=render_paper)
 
 def default_context(papers, **kws):
   top_papers = encode_json(papers, args.num_results)

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0">
+<channel>
+    <title>Arxiv Sanity Preserver RSS feed</title>
+    <link>http://arxiv-sanity.com/</link>
+    <description>Arxiv Sanity Preserver RSS feed of the latest papers</description>
+        {% for paper in papers%}
+        <item>
+            <title>{{ paper.title }}</title>
+            <link>{{ paper.link }}</link>
+            <description>{{ paper.summary }}</description>
+        </item>
+        {% endfor %}
+
+</channel>
+</rss>
