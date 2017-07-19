@@ -81,9 +81,15 @@ def teardown_request(exception):
 # -----------------------------------------------------------------------------
 
 def papers_search(qraw):
-  qparts = qraw.lower().strip().split() # split by spaces
   # use reverse index and accumulate scores
   scores = []
+
+  if isvalidid(qraw) is not None:
+    pid = qraw.split('v')[0]
+    if pid in db.keys():
+      scores.append((1, db[pid]))
+
+  qparts = qraw.lower().strip().split() # split by spaces
   for pid,p in db.items():
     score = sum(SEARCH_DICT[pid].get(q,0) for q in qparts)
     if score == 0:
