@@ -80,7 +80,7 @@ def teardown_request(exception):
 # search/sort functionality
 # -----------------------------------------------------------------------------
 
-def papers_search(qraw):
+def papers_search(qraw, ret_ids=False):
   qparts = qraw.lower().strip().split() # split by spaces
   # use reverse index and accumulate scores
   scores = []
@@ -90,10 +90,21 @@ def papers_search(qraw):
       continue # no match whatsoever, dont include
     # give a small boost to more recent papers
     score += 0.0001*p['tscore']
-    scores.append((score, p))
+    scores.append((score, pid if ret_ids else p))
   scores.sort(reverse=True, key=lambda x: x[0]) # descending
   out = [x[1] for x in scores if x[0] > 0]
   return out
+
+def is_searching(qraw):
+  return qraw and '/search' in request.path
+
+def papers_filter_by_search(papers):
+  qraw = request.args.get('q', '')
+  if not is_searching(qraw):
+      return papers
+
+  ids = papers_search(qraw, True)
+  return filter(lambda x: x['pid'] in ids, papers)
 
 def papers_similar(pid):
   rawpid = strip_version(pid)
@@ -226,7 +237,14 @@ def default_context(papers, **kws):
   except Exception as e:
     print(e)
 
-  ans = dict(papers=top_papers, numresults=len(papers), totpapers=len(db), tweets=[], msg='', show_prompt=show_prompt, pid_to_users={})
+  search_routes = ['top', 'toptwtr', 'friends', 'recommend', 'library']
+
+  search_url = '/search'
+  url = request.path.lstrip('/')
+  if url in search_routes:
+      search_url = '/' + url + search_url
+
+  ans = dict(papers=top_papers, numresults=len(papers), totpapers=len(db), tweets=[], msg='', show_prompt=show_prompt, pid_to_users={}, search_url=search_url)
   ans.update(kws)
   return ans
 
@@ -376,6 +394,7 @@ def search():
   return render_template('main.html', **ctx)
 
 @app.route('/recommend', methods=['GET'])
+@app.route('/recommend/search', methods=['GET'])
 def recommend():
   """ return user's svm sorted list """
   ttstr = request.args.get('timefilter', 'week') # default is week
@@ -384,11 +403,13 @@ def recommend():
   tt = legend.get(ttstr, None)
   papers = papers_from_svm(recent_days=tt)
   papers = papers_filter_version(papers, vstr)
+  papers = papers_filter_by_search(papers)
   ctx = default_context(papers, render_format='recommend',
                         msg='Recommended papers: (based on SVM trained on tfidf of papers in your library, refreshed every day or so)' if g.user else 'You must be logged in and have some papers saved in your library.')
   return render_template('main.html', **ctx)
 
 @app.route('/top', methods=['GET'])
+@app.route('/top/search', methods=['GET'])
 def top():
   """ return top papers """
   ttstr = request.args.get('timefilter', 'week') # default is week
@@ -399,11 +420,13 @@ def top():
   top_sorted_papers = [db[p] for p in TOP_SORTED_PIDS]
   papers = [p for p in top_sorted_papers if curtime - p['time_published'] < tt*24*60*60]
   papers = papers_filter_version(papers, vstr)
+  papers = papers_filter_by_search(papers)
   ctx = default_context(papers, render_format='top',
                         msg='Top papers based on people\'s libraries:')
   return render_template('main.html', **ctx)
 
 @app.route('/toptwtr', methods=['GET'])
+@app.route('/toptwtr/search', methods=['GET'])
 def toptwtr():
   """ return top papers """
   ttstr = request.args.get('timefilter', 'day') # default is day
@@ -415,11 +438,13 @@ def toptwtr():
       papers.append(db[rec['pid']])
       tweet = {k:v for k,v in rec.items() if k != '_id'}
       tweets.append(tweet)
+  papers = papers_filter_by_search(papers)
   ctx = default_context(papers, render_format='toptwtr', tweets=tweets,
                         msg='Top papers mentioned on Twitter over last ' + ttstr + ':')
   return render_template('main.html', **ctx)
 
 @app.route('/library')
+@app.route('/library/search', methods=['GET'])
 def library():
   """ render user's library """
   papers = papers_from_library()
@@ -428,6 +453,7 @@ def library():
     msg = '%d papers in your library:' % (len(ret), )
   else:
     msg = 'You must be logged in. Once you are, you can save papers to your library (with the save icon on the right of each paper) and they will show up here.'
+  papers = papers_filter_by_search(papers)
   ctx = default_context(papers, render_format='library', msg=msg)
   return render_template('main.html', **ctx)
 
@@ -472,6 +498,7 @@ def review():
   return ret
 
 @app.route('/friends', methods=['GET'])
+@app.route('/friends/search', methods=['GET'])
 def friends():
     
     ttstr = request.args.get('timefilter', 'week') # default is week
@@ -515,6 +542,7 @@ def friends():
         else:
             msg = "Papers in your friend's libraries:"
 
+    papers = papers_filter_by_search(papers)
     ctx = default_context(papers, render_format='friends', pid_to_users=pid_to_users, msg=msg)
     return render_template('main.html', **ctx)
 
