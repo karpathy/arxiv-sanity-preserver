@@ -132,7 +132,7 @@ function addPapers(num, dynamic) {
     ldiv.append('a').attr('href', pdf_url).attr('target', '_blank').html('pdf');
     // access arxiv-vanity url of the paper
     var vanity_link = "https://www.arxiv-vanity.com/papers/" + p.pid;
-    ldiv.append('a').attr('href', vanity_link).attr('target', '_blank').html('arxiv-vanity');
+    ldiv.append('a').attr('href', vanity_link).attr('target', '_blank').html('mobile-friendly');
     
     // rank by tfidf similarity
     ldiv.append('br');
