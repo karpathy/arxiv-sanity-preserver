@@ -3,7 +3,7 @@
 
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<title>Arxiv Sanity Preserver</title>
+<title>AI scholars</title>
 
 <!-- MathJax -->
 <script type="text/x-mathjax-config">
@@ -164,32 +164,14 @@ $(document).ready(function(){
 </head>
 
 <body>
-<a href="https://github.com/karpathy/arxiv-sanity-preserver"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/38ef81f8aca64bb9a64448d0d70f1308ef5341ab/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6461726b626c75655f3132313632312e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png"></a>
 
 <div id ="titdiv">
-
-  <!-- User account information on top right -->
-  <div id="userinfo">
-    {% if not g.user %}
-    <form action="{{ url_for('login') }}" method="post">
-      User:
-      <input type="text" name="username" class="input-no-border">
-      Pass:
-      <input type="password" name="password" class="input-no-border">
-      <input type="submit" value="Login or Create" class="btn-fancy">
-    </form>
-    {% else %}
-    <a href="{{ url_for('account') }}">{{ g.user.username }}</a>
-    <a href="{{ url_for('logout') }}">log out</a>
-    {% endif %}
-  </div>
 
   <!-- Site information/banner on top left -->
 	<a href="/">
 	<div id="tittxt">
-		<h1>Arxiv Sanity Preserver</h1>
-		Built in spare time by <a href="https://twitter.com/karpathy">@karpathy</a> to accelerate research.<br>
-		Serving last {{ totpapers }} papers from cs.[CV|CL|LG|AI|NE]/stat.ML
+		<h1>AI Scholars Search ngineer</h1>
+		{{ totpapers }} <!-- cs.[CV|CL|LG|AI|NE]/stat.ML -->
 	</div>
 	</a>
 </div>
@@ -209,7 +191,7 @@ $(document).ready(function(){
 {% if render_format == "recent" and g.user.username is not defined %}
 <div id="banner">
   <div style="float:right;cursor:pointer;" id="xbanner">X</div>
-  New to arxiv-sanity? Check out the <a href="https://youtu.be/S2GY3gh6qC8" target="_blank">introduction video</a>.
+  DO NOT REST UNTIL YOUR GOOD IS BETTER AND YOUR BETTER IS BEST!
 </div>
 {% endif %}
 
@@ -234,6 +216,7 @@ To nuke this message away for a long time click <span id="goaway" style="text-de
 </div>
 {% endif %}
 
+<!--
 <div id="pagebar">
   <div class="pagelink" id="tabrecent"><a href="/">most recent</a></div>
   <div class="pagelink" id="tabtop"><a href="/top">top recent</a></div>
@@ -243,7 +226,7 @@ To nuke this message away for a long time click <span id="goaway" style="text-de
   <div class="pagelink" id="tabrec"><a href="/recommend">recommended</a></div>
   <div class="pagelink" id="tablib"><a href="/library">library</a></div>
 </div>
-
+-->
 <!-- this div will be rendered into dynamcially at init with JS -->
 <div id="recommend-time-choice" class="centerdiv"></div>
 

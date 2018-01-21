@@ -95,6 +95,50 @@ def papers_search(qraw):
   out = [x[1] for x in scores if x[0] > 0]
   return out
 
+
+def people_search(qraw):
+
+  qparts = qraw.lower().strip().split() # split by spaces
+  # use reverse index and accumulate scores
+  scores = []
+  plist = []
+  pscores = {}
+  for pid,p in db.items():
+    score = sum(SEARCH_DICT[pid].get(q,0) for q in qparts)
+    if score == 0:
+      continue # no match whatsoever, dont include
+    # give a small boost to more recent papers
+    score += 0.0001*p['tscore']
+    scores.append((score, p))
+  scores.sort(reverse=True, key=lambda x: x[0]) # descending
+  papers = [x[1] for x in scores if x[0] > 0]
+
+  print ("Found ", len(papers), " papers!\n");
+ 
+#  for i in range(len(scores)):
+  for i in range(0, min(3000, len(scores))):
+    x = scores [i][0]
+    p = scores [i][1]
+    print(i, ":--", p['title'], ' ', x)
+    authors = [a['name'] for a in p['authors']]
+    print(authors)
+
+    for name in authors:
+      if name in pscores:
+         pscores[name] += x*0.1
+      else:
+         pscores[name] = x    
+
+# print (sorted(pscores.items(), reverse=True, key=lambda x:float(x[1])));
+
+  score_list = [value for (key, value) in sorted(pscores.items(), reverse=True,  key=lambda x:float(x[1]))]
+#  print(score_list)
+  plist = [key for (key, value) in sorted(pscores.items(), reverse=True,  key=lambda x:float(x[1]))]
+#  print(plist)
+  print(len(plist))
+  return plist  
+#  return papers
+  
 def papers_similar(pid):
   rawpid = strip_version(pid)
 
@@ -194,7 +238,8 @@ def encode_json(ps, n=10, send_images=True, send_abstracts=True):
     struct['originally_published_time'] = '%s/%s/%s' % (timestruct.month, timestruct.day, timestruct.year)
 
     # fetch amount of discussion on this paper
-    struct['num_discussion'] = comments.count({ 'pid': p['_rawid'] })
+#    struct['num_discussion'] = comments.count({ 'pid': p['_rawid'] })
+    struct['num_discussion'] =  0
 
     # arxiv comments from the authors (when they submit the paper)
     cc = p.get('arxiv_comment', '')
@@ -205,6 +250,14 @@ def encode_json(ps, n=10, send_images=True, send_abstracts=True):
     ret.append(struct)
   return ret
 
+def encode_json_persons (ps):
+  ret = []
+  for i in range(len(ps)):
+    p = ps[i]
+    struct = {}
+    struct['name'] = ps[i]
+    ret.append(struct)
+  return ret 
 # -----------------------------------------------------------------------------
 # flask request handling
 # -----------------------------------------------------------------------------
@@ -374,6 +427,23 @@ def search():
   papers = papers_search(q) # perform the query and get sorted documents
   ctx = default_context(papers, render_format="search")
   return render_template('main.html', **ctx)
+
+@app.route("/psearch", methods=['GET'])
+def psearch():
+  q = request.args.get('q', '') # get the search request
+  persons = people_search(q) # perform the query and get sorted documents
+
+  print ("======================")
+  print (encode_json_persons(persons))
+  ans = dict(papers=encode_json_persons(persons), numresults=len(persons), render_format="psearch", totpapers=len(db), tweets=[], msg='', show_prompt=False, pid_to_users={})
+
+  print ("=========++++++=============")
+  return render_template('people_search.html', **ans)
+#  ans.update(kws)
+# return ans
+
+#  ctx = default_context(persons , render_format="psearch")
+#  return render_template('main.html', **ctx)
 
 @app.route('/recommend', methods=['GET'])
 def recommend():
@@ -677,6 +747,8 @@ if __name__ == "__main__":
   SEARCH_DICT = cache['search_dict']
 
   print('connecting to mongodb...')
+
+  '''
   client = pymongo.MongoClient()
   mdb = client.arxiv
   tweets_top1 = mdb.tweets_top1
@@ -695,6 +767,7 @@ if __name__ == "__main__":
   print('mongodb follow collection size:', follow_collection.count())
   
   TAGS = ['insightful!', 'thank you', 'agree', 'disagree', 'not constructive', 'troll', 'spam']
+  '''
 
   # start
   if args.prod:

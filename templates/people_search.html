@@ -1,0 +1,246 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>AI scholars</title>
+
+<!-- MathJax -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_CHTML">
+</script>
+
+<!-- CSS -->
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+
+<!-- Favicon -->
+<link rel="shortcut icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}" />
+
+<!-- JS -->
+<script src="{{ url_for('static', filename='jquery-1.8.3.min.js') }}"></script>
+<script src="{{ url_for('static', filename='d3.min.js') }}"></script>
+<script src="{{ url_for('static', filename='as-common.js') }}"></script>
+
+<!-- Google Analytics JS -->
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-3698471-25', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+<script>
+
+// passed in from flask as json
+var tweets = {{ tweets | tojson }};
+var papers = {{ papers | tojson }};
+var pid_to_users = {{ pid_to_users | tojson }};
+var msg = "{{ msg }}";
+var render_format = "{{ render_format }}";
+var username = "{{ g.user.username }}";
+var numresults = "{{ numresults }}";
+var show_prompt = "{{ show_prompt }}";
+
+var urlq = ''; // global will be read in to QueryString when load is done
+
+// when page loads...
+$(document).ready(function(){
+
+	urlq = QueryString.q;
+
+  // display message, if any
+  if(msg !== '') { d3.select("#rtable").append('div').classed('msg', true).html(msg); }
+
+  // add papers to #rtable
+	var done = addPersons(100, false);
+  if(done) { $("#loadmorebtn").hide(); }
+
+  // set up inifinite scrolling for adding more papers
+  $(window).on('scroll', function(){
+    var scrollTop = $(document).scrollTop();
+    var windowHeight = $(window).height();
+    var bodyHeight = $(document).height() - windowHeight;
+    var scrollPercentage = (scrollTop / bodyHeight);
+    if(scrollPercentage > 0.9) {
+      var done = addPersons(50, true);
+      if(done) { $("#loadmorebtn").hide(); }
+    }
+  });
+
+  // just in case scrolling is broken somehow, provide a button handler explicit
+  $("#loadmorebtn").on('click', function(){
+    var done = addPersons(50, true);
+    if(done) { $("#loadmorebtn").hide(); }
+  });
+
+  if(papers.length === 0) { $("#loadmorebtn").hide(); }
+
+	if(!(typeof urlq == 'undefined')) {
+		d3.select("#qfield").attr('value', urlq.replace(/\+/g, " "));
+	}
+
+  var vf = QueryString.vfilter; if(typeof vf === 'undefined') { vf = 'all'; }
+  var tf = QueryString.timefilter; if(typeof tf === 'undefined') { tf = 'week'; }
+  var link_endpoint = '/';
+  if(render_format === 'recent') { link_endpoint = ''; }
+  if(render_format === 'top') { link_endpoint = 'top'; }
+  if(render_format === 'recommend') { link_endpoint = 'recommend'; }
+  if(render_format === 'friends') { link_endpoint = 'friends'; }
+  if(render_format === 'toptwtr') { link_endpoint = 'toptwtr'; }
+  if(render_format === 'discussions') { link_endpoint = 'discussions'; }
+
+  var time_ranges = ['day', '3days', 'week', 'month', 'year', 'alltime'];
+  var time_txt = {'day':'Last day', '3days': 'Last 3 days', 'week': 'Last week', 'month': 'Last month', 'year': 'Last year', 'alltime': 'All time'}
+  var time_range = tf;
+
+  // set up time filtering options
+  if(render_format === 'recommend' || render_format === 'top' || render_format === 'recent' || render_format === 'friends') {
+    // insert version filtering options for these views
+    var elt = d3.select('#recommend-time-choice');
+    var vflink = vf === 'all' ? '1' : 'all'; // toggle only showing v1 or not
+    if(render_format === 'recent') {
+      var aelt = elt.append('a').attr('href', '/'+link_endpoint+'?'+'&vfilter='+vflink); // leave out timefilter from this page
+    } else {
+      var aelt = elt.append('a').attr('href', '/'+link_endpoint+'?'+'timefilter='+time_range+'&vfilter='+vflink);
+    }
+    var delt = aelt.append('div').classed('vchoice', true).html('Only show v1');
+    if(vf === '1') { delt.classed('vchoice-selected', true); }
+  }
+
+  // time choices for recommend/top
+  if(render_format === 'recommend' || render_format === 'top' || render_format === 'friends') {
+    // insert time filtering options for these two views
+    var elt = d3.select('#recommend-time-choice');
+    elt.append('div').classed('fdivider', true).html('|');
+    for(var i=0;i<time_ranges.length;i++) {
+      var time_range = time_ranges[i];
+      var aelt = elt.append('a').attr('href', '/'+link_endpoint+'?'+'timefilter='+time_range+'&vfilter='+vf);
+      var delt = aelt.append('div').classed('timechoice', true).html(time_txt[time_range]);
+      if(tf == time_range) { delt.classed('timechoice-selected', true); } // also render as chosen
+    }
+  }
+
+  // time choices for top tweets
+  if(render_format === 'toptwtr') {
+    var tf = QueryString.timefilter; if(typeof tf === 'undefined') { tf = 'day'; } // default here is day
+    var time_ranges = ['day', 'week', 'month'];
+    var elt = d3.select('#recommend-time-choice');
+    for(var i=0;i<time_ranges.length;i++) {
+      var time_range = time_ranges[i];
+      var aelt = elt.append('a').attr('href', '/'+link_endpoint+'?'+'timefilter='+time_range);
+      var delt = aelt.append('div').classed('timechoice', true).html(time_txt[time_range]);
+      if(tf == time_range) { delt.classed('timechoice-selected', true); } // also render as chosen
+    }
+  }
+
+  var xb = $("#xbanner");
+  if(xb.length !== 0) {
+    xb.click(function(){ $("#banner").slideUp('fast'); })
+  }
+
+  // in top tab: color current choice
+  if( render_format === 'recent') { d3.select('#tabrecent').classed('tab-selected', true); }
+  if( render_format === 'top') { d3.select('#tabtop').classed('tab-selected', true); }
+  if( render_format === 'toptwtr') { d3.select('#tabtwtr').classed('tab-selected', true); }
+  if( render_format === 'friends') { d3.select('#tabfriends').classed('tab-selected', true); }
+  if( render_format === 'discussions') { d3.select('#tabdiscussions').classed('tab-selected', true); }
+  if( render_format === 'recommend') { d3.select('#tabrec').classed('tab-selected', true); }
+  if( render_format === 'library') { d3.select('#tablib').classed('tab-selected', true); }
+
+  $("#goaway").on('click', function(){
+    $("#prompt").slideUp('fast');
+    $.post("/goaway", {}).done(function(data){ });
+  });
+});
+
+</script>
+</head>
+
+<body>
+
+<div id ="titdiv">
+
+  <!-- Site information/banner on top left -->
+	<a href="/">
+	<div id="tittxt">
+		<h1>AI Scholars Search ngineer</h1>
+		{{ totpapers }} <!-- cs.[CV|CL|LG|AI|NE]/stat.ML -->
+	</div>
+	</a>
+</div>
+
+<div id="flashesdiv">
+{% with flashes = get_flashed_messages() %}
+    {% if flashes %}
+      <ul class="flashes">
+      {% for message in flashes %}
+        <li>{{ message }}
+      {% endfor %}
+      </ul>
+    {% endif %}
+{% endwith %}
+</div>
+
+{% if render_format == "recent" and g.user.username is not defined %}
+<div id="banner">
+  <div style="float:right;cursor:pointer;" id="xbanner">X</div>
+  DO NOT REST UNTIL YOUR GOOD IS BETTER AND YOUR BETTER IS BEST!
+</div>
+{% endif %}
+
+<div id="sbox">
+  <form action="/psearch" method="get">
+  	<input name="q" type="text" id="qfield">
+  </form>
+  <div id="search_hint"></div>
+</div>
+
+{% if show_prompt == "yes" %}
+<div id="prompt" style="background-color:#f6ff7a; padding:10px; width:980px; margin-left:auto; margin-right:auto; font-size:14px;">
+Hey there {{ g.user.username }}, sorry to interrupt. Arxiv-sanity costs a non-negligible amount of money to host. 
+If you love the site, please consider pitching in:
+  <form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_top" style="display:inline-block;">
+  <input type="hidden" name="cmd" value="_s-xclick">
+  <input type="hidden" name="hosted_button_id" value="DRW9PQ2J3U3RJ">
+  <input type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!" style="display:inline-block;height:14px;">
+  <img alt="" border="0" src="https://www.paypalobjects.com/en_US/i/scr/pixel.gif" width="1" height="1">
+  </form>
+To nuke this message away for a long time click <span id="goaway" style="text-decoration: underline;cursor: pointer;">here</span>.
+</div>
+{% endif %}
+
+<!--
+<div id="pagebar">
+  <div class="pagelink" id="tabrecent"><a href="/">most recent</a></div>
+  <div class="pagelink" id="tabtop"><a href="/top">top recent</a></div>
+  <div class="pagelink" id="tabtwtr"><a href="/toptwtr">top hype</a></div>
+  <div class="pagelink" id="tabfriends"><a href="/friends">friends</a></div>
+  <div class="pagelink" id="tabdiscussions"><a href="/discussions">discussions</a></div>
+  <div class="pagelink" id="tabrec"><a href="/recommend">recommended</a></div>
+  <div class="pagelink" id="tablib"><a href="/library">library</a></div>
+</div>
+-->
+<!-- this div will be rendered into dynamcially at init with JS -->
+<div id="recommend-time-choice" class="centerdiv"></div>
+
+<div id="maindiv">
+
+<div id="rtable"></div>
+
+<div id="loadmore">
+  <button id="loadmorebtn">Load more</button>
+</div>
+
+</div>
+
+<br><br><br><br><br><br>
+</body>
+
+</html>

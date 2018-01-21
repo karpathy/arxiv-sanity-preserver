@@ -7,6 +7,7 @@ static/thumbs/
 as.db
 secret_key.txt
 env/
+p3env/
 data
 *.DS_Store
 twitter.txt

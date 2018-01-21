@@ -30,7 +30,7 @@ for pid,j in db.items():
       req = urlopen(pdf_url, None, timeout_secs)
       with open(fname, 'wb') as fp:
           shutil.copyfileobj(req, fp)
-      time.sleep(0.05 + random.uniform(0,0.1))
+      time.sleep(0.02 + random.uniform(0,0.1))
     else:
       print('%s exists, skipping' % (fname, ))
     numok+=1
