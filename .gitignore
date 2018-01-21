@@ -8,6 +8,9 @@ as.db
 secret_key.txt
 env/
 p3env/
-data
+sample/
+data/
+x_data/
 *.DS_Store
 twitter.txt
+.vscode/settings.json
