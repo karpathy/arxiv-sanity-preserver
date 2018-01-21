@@ -7,6 +7,10 @@ static/thumbs/
 as.db
 secret_key.txt
 env/
-data
+p3env/
+sample/
+data/
+x_data/
 *.DS_Store
 twitter.txt
+.vscode/settings.json
