@@ -25,6 +25,8 @@ $ pip install -r requirements.txt
 
 You will also need [ImageMagick](http://www.imagemagick.org/script/index.php) and [pdftotext](https://poppler.freedesktop.org/), which you can install on Ubuntu as `sudo apt-get install imagemagick poppler-utils`. Bleh, that's a lot of dependencies isn't it.
 
+Make sure you have MongoDB installed and running. If you are using Ubuntu 16.04, this is a good link to get started with it - https://www.digitalocean.com/community/tutorials/how-to-install-mongodb-on-ubuntu-16-04
+
 ### Processing pipeline
 
 The processing pipeline requires you to run a series of scripts, and at this stage I really encourage you to manually inspect each script, as they may contain various inline settings you might want to change. In order, the processing pipeline is:
