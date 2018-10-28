@@ -277,7 +277,7 @@ ul.flashes li {
 	border-top: 1px solid #AAA;
 	
 	padding: 10px 5px 10px 5px;
-	background-color: #FFF;
+	background-color: #CCE;
 }
 #pagebar a:link{ text-decoration: none; color: #338;}
 #pagebar a:visited{ text-decoration: none; color: #338;}
@@ -321,7 +321,7 @@ ul.flashes li {
 	background-color: #CEC;
 }
 .tab-selected {
-	background-color: #CCE;
+	background-color: #FFF;
 }
 .fdivider {
 	display: inline-block;
