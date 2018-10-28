@@ -80,7 +80,7 @@ def open_atomic(filepath, *args, **kwargs):
             yield f
             if fsync:
                 f.flush()
-                os.fsync(file.fileno())
+                os.fsync(f.fileno())
         os.rename(tmppath, filepath)
 
 def safe_pickle_dump(obj, fname):
