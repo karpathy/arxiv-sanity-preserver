@@ -35,7 +35,7 @@ print('number of users: ', len(users))
 meta = pickle.load(open(Config.meta_path, 'rb'))
 out = pickle.load(open(Config.tfidf_path, 'rb'))
 X = out['X']
-X = X.todense()
+X = X.todense().astype(np.float32)
 
 xtoi = { strip_version(x):i for x,i in meta['ptoi'].items() }
 
