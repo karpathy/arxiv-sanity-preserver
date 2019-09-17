@@ -74,11 +74,12 @@ if __name__ == "__main__":
   # main loop where we fetch the new results
   print('database has %d entries at start' % (len(db), ))
   num_added_total = 0
-  for i in range(args.start_index, args.max_index, args.results_per_iteration):
+  results_per_iteration = min(args.max_index, args.results_per_iteration)
+  for i in range(args.start_index, args.max_index, results_per_iteration):
 
-    print("Results %i - %i" % (i,i+args.results_per_iteration))
+    print("Results %i - %i" % (i,i+results_per_iteration))
     query = 'search_query=%s&sortBy=lastUpdatedDate&start=%i&max_results=%i' % (args.search_query,
-                                                         i, args.results_per_iteration)
+                                                         i, results_per_iteration)
     with urllib.request.urlopen(base_url+query) as url:
       response = url.read()
     parse = feedparser.parse(response)
