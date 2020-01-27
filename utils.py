@@ -97,5 +97,6 @@ def strip_version(idstr):
     return parts[0]
 
 # "1511.08198v1" is an example of a valid arxiv id that we accept
+# "0310594v1" and the dot may be missing too
 def isvalidid(pid):
-  return re.match('^\d+(v\d+)?$', pid)
+  return re.match('^([a-z]+(-[a-z]+)?/)?\d+(\.\d+)?(v\d+)?$', pid)
