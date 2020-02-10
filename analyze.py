@@ -23,7 +23,7 @@ import scipy.sparse as sp
 import regex
 
 seed(1337)
-max_train = 5000 # max number of tfidf training documents (chosen randomly), for memory efficiency
+max_train = 25000 # max number of tfidf training documents (chosen randomly), for memory efficiency
 max_features = 5000
 
 # read database

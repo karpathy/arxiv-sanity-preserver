@@ -16,3 +16,8 @@ flask
 flask_limiter
 tornado
 pymongo
+
+# for analyze.py
+pandas
+regex
+openpyxl

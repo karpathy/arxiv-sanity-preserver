@@ -9,7 +9,7 @@ from utils import Config
 
 timeout_secs = 10 # after this many seconds we give up on a paper
 if not os.path.exists(Config.pdf_dir): os.makedirs(Config.pdf_dir)
-have = set(os.listdir(Config.pdf_dir)) # get list of all pdfs we already have
+#have = set(os.listdir(Config.pdf_dir)) # get list of all pdfs we already have
 
 numok = 0
 numtot = 0
@@ -21,7 +21,8 @@ for pid,j in db.items():
   pdf_url = pdfs[0] + '.pdf'
   basename = pdf_url.split('/')[-1]
   fname = os.path.join(Config.pdf_dir, basename)
-
+  pdf_url = 'http://export.arxiv.org/pdf/'+ basename
+  
   # try retrieve the pdf
   numtot += 1
   try:
@@ -30,7 +31,7 @@ for pid,j in db.items():
       req = urlopen(pdf_url, None, timeout_secs)
       with open(fname, 'wb') as fp:
           shutil.copyfileobj(req, fp)
-      time.sleep(0.05 + random.uniform(0,0.1))
+      time.sleep(1 + random.uniform(0,0.1))
     else:
       print('%s exists, skipping' % (fname, ))
     numok+=1

@@ -79,7 +79,7 @@ for i,p in enumerate(pdf_files):
     os.system('cp %s %s' % (missing_thumb_path, thumb_path))
     print("could not render pdf, creating a missing image placeholder")
   else:
-    cmd = "montage -mode concatenate -quality 80 -tile x1 %s %s" % (os.path.join(Config.tmp_dir, 'thumb-*.png'), thumb_path)
+    cmd = 'montage -mode concatenate -quality 80 -tile x1 %s %s' % (os.path.join(Config.tmp_dir, 'thumb-*.png'), thumb_path)
     print(cmd)
     os.system(cmd)
 

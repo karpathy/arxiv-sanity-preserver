@@ -173,6 +173,8 @@ def encode_json(ps, n=10, send_images=True, send_abstracts=True):
   for i in range(min(len(ps),n)):
     p = ps[i]
     idvv = '%sv%d' % (p['_rawid'], p['_version'])
+    idyymm = p['_rawid'][:4]  
+    idpure = p['_rawid']
     struct = {}
     struct['title'] = p['title']
     struct['pid'] = idvv
@@ -184,7 +186,8 @@ def encode_json(ps, n=10, send_images=True, send_abstracts=True):
     if send_abstracts:
       struct['abstract'] = p['summary']
     if send_images:
-      struct['img'] = '/static/thumbs/' + idvv + '.pdf.jpg'
+      #struct['img'] = '/static/thumbs/' + idvv + '.pdf.jpg'
+      struct['img'] = '/static/thumbs/jpg_txt/' + idyymm + '/'+ idpure + '.jpg'
     struct['tags'] = [t['term'] for t in p['tags']]
     
     # render time information nicely
@@ -437,13 +440,17 @@ def review():
   
   # make sure user is logged in
   if not g.user:
+    print('not g.user')
     return 'NO' # fail... (not logged in). JS should prevent from us getting here.
 
   idvv = request.form['pid'] # includes version
+  print('idvv=',idvv)
   if not isvalidid(idvv):
+    print('not isvalidid(idvv)')
     return 'NO' # fail, malformed id. weird.
   pid = strip_version(idvv)
   if not pid in db:
+    print('not pid in db')
     return 'NO' # we don't know this paper. wat
 
   uid = session['user_id'] # id of logged in user
@@ -469,6 +476,7 @@ def review():
     #print('added %s for %s' % (pid, uid))
     ret = 'ON'
 
+  print(ret)
   return ret
 
 @app.route('/friends', methods=['GET'])
