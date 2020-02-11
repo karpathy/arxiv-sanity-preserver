@@ -63,10 +63,11 @@ for pid,j in db.items():
            , j['arxiv_primary_category']['term'].split(".")[0]+j['_rawid']+'.txt') #YYMM/catYYMMxxxxx.pdf
   if os.path.isfile(txt_path): # some pdfs dont translate to txt
     txt = read_txt_path(txt_path)
+
     if len(txt) > 1000 and len(txt) < 500000: # 500K is VERY conservative upper bound
       txt_paths.append(txt_path) # todo later: maybe filter or something some of them
       pids.append(idvv)
-      print("read %d/%d (%s) with %d chars" % (n, len(db), idvv, len(txt)))
+      #print("read %d/%d (%s) with %d chars" % (n, len(db), idvv, len(txt)))
     else:
       print("skipped %d/%d (%s) with %d chars: suspicious!" % (n, len(db), idvv, len(txt)))
       pass
@@ -109,7 +110,6 @@ del corpus
 num_cores = multiprocessing.cpu_count()
 num_partitions = num_cores-1
 # I like to leave some cores for other processes
-
 print('num_partitions',num_partitions)
 
 def parallelize_dataframe(df, func):
@@ -134,6 +134,7 @@ data_pd.head()
 X = parallelize_dataframe(data_pd, transform_func)
 print(v.vocabulary_)
 print(X.shape)
+#exit()
 
 # write full matrix out
 out = {}
@@ -151,15 +152,6 @@ print("writing", Config.meta_path)
 safe_pickle_dump(out, Config.meta_path)
 del out
 del data_pd
-
-def compute_batch(i):
-  i1 = min(len(pids), i+batch_size)
-  xquery = X[i:i1] # BxD
-  ds = -np.asarray(np.dot(X, xquery.T)) #NxD * DxB => NxB
-  IX = np.argsort(ds, axis=0) # NxB
-  for j in range(i1-i):
-    sim_dict[pids[i+j]] = [pids[q] for q in list(IX[:50,j])]
-  print('%d/%d...' % (i, len(pids)))
 
 print("precomputing nearest neighbor queries in batches...")
 X = X.todense() # originally it's a sparse matrix
