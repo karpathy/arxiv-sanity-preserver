@@ -31,7 +31,10 @@ def get_keys():
 def extract_arxiv_pids(r):
   pids = []
   for u in r.urls:
-    m = re.search('arxiv.org/abs/(.+)', u.expanded_url)
+    # https://arxiv.org/help/arxiv_identifier
+    # https://arxiv.org/help/arxiv_identifier_for_services
+    # https://www.wikidata.org/wiki/Property:P818
+    m = re.search('.*arxiv.org/.*/((\d{4}.\d{4,5}|[a-z\-]+(\.[A-Z]{2})?/\d{7})(v\d+)?).*', u.expanded_url)
     if m: 
       rawid = m.group(1)
       pids.append(rawid)
