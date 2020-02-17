@@ -186,8 +186,7 @@ def encode_json(ps, n=10, send_images=True, send_abstracts=True):
     if send_abstracts:
       struct['abstract'] = p['summary']
     if send_images:
-      #struct['img'] = '/static/thumbs/' + idvv + '.pdf.jpg'
-      struct['img'] = '/static/thumbs/jpg_txt/' + idyymm + '/'+ idpure + '.jpg'
+      struct['img'] = '/static/thumbs/' + idyymm + '/'+ idpure + '.jpg'
     struct['tags'] = [t['term'] for t in p['tags']]
     
     # render time information nicely
