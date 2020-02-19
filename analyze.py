@@ -153,8 +153,18 @@ safe_pickle_dump(out, Config.meta_path)
 del out
 del data_pd
 
+def compute_batch(i):
+  i1 = min(len(pids), i+batch_size)
+  xquery = X[i:i1] # BxD
+  ds = -np.asarray(np.dot(X, xquery.T)) #NxD * DxB => NxB
+  IX = np.argsort(ds, axis=0) # NxB
+  for j in range(i1-i):
+    sim_dict[pids[i+j]] = [pids[q] for q in list(IX[:50,j])]
+  print('%d/%d...' % (i, len(pids)))
+
+
 print("precomputing nearest neighbor queries in batches...")
-X = X.todense() # originally it's a sparse matrix
+X = X.todense().astype(np.float32) # originally it's a sparse matrix
 sim_dict = {}
 batch_size = 200
 Parallel( n_jobs=-1, prefer="threads", verbose=5)(
