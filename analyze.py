@@ -11,7 +11,7 @@ from random import shuffle, seed
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 
-from utils import Config, safe_pickle_dump
+from utils import Config, safe_pickle_dump, dir_basename_from_pid
 from joblib import Parallel, delayed
 
 import multiprocessing
@@ -44,23 +44,9 @@ n = 0
 for pid,j in db.items():
   n += 1
   idvv = '%sv%d' % (j['_rawid'], j['_version'])
-  idyymm = j['_rawid'][:4]
 
-  if j['_rawid'][:4].isdigit() and '.' in j['_rawid']: # this is the current scheme from 0707
-    schema='0707'
-    txt_path = os.path.join('data', 'txt'
-            , j['_rawid'][:4]
-            , j['_rawid']+'.txt') # YYMM/YYMM.xxxxx.pdf (number of xxx is variable)
-  elif '/' in j['_rawid']: #some rawids had the category and the id
-   shema='slash'
-   txt_path = os.path.join('data', 'txt'
-           , j['_rawid'].split("/")[1][:4].split("-")[0]
-           , "".join(j['_rawid'].split("/"))+'.txt') #YYMM/catYYMMxxxxx.pdf
-  else: # this is for rawid with no category, but we split category from metadata on the dot (if it has one)
-    schema='else'
-    txt_path = os.path.join('data', 'txt'
-           , j['_rawid'][:4].split("-")[0]
-           , j['arxiv_primary_category']['term'].split(".")[0]+j['_rawid']+'.txt') #YYMM/catYYMMxxxxx.pdf
+  txt_path = os.path.join(Config.txt_dir, dir_basename_from_pid(pid,j)+".txt")
+
   if os.path.isfile(txt_path): # some pdfs dont translate to txt
     txt = read_txt_path(txt_path)
 
@@ -73,7 +59,6 @@ for pid,j in db.items():
       pass
   else:
     print("could not find %s in txt folder." % (txt_path, ))
-    print(schema)
 print("in total read in %d text files out of %d db entries." % (len(txt_paths), len(db)))
 
 # compute tfidf vectors with scikits
