@@ -16,9 +16,9 @@ class Config(object):
     thumbs_dir = os.path.join('static', 'thumbs')
     # intermediate pickles
     tfidf_path = os.path.join('/', 'data', 'pickles','tfidf.p')
-    meta_path = 'tfidf_meta.p'
-    sim_path = 'sim_dict.p'
-    user_sim_path = 'user_sim.p'
+    meta_path = os.path.join('/', 'data', 'pickles','tfidf_meta.p')
+    sim_path = os.path.join('/', 'data', 'pickles','sim_dict.p')
+    user_sim_path = os.path.join('/', 'data', 'pickles','user_sim.p')
     # sql database file
     db_serve_path = 'db2.p' # an enriched db.p with various preprocessing info
     database_path = 'as.db'
