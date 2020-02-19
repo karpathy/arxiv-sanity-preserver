@@ -107,17 +107,23 @@ def dir_basename_from_pid(pid,j):
   """ Mapping article id from metadata to its location in the arxiv S3 tarbals. 
 
   Returns dir/basename without extention and without full qualified path.
+  It also ignores version because there is no version in the tarbals. 
+  I understand they have the updated version in the tarballs all the time.
 
-  Add .txt .pdf or .jpg for the actual file you need and prepend with the path to your files dirs.
+  Add .txt .pdf or .jpg for the actual file you need and prepend with the 
+  path to your files dirs.
   """
+  schema="unhandled"
   if j['_rawid'][:4].isdigit() and '.' in j['_rawid']: # this is the current scheme from 0704
-    schema='0704' # YYMM/YYMM.xxxxx.pdf (number of xxx is variable)
-    dir_basename_str = '/'.join( j['_rawid'][:4] , j['_rawid'])
-  elif '/' in j['_rawid']: #some rawids had the category and the id
-   shema='slash' #YYMM/catYYMMxxxxx.pdf
-   dir_basename_str = '/'.join( j['_rawid'].split("/")[1][:4].split("-")[0] , "".join(j['_rawid'].split("/")))
+    schema='current' # YYMM/YYMM.xxxxx.pdf (number of xxx is variable)
+    dir_basename_str = '/'.join( [ j['_rawid'][:4] , j['_rawid'] ] )
+  elif '/' in j['_rawid']: # cond-mat/0210533 some rawids had the category and the id
+    schema='slash' #YYMM/catYYMMxxxxx.pdf
+    dir_basename_str = '/'.join( [ j['_rawid'].split("/")[1][:4], "".join(j['_rawid'].split("/")) ] )  
   else: # this is for rawid with no category, but we split category from metadata on the dot (if it has one)
     schema='else' #YYMM/catYYMMxxxxx.pdf
-    dir_basename_str = '/'.join( j['_rawid'][:4].split("-")[0]
-      , j['arxiv_primary_category']['term'].split(".")[0]+j['_rawid'])
+    dir_basename_str = '/'.join( [ j['_rawid'][:4].split("-")[0]
+      , j['arxiv_primary_category']['term'].split(".")[0]+j['_rawid'] ] )
+  if schema == 'unhandled':
+    print('unhandled mapping in pid to tarball',j['_rawid'])
   return dir_basename_str
