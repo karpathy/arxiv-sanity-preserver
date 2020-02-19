@@ -119,7 +119,7 @@ X = parallelize_dataframe(data_pd, transform_func)
 # write full matrix out
 out = {}
 out['X'] = X # this one is heavy!
-print("writing tfidf.p", Config.tfidf_path)
+print("writing", Config.tfidf_path)
 safe_pickle_dump(out, Config.tfidf_path)
 
 # writing lighter metadata information into a separate (smaller) file
@@ -128,7 +128,7 @@ out['vocab'] = v.vocabulary_
 out['idf'] = v._tfidf.idf_
 out['pids'] = pids # a full idvv string (id and version number)
 out['ptoi'] = { x:i for i,x in enumerate(pids) } # pid to ix in X mapping
-print("writing tfidf_meta.p", Config.meta_path)
+print("writing", Config.meta_path)
 safe_pickle_dump(out, Config.meta_path)
 del out
 del data_pd
