@@ -3,7 +3,9 @@ export WORKER_ID=i-0b8a8a78e1f18b2c5
 aws ec2 start-instances --region eu-central-1 --instance-ids "$WORKER_ID"
 # how to find WORKER_DNS out by instance id?
 export WORKER_DNS=ubuntu@ec2-3-125-115-48.eu-central-1.compute.amazonaws.com 
-source ~/env/bin/activate; python OAI_seed_db.py --from-date '2020-02-01'; 
+source ~/env/bin/activate; 
+python OAI_seed_db.py --from-date '2020-02-01' --set "physics:cond-mat"; 
+python OAI_seed_db.py --from-date '2020-02-01' --set "cs"; 
 python download_pdfs.py  # how to set from-date?
 
 # For PDF to txt conversion 
