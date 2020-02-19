@@ -138,7 +138,7 @@ print(X.shape)
 
 # write full matrix out
 out = {}
-out['X'] = X.astype(np.float32)  # this one is heavy!
+out['X'] = X # this one is heavy!
 print("writing", Config.tfidf_path)
 safe_pickle_dump(out, Config.tfidf_path)
 
