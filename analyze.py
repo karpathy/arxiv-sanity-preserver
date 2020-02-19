@@ -96,6 +96,7 @@ num_cores = multiprocessing.cpu_count()
 num_partitions = num_cores-1 # I like to leave some cores for other processes
 print('num_partitions',num_partitions)
 
+#TODO we actually don't need a dataframe, transform corpus to np.array directly  
 def parallelize_dataframe(df, func):
     a = np.array_split(df, num_partitions)
     del df
