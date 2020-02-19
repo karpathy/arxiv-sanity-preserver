@@ -93,14 +93,13 @@ del corpus
 
 # https://github.com/rafaelvalero/ParallelTextProcessing/blob/master/parallelizing_text_processing.ipynb
 num_cores = multiprocessing.cpu_count()
-num_partitions = num_cores-1
-# I like to leave some cores for other processes
+num_partitions = num_cores-1 # I like to leave some cores for other processes
 print('num_partitions',num_partitions)
 
 def parallelize_dataframe(df, func):
     a = np.array_split(df, num_partitions)
     del df
-    pool = Pool(num_cores)
+    pool = Pool(num_partitions)
     sparse_mtrx = sp.vstack(pool.map(func, a), format='csr')
     pool.close()
     pool.join()
@@ -115,16 +114,12 @@ print("transforming %d documents..." % (len(txt_paths), ))
 corpus = make_corpus(txt_paths)
 data_pd = pd.DataFrame(corpus)
 data_pd.rename(columns = {0:'text'},inplace = True)
-data_pd.head()
 X = parallelize_dataframe(data_pd, transform_func)
-print(v.vocabulary_)
-print(X.shape)
-#exit()
 
 # write full matrix out
 out = {}
 out['X'] = X # this one is heavy!
-print("writing", Config.tfidf_path)
+print("writing tfidf.p", Config.tfidf_path)
 safe_pickle_dump(out, Config.tfidf_path)
 
 # writing lighter metadata information into a separate (smaller) file
@@ -133,7 +128,7 @@ out['vocab'] = v.vocabulary_
 out['idf'] = v._tfidf.idf_
 out['pids'] = pids # a full idvv string (id and version number)
 out['ptoi'] = { x:i for i,x in enumerate(pids) } # pid to ix in X mapping
-print("writing", Config.meta_path)
+print("writing tfidf_meta.p", Config.meta_path)
 safe_pickle_dump(out, Config.meta_path)
 del out
 del data_pd
