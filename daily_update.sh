@@ -1,6 +1,5 @@
 #!/bin/bash
 export WORKER_ID=i-0b8a8a78e1f18b2c5
-aws ec2 start-instances --region eu-central-1 --instance-ids "$WORKER_ID"
 # how to find WORKER_DNS out by instance id?
 export WORKER_DNS=ubuntu@ec2-3-125-115-48.eu-central-1.compute.amazonaws.com 
 source ~/env/bin/activate; 
@@ -43,7 +42,12 @@ mkdir -p /data/jpg/${1#"./"}; ' sh {} \;
 time find /data/pdf/ -type f -name "*.pdf"|parallel create_txt_and_thumbs {}
 
 aws s3 sync /data/txt s3://abbrivia.private-arxiv/jpg_txt/ \
-	--exclude "*" --include "*.txt" &
+	--exclude "*" --include "*.txt" --include "*.jpg" &
+
+#aws s3 sync s3://abbrivia.private-arxiv/jpg_txt /data/jpg/  \
+#	--exclude "*" --include "*.jpg"
+#aws s3 sync s3://abbrivia.private-arxiv/jpg_txt /data/txt/  \
+#	--exclude "*" --include "*.txt"
 
 while [ $(aws ec2 start-instances --region eu-central-1 \
 --instance-ids "$WORKER_ID" --output text|grep "CURRENTSTATE" \
@@ -69,6 +73,6 @@ python analyze.py;
 SSH
 for file in sim_dict.p tfidf.p tfidf_meta.p; do scp \
 ""$WORKER_DNS":/data/pickles/$file" /data/pickles/ ; done;
-#aws ec2 stop-instances --region eu-central-1 --instance-ids "$WORKER_ID" 
+aws ec2 stop-instances --region eu-central-1 --instance-ids "$WORKER_ID" 
 source ~/env/bin/activate; cd ~/arxiv-sanity-preserver/; python buildsvm.py; \
 python make_cache.py;
