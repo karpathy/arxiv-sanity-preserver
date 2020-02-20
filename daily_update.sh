@@ -1,10 +1,7 @@
 #!/bin/bash
-export WORKER_ID=i-0b8a8a78e1f18b2c5
-# how to find WORKER_DNS out by instance id?
-export WORKER_DNS=ubuntu@ec2-3-125-115-48.eu-central-1.compute.amazonaws.com 
 source ~/env/bin/activate; 
 python OAI_seed_db.py --from-date '2020-02-01' --set "physics:cond-mat"; 
-python OAI_seed_db.py --from-date '2020-02-01' --set "cs"; 
+#python OAI_seed_db.py --from-date '2020-02-01' --set "cs"; 
 python download_pdfs.py  # how to set from-date?
 
 # For PDF to txt conversion 
@@ -49,30 +46,43 @@ aws s3 sync /data/txt s3://abbrivia.private-arxiv/jpg_txt/ \
 #aws s3 sync s3://abbrivia.private-arxiv/jpg_txt /data/txt/  \
 #	--exclude "*" --include "*.txt"
 
-while [ $(aws ec2 start-instances --region eu-central-1 \
+export WORKER_ID=i-0b8a8a78e1f18b2c5
+while ! [ "x$(aws ec2 start-instances --region eu-central-1 \
 --instance-ids "$WORKER_ID" --output text|grep "CURRENTSTATE" \
-|cut -f3) != 'running' ];
-do sleep 60;
+|cut -f3)" = "xrunning" ];
+do 
+	echo "$WORKER_ID not running"
+	sleep 60;
 done;
+export WORKER_IP="$(aws ec2 describe-instances --output text \
+	--region eu-central-1 --instance-ids "$WORKER_ID" \
+	--query 'Reservations[*].Instances[*].PublicIpAddress' )"
+export WORKER_CONNECT='ubuntu@'"$WORKER_IP"
+echo "$WORKER_CONNECT"
 
 # copy all txt files to the processing instance
 # setup its ephemeral disk /data if lost 
 #lsblk
-ssh "$WORKER_DNS" << SSH
-ls /data || ( sudo mkfs -t xfs /dev/xvdb && sudo mkdir /data; \
-sudo mount /dev/xvdb /data; sudo chown ubuntu.ubuntu /data )
-mkdir -p /data/txt /data/pickles 
+ssh-keygen -f "/home/ubuntu/.ssh/known_hosts" -R "$WORKER_IP"
+ssh -o "StrictHostKeyChecking no" "$WORKER_CONNECT" << SSH
+if findmnt --source /dev/xvdb --target /data >/dev/null && [ "x$(stat --format '%U' '/data/txt')" = "xubuntu" ] ;
+then echo "/data/txt is mounted to /dev/xvdb owned by ubuntu, proceeding"
+else echo "resetting /data"; \
+sudo mkfs -t xfs /dev/xvdb; sudo mkdir -p /data; \
+sudo mount /dev/xvdb /data; sudo chown ubuntu.ubuntu /data; \
+mkdir -p /data/txt; mkdir -p /data/pickles; 
+fi
 SSH
-time rsync -r --size-only --progress /data/txt/ "$WORKER_DNS":/data/txt
+time rsync -r --size-only --progress /data/txt/ "$WORKER_CONNECT":/data/txt
 scp /home/ubuntu/arxiv-sanity-preserver/db.p \
-"$WORKER_DNS":/home/ubuntu/arxiv-sanity-preserver/
-#rsync -havz --progress /home/ubuntu/arxiv-sanity-preserver/ "$WORKER_DNS":/home/ubuntu/arxiv-sanity-preserver/
-time ssh "$WORKER_DNS" << SSH
+"$WORKER_CONNECT":/home/ubuntu/arxiv-sanity-preserver/
+#rsync -havz --progress /home/ubuntu/arxiv-sanity-preserver/ "$WORKER_CONNECT":/home/ubuntu/arxiv-sanity-preserver/
+time ssh "$WORKER_CONNECT" << SSH
 source /home/ubuntu/env/bin/activate; cd /home/ubuntu/arxiv-sanity-preserver/; \
 python analyze.py;
 SSH
 for file in sim_dict.p tfidf.p tfidf_meta.p; do scp \
-""$WORKER_DNS":/data/pickles/$file" /data/pickles/ ; done;
+""$WORKER_CONNECT":/data/pickles/$file" /data/pickles/ ; done;
 aws ec2 stop-instances --region eu-central-1 --instance-ids "$WORKER_ID" 
 source ~/env/bin/activate; cd ~/arxiv-sanity-preserver/; python buildsvm.py; \
 python make_cache.py;
