@@ -43,12 +43,15 @@ for pid,j in db.items():
 
   # try retrieve the pdf
   numtot += 1
+
+  if numtot%4==0: time.sleep(1 + random.uniform(0,0.1)) # as per arXive guidelines
+  
   print('fetching %s into %s' % (pdf_url, fname))
   try:
     req = urlopen(pdf_url, None, timeout_secs)
     with open(fname, 'wb') as fp:
       shutil.copyfileobj(req, fp)
-    time.sleep(1 + random.uniform(0,0.1))
+    time.sleep(random.uniform(0,0.1))
     numok+=1
   except Exception as e:
     print('error downloading: ', pdf_url)
