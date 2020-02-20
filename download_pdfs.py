@@ -45,6 +45,7 @@ for pid,j in db.items():
   numtot += 1
 
   if numtot%4==0: time.sleep(1 + random.uniform(0,0.1)) # as per arXive guidelines
+  if numtot%500==0: time.sleep(20 + random.uniform(0,0.1)) # was banned before after a 1000...
   
   print('fetching %s into %s' % (pdf_url, fname))
   try:
