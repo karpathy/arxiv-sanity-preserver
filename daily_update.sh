@@ -1,4 +1,7 @@
 #!/bin/bash
+# add to crontab -e 
+# 16 04 * * * . /home/ubuntu/.profile; /home/ubuntu/arxiv-sanity-preserver/daily_update.sh 2>>/data/daily_update.log
+# the single dot is the command to source profile
 source ~/env/bin/activate; 
 python OAI_seed_db.py --from-date '2020-02-01' --set "physics:cond-mat"; 
 #python OAI_seed_db.py --from-date '2020-02-01' --set "cs"; 
