@@ -67,6 +67,8 @@ python analyze.py
 python buildsvm.py
 python make_cache.py
 ```
+### Crontab entry
+```21 04 * * * . /home/ubuntu/.profile; echo "START $(date)">>/data/daily_update.log; /home/ubuntu/arxiv-sanity-preserver/daily_update.sh 2>&1 1>>/data/daily_update.log; "FINISH $(date)">>/data/daily_update.log; ```
 
 I run the server in a screen session, so `screen -S serve` to create it (or `-r` to reattach to it) and run:
 
