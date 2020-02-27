@@ -609,9 +609,9 @@ def login():
   """ logs in the user. if the username doesn't exist creates the account """
   
   if not request.form['username']:
-    flash('You have to enter a username')
+    flash('You have to enter a username, choose some name and password if you do not have an account yet.')
   elif not request.form['password']:
-    flash('You have to enter a password')
+    flash('You have to enter a password, choose some name and password if you do not have an account yet.')
   elif get_user_id(request.form['username']) is not None:
     # username already exists, fetch all of its attributes
     user = query_db('''select * from user where

@@ -41,10 +41,11 @@ def fetch_url(j):
     req = urlopen(pdf_url, None, timeout_secs)
     with open(fname, 'wb') as fp:
       shutil.copyfileobj(req, fp)
-    #numok+=1
+    return 1
   except Exception as e:
     print('error downloading: ', pdf_url)
     print(e)
+    return 0
 
 db = pickle.load(open(Config.db_path, 'rb'))
 for pid,j in db.items():
@@ -57,14 +58,18 @@ for pid,j in db.items():
   numtot += 1
 
   if numtot%500==0: time.sleep(20 + random.uniform(0,0.1)) # was banned before after a 1000...
+  
+  numok += fetch_url(j) 
+  time.sleep(1 + random.uniform(0,0.1)) # as per arXive guidelines
+  print('%d/%d of %d downloaded ok.' % (numok, numtot, len(db)))
 
-  entries.append(j) # a buffer for 4 urls (records)
+  #entries.append(j) # a buffer for 4 urls (records)
 
-  if len(entries)==4:
-      time.sleep(1 + random.uniform(0,0.1)) # as per arXive guidelines
-      ThreadPool(4).imap_unordered(fetch_url, entries)
-      entries=list() # clean buffer
-      numok+=4 # TODO handle that correctly via manager or something
-      print('%d/%d of %d downloaded ok.' % (numok, numtot, len(db)))
+  #if len(entries)==4:
+  #    time.sleep(1 + random.uniform(0,0.1)) # as per arXive guidelines
+  #    ThreadPool(4).imap_unordered(fetch_url, entries)
+  #    entries=list() # clean buffer
+  #    numok+=4 # TODO handle that correctly via manager or something
+  #    print('%d/%d of %d downloaded ok.' % (numok, numtot, len(db)))
 
 print('final number of papers downloaded okay: %d/%d' % (numok, len(db)))

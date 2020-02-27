@@ -172,12 +172,13 @@ $(document).ready(function(){
   <!-- User account information on top right -->
   <div id="userinfo">
     {% if not g.user %}
+    To create account just enter some username and password.
     <form action="{{ url_for('login') }}" method="post">
       User:
       <input type="text" name="username" class="input-no-border">
       Pass:
       <input type="password" name="password" class="input-no-border">
-      <input type="submit" value="Login or Create" class="btn-fancy">
+      <input type="submit" value="Login or Create Account" class="btn-fancy">
     </form>
     {% else %}
     <a href="{{ url_for('account') }}">{{ g.user.username }}</a>
