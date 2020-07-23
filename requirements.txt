@@ -21,3 +21,6 @@ pymongo
 pandas
 regex
 openpyxl
+
+# cannot import name 'check_password_hash' for 1.0.1
+werkzeug==0.16.1
