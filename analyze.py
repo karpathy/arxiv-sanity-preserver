@@ -93,7 +93,7 @@ del corpus
 
 # https://github.com/rafaelvalero/ParallelTextProcessing/blob/master/parallelizing_text_processing.ipynb
 num_cores = multiprocessing.cpu_count()
-num_partitions = num_cores-1 # I like to leave some cores for other processes
+num_partitions = num_cores-1 if num_cores > 1 else 1 # I like to leave some cores for other processes
 print('num_partitions',num_partitions)
 
 #TODO we actually don't need a dataframe, transform corpus to np.array directly  
