@@ -49,8 +49,8 @@ def fetch_url(j):
 
 db = pickle.load(open(Config.db_path, 'rb'))
 for pid,j in db.items():
-  if not 20 <= int( dir_basename_from_pid(pid,j).split("/")[0][:2]) <= 80: 
-    continue # not between years 1980 and 2019
+#  if not 20 <= int( dir_basename_from_pid(pid,j).split("/")[0][:2]) <= 80: 
+#    continue # not between years 1980 and 2019
   if os.path.join(Config.txt_dir,dir_basename_from_pid(pid,j)+'.txt') in have_txt \
      or os.path.join(Config.pdf_dir,dir_basename_from_pid(pid,j)+'.pdf') in have_pdf:
     continue
