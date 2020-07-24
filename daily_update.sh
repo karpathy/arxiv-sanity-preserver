@@ -2,6 +2,7 @@
 # add to crontab -e 
 # 16 04 * * * . /home/ubuntu/.profile; /home/ubuntu/arxiv-sanity-preserver/daily_update.sh 2>>/data/daily_update.log
 # the single dot is the command to source profile
+export awscli=aws # installed into the virualenv with pip install aws --update
 source /home/ubuntu/env/bin/activate; 
 cd /home/ubuntu/arxiv-sanity-preserver/;
 python /home/ubuntu/arxiv-sanity-preserver/OAI_seed_db.py --from-date '2020-02-01' --set "physics:cond-mat"; 
@@ -42,23 +43,23 @@ mkdir -p /data/jpg/${1#"./"}; ' sh {} \;
 
 time find /data/pdf/ -type f -name "*.pdf"|parallel create_txt_and_thumbs {}
 
-/snap/bin/aws s3 sync /data/txt s3://abbrivia.private-arxiv/jpg_txt/ \
+"$awscli" s3 sync /data/txt s3://abbrivia.private-arxiv/jpg_txt/ \
 	--exclude "*" --include "*.txt" --include "*.jpg" &
 
-#/snap/bin/aws s3 sync s3://abbrivia.private-arxiv/jpg_txt /data/jpg/  \
+#"$awscli" s3 sync s3://abbrivia.private-arxiv/jpg_txt /data/jpg/  \
 #	--exclude "*" --include "*.jpg"
-#/snap/bin/aws s3 sync s3://abbrivia.private-arxiv/jpg_txt /data/txt/  \
+#"$awscli" s3 sync s3://abbrivia.private-arxiv/jpg_txt /data/txt/  \
 #	--exclude "*" --include "*.txt"
 
 export WORKER_ID=i-0b8a8a78e1f18b2c5
-while ! [ "x$(/snap/bin/aws ec2 start-instances --region eu-central-1 \
+while ! [ "x$("$awscli" ec2 start-instances --region eu-central-1 \
 --instance-ids "$WORKER_ID" --output text|grep "CURRENTSTATE" \
 |cut -f3)" = "xrunning" ];
 do 
 	echo "$WORKER_ID not running"
 	sleep 60;
 done;
-export WORKER_IP="$(/snap/bin/aws ec2 describe-instances --output text \
+export WORKER_IP="$("$awscli" ec2 describe-instances --output text \
 	--region eu-central-1 --instance-ids "$WORKER_ID" \
 	--query 'Reservations[*].Instances[*].PublicIpAddress' )"
 export WORKER_CONNECT='ubuntu@'"$WORKER_IP"
@@ -87,6 +88,6 @@ python analyze.py;
 SSH
 for file in sim_dict.p tfidf.p tfidf_meta.p; do scp \
 ""$WORKER_CONNECT":/data/pickles/$file" /data/pickles/ ; done;
-/snap/bin/aws ec2 stop-instances --region eu-central-1 --instance-ids "$WORKER_ID" 
+"$awscli" ec2 stop-instances --region eu-central-1 --instance-ids "$WORKER_ID" 
 source /home/ubuntu/env/bin/activate; cd /home/ubuntu/arxiv-sanity-preserver/; python buildsvm.py; \
 python /home/ubuntu/arxiv-sanity-preserver/make_cache.py;
