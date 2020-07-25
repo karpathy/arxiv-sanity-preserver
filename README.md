@@ -44,6 +44,13 @@ The processing pipeline requires you to run a series of scripts, and at this sta
 
 Optionally you can also run the `twitter_daemon.py` in a screen session, which uses your Twitter API credentials (stored in `twitter.txt`) to query Twitter periodically looking for mentions of papers in the database, and writes the results to the pickle file `twitter.p`.
 
+Structure of the `twitter.txt`:
+<pre>consumer_key
+consumer_secret
+access_token_key
+access_token_secret
+</pre>
+
 I have a simple shell script that runs these commands one by one, and every day I run this script to fetch new papers, incorporate them into the database, and recompute all tfidf vectors/classifiers. More details on this process below.
 
 **protip: numpy/BLAS**: The script `analyze.py` does quite a lot of heavy lifting with numpy. I recommend that you carefully set up your numpy to use BLAS (e.g. OpenBLAS), otherwise the computations will take a long time. With ~25,000 papers and ~5000 users the script runs in several hours on my current machine with a BLAS-linked numpy.
@@ -52,7 +59,7 @@ I have a simple shell script that runs these commands one by one, and every day 
 
 If you'd like to run the flask server online (e.g. AWS) run it as `python serve.py --prod`.
 
-You also want to create a `secret_key.txt` file and fill it with random text (see top of `serve.py`).
+You also want to create a `secret_key.txt` file and fill it with random text (see top of `serve.py`). `cat /dev/urandom | base64 | head -c 1000 > secret_key.txt`
 
 ### Current workflow
 
