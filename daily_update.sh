@@ -5,7 +5,7 @@
 export awscli=aws # installed into the virualenv with pip install aws --update
 source /home/ubuntu/env/bin/activate; 
 cd /home/ubuntu/arxiv-sanity-preserver/;
-python /home/ubuntu/arxiv-sanity-preserver/OAI_seed_db.py --from-date '2020-02-01' --set "physics:cond-mat"; 
+python /home/ubuntu/arxiv-sanity-preserver/OAI_seed_db.py --from-date '2020-06-01' --set "physics:cond-mat"; 
 #python OAI_seed_db.py --from-date '2020-02-01' --set "cs"; 
 python /home/ubuntu/arxiv-sanity-preserver/download_pdfs.py  # how to set from-date?
 
@@ -84,10 +84,17 @@ scp /home/ubuntu/arxiv-sanity-preserver/db.p \
 #rsync -havz --progress /home/ubuntu/arxiv-sanity-preserver/ "$WORKER_CONNECT":/home/ubuntu/arxiv-sanity-preserver/
 time ssh "$WORKER_CONNECT" << SSH
 source /home/ubuntu/env/bin/activate; cd /home/ubuntu/arxiv-sanity-preserver/; \
-python analyze.py;
+python analyze.py; 
+python buildsvm.py; 
+python make_cache.py;
 SSH
+
 for file in sim_dict.p tfidf.p tfidf_meta.p; do scp \
 ""$WORKER_CONNECT":/data/pickles/$file" /data/pickles/ ; done;
+
+for file in db2.p serve_cache.p; do scp \
+""$WORKER_CONNECT":/home/ubuntu/arxiv-sanity-preserver/$file" /home/ubuntu/arxiv-sanity-preserver/ ; done;
+
 "$awscli" ec2 stop-instances --region eu-central-1 --instance-ids "$WORKER_ID" 
-source /home/ubuntu/env/bin/activate; cd /home/ubuntu/arxiv-sanity-preserver/; python buildsvm.py; \
-python /home/ubuntu/arxiv-sanity-preserver/make_cache.py;
+#source /home/ubuntu/env/bin/activate; cd /home/ubuntu/arxiv-sanity-preserver/; python buildsvm.py; \
+#python /home/ubuntu/arxiv-sanity-preserver/make_cache.py;
