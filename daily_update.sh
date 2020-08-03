@@ -71,11 +71,15 @@ echo "$WORKER_CONNECT"
 ssh-keygen -f "/home/ubuntu/.ssh/known_hosts" -R "$WORKER_IP"
 ssh -o "StrictHostKeyChecking no" "$WORKER_CONNECT" << SSH
 if findmnt --source /dev/xvdb --target /data >/dev/null && [ "x$(stat --format '%U' '/data/txt')" = "xubuntu" ] ;
-then echo "/data/txt is mounted to /dev/xvdb owned by ubuntu, proceeding"
-else echo "resetting /data"; \
-sudo mkfs -t xfs /dev/xvdb; sudo mkdir -p /data; \
-sudo mount /dev/xvdb /data; sudo chown ubuntu.ubuntu /data; \
-mkdir -p /data/txt; mkdir -p /data/pickles; 
+then 
+echo "/data/txt is mounted to /dev/xvdb owned by ubuntu, proceeding";
+else 
+echo "resetting /data"; 
+sudo mkfs -t xfs /dev/xvdb; sudo mkdir -p /data; 
+sudo mount /dev/xvdb /data; sudo chown ubuntu.ubuntu /data; 
+mkdir -p /data/{pdf,txt,jpg}/{00..20}{01..12}; 
+mkdir -p /data/{pdf,txt,jpg}/{90..99}{01..12}; 
+mkdir -p /data/pickles/; 
 fi
 SSH
 #TODO add --files-from=FILE       read list of source-file names from FILE
