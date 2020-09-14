@@ -597,6 +597,29 @@ def addfollow():
         
     return 'NOTOK'
 
+@app.route('/update_password', methods=['POST'])
+def update_password():
+  username = request.form['username']
+  password = request.form['password']
+  new_password = request.form['new_password']
+
+  if get_user_id(username) is None:
+    raise ValueError("User should exist! " + username)
+
+  user = query_db('''select * from user where
+          username = ?''', [username], one=True)
+
+  if not check_password_hash(user['pw_hash'], password):
+    return "Current password not valid"
+
+  g.db.execute('update user set pw_hash = ? where username = ?',
+      [generate_password_hash(new_password), username])
+
+  g.db.commit()
+
+  return redirect(url_for('intmain'))
+
+
 @app.route('/login', methods=['POST'])
 def login():
   """ logs in the user. if the username doesn't exist creates the account """
