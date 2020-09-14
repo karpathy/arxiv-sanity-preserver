@@ -602,6 +602,7 @@ def update_password():
 
   if not g.user:
     flash('You need to login first')
+    return redirect(url_for('intmain'))
 
   username = get_username(session['user_id'])
   password = request.form['password']
