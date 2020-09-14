@@ -37,6 +37,12 @@
   padding: 10px;
   width: 280px;
 }
+#resetpwd {
+  margin-top: 10px;
+  border: 1px solid black;
+  padding: 10px;
+  width: 280px;
+}
 .fdu {
   padding: 5px;
 }
@@ -231,9 +237,19 @@ $(document).ready(function(){
         <input type="submit" value="Add" class="newf-btn" style="width:100px;">
       </form>
     </div>
+
+    <div id="resetpwd">
+      <h3>Update password</h3>
+      <form action="/update_password" method="post">
+        Current Password <br>
+        <input type="input" name="password" value="" class="newf-input">
+        <br> <br> New Password <br>
+        <input type="input" name="new_password" value="" class="newf-input">
+        <input type="submit" value="Save" class="newf-btn" style="width:100px;">
+      </form>
+    </div>
   </div>
   {% endif %}
-  
 </div>
 
 <br><br><br><br><br><br>

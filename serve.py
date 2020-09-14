@@ -599,7 +599,11 @@ def addfollow():
 
 @app.route('/update_password', methods=['POST'])
 def update_password():
-  username = request.form['username']
+
+  if not g.user:
+    flash('You need to login first')
+
+  username = get_username(session['user_id'])
   password = request.form['password']
   new_password = request.form['new_password']
 
