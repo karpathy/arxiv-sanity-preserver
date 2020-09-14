@@ -2,7 +2,7 @@
 Use imagemagick to convert all pfds to a sequence of thumbnail images
 requires: sudo apt-get install imagemagick
 """
-
+import sys
 import os
 import time
 import shutil
