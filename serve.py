@@ -614,12 +614,14 @@ def update_password():
           username = ?''', [username], one=True)
 
   if not check_password_hash(user['pw_hash'], password):
-    return "Current password not valid"
+    flash("Current password not valid")
+  else:
+    g.db.execute('update user set pw_hash = ? where username = ?',
+        [generate_password_hash(new_password), username])
 
-  g.db.execute('update user set pw_hash = ? where username = ?',
-      [generate_password_hash(new_password), username])
+    g.db.commit()
 
-  g.db.commit()
+    flash("Password updated")
 
   return redirect(url_for('intmain'))
 
