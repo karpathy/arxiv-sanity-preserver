@@ -606,9 +606,14 @@ def update_password():
   username = get_username(session['user_id'])
   password = request.form['password']
   new_password = request.form['new_password']
+  new_password_again = request.form['new_password_again']
 
   if get_user_id(username) is None:
     raise ValueError("User should exist! " + username)
+
+  if new_password != new_password_again:
+    flash("New password must match")
+    return redirect(url_for('intmain'))
 
   user = query_db('''select * from user where
           username = ?''', [username], one=True)
