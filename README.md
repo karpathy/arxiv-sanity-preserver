@@ -5,7 +5,7 @@ This project is a web interface that attempts to tame the overwhelming flood of 
 
 ![user interface](https://raw.github.com/karpathy/arxiv-sanity-preserver/master/ui.jpeg)
 
-### Code layout
+### Basic Code layout
 
 There are two large parts of the code:
 
