@@ -10,3 +10,6 @@ env/
 data
 *.DS_Store
 twitter.txt
+node_modules
+*lock.json
+poetry.lock
