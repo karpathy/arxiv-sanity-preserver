@@ -8,6 +8,7 @@ authors = ["Ezra Ablaza <ezra.ablaza.inbox@gmail.com>"]
 python = "^3.8"
 numpy = "^1.19.3"
 feedparser = "^6.0.2"
+boto3 = "^1.16.9"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
