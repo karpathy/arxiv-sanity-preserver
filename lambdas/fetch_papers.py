@@ -1,5 +1,5 @@
 import argparse
-import urllib.request
+import requests
 import feedparser as fp
 import boto3
 from boto3.dynamodb.conditions import Key
@@ -24,6 +24,13 @@ class FetchArgs:
     def __init__(self, data):
         self.data = data
 
+    def getrange(self):
+        return range(
+            self.data['start_index'], 
+            self.data['max_index'],
+            self.data['res_per_iter']
+        )
+    
     @classmethod
     def argsFromEvent(cls, event):
         data = { **DEFAULT_ARGS, **event }
@@ -58,7 +65,8 @@ def parse_arxiv_url(url):
     ix = url.rfind('/')
     idversion = url[ix+1:] # extract just the id (and the version)
     parts = idversion.split('v')
-    assert len(parts) > 2, 'error parsing url ' + url
+    if len(parts) > 2:
+        raise Exception("Error processing url: %s" % url)
     return parts[0], int(parts[1])
 
 
@@ -67,16 +75,55 @@ def parse_args(event):
     return FetchArgs.argsFromEvent(event)
 
 
+def fetch_entries(args):
+    # generate entries from arxiv using argument parameters
+    for index in args.getrange():
+        params = {
+            'search_query': args.data['search_query'],
+            'start': index,
+            'max_results': args.data['res_per_iter'],
+            'sortBy': 'lastUpdatedDate'
+        }
+        response = requests.get(API_URL, params=params, timeout=5)
+        if response.status_code != 200:
+            raise Exception("Search returned with error code: %i" % response.status_code)
+        else:
+            yield fp.parse(response.content)
+
+def extract_info(entries):
+    # generate rawids, versions, and links
+    for entry in entries:
+        try: 
+            rawid, version =  parse_arxiv_url(entry['id'])
+            yield {
+                'rawid': rawid, 
+                'version': version, 
+                'links': entry['links']
+            }
+        except Exception:
+            raise
+
 def main(event, context):
     """
     """
-    #Load table
+    # load table
     global TABLE
     if TABLE is None:
         TABLE = boto3.resource('dynamodb').Table('asp2-fetch-results')    
 
+    # start fetching and parsing
     args = parse_args(event)
     print('Searching arXiv for %s\nusing these options: %s' % (args.data['search_query'], args.data))
-
-
+    
+    total_added, total_skipped = 0, 0
+    try:
+        for parsed_resp in fetch_entries(args):
+            # check response
+            if not hasattr(parsed_resp, 'entries'):
+                raise Exception("No entries found in response.")
+            # 
+            for entry_data in extract_info(parsed_resp.entries):
+                print(entry_data)
+    except Exception as e:
+        print(e)
 
