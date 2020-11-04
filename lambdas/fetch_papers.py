@@ -84,6 +84,7 @@ def fetch_entries(args):
             'max_results': args.data['res_per_iter'],
             'sortBy': 'lastUpdatedDate'
         }
+        print("\nFetching %i entries starting from index %i..." % (params['max_results'], params['start']))
         response = requests.get(API_URL, params=params, timeout=5)
         if response.status_code != 200:
             raise Exception("Search returned with error code: %i" % response.status_code)
@@ -98,10 +99,42 @@ def extract_info(entries):
             yield {
                 'rawid': rawid, 
                 'version': version, 
-                'links': entry['links']
+                'links': entry['links'],
+                'authors': entry['authors']
             }
         except Exception:
             raise
+
+def find_in_table(rawid, table):
+    # find entry in table with the rawid
+    try:
+        result = table.query(
+            KeyConditionExpression=Key('rawid').eq(rawid),
+            Limit=1
+        )
+        if result['Count'] == 0:
+            return {}
+        return result['Items'][0]
+    except ClientError as e:
+        print(e.response['Error']['Message']) 
+
+def insert_into_table(entry_data, table, nums):
+    # insert entry_data into the table using its rawid if:
+    #   the rawid doesn't exist, or
+    #   the version of the entry_data is more recent than the one stored
+    rawid = entry_data['rawid']
+    version = entry_data['version']
+    if item := find_in_table(rawid, table):
+        if item['version'] >= version:     
+            nums['skipped'] += 1
+            return
+        else:
+            nums['updated'] += 1
+    else:
+        nums['added'] += 1
+    table.put_item(
+        Item=entry_data
+    )
 
 def main(event, context):
     """
@@ -113,17 +146,35 @@ def main(event, context):
 
     # start fetching and parsing
     args = parse_args(event)
-    print('Searching arXiv for %s\nusing these options: %s' % (args.data['search_query'], args.data))
+    print("Searching arXiv for %s\nusing these options: %s" % (args.data['search_query'], args.data))
     
-    total_added, total_skipped = 0, 0
+    
+    total_nums = {
+        'added': 0,
+        'updated': 0,
+        'skipped': 0
+    }
     try:
         for parsed_resp in fetch_entries(args):
+            nums = {
+                'added': 0,
+                'updated': 0,
+                'skipped': 0
+            }
             # check response
             if not hasattr(parsed_resp, 'entries'):
                 raise Exception("No entries found in response.")
-            # 
+            # attempt an entry or replacement
             for entry_data in extract_info(parsed_resp.entries):
-                print(entry_data)
+                insert_into_table(entry_data, TABLE, nums)
+            # show numbers
+            print("Entries added: %i\nEntries updated: %i\nEntries skipped: %i" % 
+                (nums['added'], nums['updated'], nums['skipped']))
+            # add to totals
+            total_nums = {k: total_nums[k] + nums[k] for k in set(nums)}
     except Exception as e:
         print(e)
+
+    print("\n**Totals**\nEntries added: %i\nEntries updated: %i\nEntries skipped: %i" % 
+        (total_nums['added'], total_nums['updated'], total_nums['skipped']))
 

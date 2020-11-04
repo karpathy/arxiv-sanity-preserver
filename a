@@ -1,63 +1,39 @@
 Searching arXiv for cat:stat.ML
 using these options: {'search_query': 'cat:stat.ML', 'start_index': 0, 'max_index': 50, 'res_per_iter': 10, 'wait_time': 0, 'break_on_no_add': 1}
 
-{'rawid': '2006.10726', 'version': 2, 'links': [{'href': 'http://arxiv.org/abs/2006.10726v2', 'rel': 'alternate', 'type': 'text/html'}, {'title': 'pdf', 'href': 'http://arxiv.org/pdf/2006.10726v2', 'rel': 'related', 'type': 'application/pdf'}]}
-{'rawid': '2011.01205', 'version': 1, 'links': [{'href': 'http://arxiv.org/abs/2011.01205v1', 'rel': 'alternate', 'type': 'text/html'}, {'title': 'pdf', 'href': 'http://arxiv.org/pdf/2011.01205v1', 'rel': 'related', 'type': 'application/pdf'}]}
-{'rawid': '2004.08546', 'version': 3, 'links': [{'href': 'http://arxiv.org/abs/2004.08546v3', 'rel': 'alternate', 'type': 'text/html'}, {'title': 'pdf', 'href': 'http://arxiv.org/pdf/2004.08546v3', 'rel': 'related', 'type': 'application/pdf'}]}
+Fetching 10 entries starting from index 0...
 
-{'rawid': '2011.01191', 'version': 1, 'links': [{'href': 'http://arxiv.org/abs/2011.01191v1', 'rel': 'alternate', 'type': 'text/html'}, {'title': 'pdf', 'href': 'http://arxiv.org/pdf/2011.01191v1', 'rel': 'related', 'type': 'application/pdf'}]}
-{'rawid': '2011.01170', 'version': 1, 'links': [{'href': 'http://arxiv.org/abs/2011.01170v1', 'rel': 'alternate', 'type': 'text/html'}, {'title': 'pdf', 'href': 'http://arxiv.org/pdf/2011.01170v1', 'rel': 'related', 'type': 'application/pdf'}]}
-{'rawid': '2007.06799', 'version': 3, 'links': [{'href': 'http://arxiv.org/abs/2007.06799v3', 'rel': 'alternate', 'type': 'text/html'}, {'title': 'pdf', 'href': 'http://arxiv.org/pdf/2007.06799v3', 'rel': 'related', 'type': 'application/pdf'}]}
-{'rawid': '2007.07368', 'version': 2, 'links': [{'href': 'http://arxiv.org/abs/2007.07368v2', 'rel': 'alternate', 'type': 'text/html'}, {'title': 'pdf', 'href': 'http://arxiv.org/pdf/2007.07368v2', 'rel': 'related', 'type': 'application/pdf'}]}
-{'rawid': '2002.07766', 'version': 4, 'links': [{'href': 'http://arxiv.org/abs/2002.07766v4', 'rel': 'alternate', 'type': 'text/html'}, {'title': 'pdf', 'href': 'http://arxiv.org/pdf/2002.07766v4', 'rel': 'related', 'type': 'application/pdf'}]}
-{'rawid': '2011.01156', 'version': 1, 'links': [{'href': 'http://arxiv.org/abs/2011.01156v1', 'rel': 'alternate', 'type': 'text/html'}, {'title': 'pdf', 'href': 'http://arxiv.org/pdf/2011.01156v1', 'rel': 'related', 'type': 'application/pdf'}]}
-{'rawid': '2011.01150', 'version': 1, 'links': [{'href': 'http://arxiv.org/abs/2011.01150v1', 'rel': 'alternate', 'type': 'text/html'}, {'title': 'pdf', 'href': 'http://arxiv.org/pdf/2011.01150v1', 'rel': 'related', 'type': 'application/pdf'}]}
+Entries added: 0
+Entries updated: 0
+Entries skipped: 10
 
-{'rawid': '2006.10848', 'version': 3, 'links': [{'href': 'http://arxiv.org/abs/2006.10848v3', 'rel': 'alternate', 'type': 'text/html'}, {'title': 'pdf', 'href': 'http://arxiv.org/pdf/2006.10848v3', 'rel': 'related', 'type': 'application/pdf'}]}
-{'rawid': '2006.04299', 'version': 2, 'links': [{'href': 'http://arxiv.org/abs/2006.04299v2', 'rel': 'alternate', 'type': 'text/html'}, {'title': 'pdf', 'href': 'http://arxiv.org/pdf/2006.04299v2', 'rel': 'related', 'type': 'application/pdf'}]}
-{'rawid': '2009.04806', 'version': 2, 'links': [{'href': 'http://arxiv.org/abs/2009.04806v2', 'rel': 'alternate', 'type': 'text/html'}, {'title': 'pdf', 'href': 'http://arxiv.org/pdf/2009.04806v2', 'rel': 'related', 'type': 'application/pdf'}]}
-{'rawid': '2011.01111', 'version': 1, 'links': [{'href': 'http://arxiv.org/abs/2011.01111v1', 'rel': 'alternate', 'type': 'text/html'}, {'title': 'pdf', 'href': 'http://arxiv.org/pdf/2011.01111v1', 'rel': 'related', 'type': 'application/pdf'}]}
+Fetching 10 entries starting from index 10...
 
-{'rawid': '2002.06189', 'version': 2, 'links': [{'href': 'http://arxiv.org/abs/2002.06189v2', 'rel': 'alternate', 'type': 'text/html'}, {'title': 'pdf', 'href': 'http://arxiv.org/pdf/2002.06189v2', 'rel': 'related', 'type': 'application/pdf'}]}
-{'rawid': '2011.01090', 'version': 1, 'links': [{'href': 'http://arxiv.org/abs/2011.01090v1', 'rel': 'alternate', 'type': 'text/html'}, {'title': 'pdf', 'href': 'http://arxiv.org/pdf/2011.01090v1', 'rel': 'related', 'type': 'application/pdf'}]}
-{'rawid': '2011.01089', 'version': 1, 'links': [{'href': 'http://arxiv.org/abs/2011.01089v1', 'rel': 'alternate', 'type': 'text/html'}, {'title': 'pdf', 'href': 'http://arxiv.org/pdf/2011.01089v1', 'rel': 'related', 'type': 'application/pdf'}]}
-{'rawid': '2011.01075', 'version': 1, 'links': [{'href': 'http://arxiv.org/abs/2011.01075v1', 'rel': 'alternate', 'type': 'text/html'}, {'title': 'pdf', 'href': 'http://arxiv.org/pdf/2011.01075v1', 'rel': 'related', 'type': 'application/pdf'}]}
-{'rawid': '2008.03920', 'version': 2, 'links': [{'href': 'http://arxiv.org/abs/2008.03920v2', 'rel': 'alternate', 'type': 'text/html'}, {'title': 'pdf', 'href': 'http://arxiv.org/pdf/2008.03920v2', 'rel': 'related', 'type': 'application/pdf'}]}
-{'rawid': '2011.01048', 'version': 1, 'links': [{'href': 'http://arxiv.org/abs/2011.01048v1', 'rel': 'alternate', 'type': 'text/html'}, {'title': 'pdf', 'href': 'http://arxiv.org/pdf/2011.01048v1', 'rel': 'related', 'type': 'application/pdf'}]}
+Entries added: 0
+Entries updated: 0
+Entries skipped: 10
 
-{'rawid': '1910.11858', 'version': 3, 'links': [{'href': 'http://arxiv.org/abs/1910.11858v3', 'rel': 'alternate', 'type': 'text/html'}, {'title': 'pdf', 'href': 'http://arxiv.org/pdf/1910.11858v3', 'rel': 'related', 'type': 'application/pdf'}]}
-{'rawid': '2009.02741', 'version': 2, 'links': [{'href': 'http://arxiv.org/abs/2009.02741v2', 'rel': 'alternate', 'type': 'text/html'}, {'title': 'pdf', 'href': 'http://arxiv.org/pdf/2009.02741v2', 'rel': 'related', 'type': 'application/pdf'}]}
-{'rawid': '2006.01668', 'version': 2, 'links': [{'href': 'http://arxiv.org/abs/2006.01668v2', 'rel': 'alternate', 'type': 'text/html'}, {'title': 'pdf', 'href': 'http://arxiv.org/pdf/2006.01668v2', 'rel': 'related', 'type': 'application/pdf'}]}
+Fetching 10 entries starting from index 20...
 
-{'rawid': '2010.06439', 'version': 2, 'links': [{'href': 'http://arxiv.org/abs/2010.06439v2', 'rel': 'alternate', 'type': 'text/html'}, {'title': 'pdf', 'href': 'http://arxiv.org/pdf/2010.06439v2', 'rel': 'related', 'type': 'application/pdf'}]}
-{'rawid': '2011.00986', 'version': 1, 'links': [{'href': 'http://arxiv.org/abs/2011.00986v1', 'rel': 'alternate', 'type': 'text/html'}, {'title': 'pdf', 'href': 'http://arxiv.org/pdf/2011.00986v1', 'rel': 'related', 'type': 'application/pdf'}]}
-{'rawid': '2011.00981', 'version': 1, 'links': [{'href': 'http://arxiv.org/abs/2011.00981v1', 'rel': 'alternate', 'type': 'text/html'}, {'title': 'pdf', 'href': 'http://arxiv.org/pdf/2011.00981v1', 'rel': 'related', 'type': 'application/pdf'}]}
-{'rawid': '1906.03866', 'version': 3, 'links': [{'href': 'http://arxiv.org/abs/1906.03866v3', 'rel': 'alternate', 'type': 'text/html'}, {'title': 'pdf', 'href': 'http://arxiv.org/pdf/1906.03866v3', 'rel': 'related', 'type': 'application/pdf'}]}
-{'rawid': '2005.10247', 'version': 2, 'links': [{'href': 'http://arxiv.org/abs/2005.10247v2', 'rel': 'alternate', 'type': 'text/html'}, {'title': 'pdf', 'href': 'http://arxiv.org/pdf/2005.10247v2', 'rel': 'related', 'type': 'application/pdf'}]}
-{'rawid': '2006.10711', 'version': 3, 'links': [{'href': 'http://arxiv.org/abs/2006.10711v3', 'rel': 'alternate', 'type': 'text/html'}, {'title': 'pdf', 'href': 'http://arxiv.org/pdf/2006.10711v3', 'rel': 'related', 'type': 'application/pdf'}]}
-{'rawid': '2002.10006', 'version': 2, 'links': [{'href': 'http://arxiv.org/abs/2002.10006v2', 'rel': 'alternate', 'type': 'text/html'}, {'title': 'pdf', 'href': 'http://arxiv.org/pdf/2002.10006v2', 'rel': 'related', 'type': 'application/pdf'}]}
+Entries added: 0
+Entries updated: 0
+Entries skipped: 10
 
-{'rawid': '1807.08501', 'version': 4, 'links': [{'href': 'http://arxiv.org/abs/1807.08501v4', 'rel': 'alternate', 'type': 'text/html'}, {'title': 'pdf', 'href': 'http://arxiv.org/pdf/1807.08501v4', 'rel': 'related', 'type': 'application/pdf'}]}
-{'rawid': '2002.03704', 'version': 3, 'links': [{'href': 'http://arxiv.org/abs/2002.03704v3', 'rel': 'alternate', 'type': 'text/html'}, {'title': 'pdf', 'href': 'http://arxiv.org/pdf/2002.03704v3', 'rel': 'related', 'type': 'application/pdf'}]}
-{'rawid': '2007.14703', 'version': 3, 'links': [{'href': 'http://arxiv.org/abs/2007.14703v3', 'rel': 'alternate', 'type': 'text/html'}, {'title': 'pdf', 'href': 'http://arxiv.org/pdf/2007.14703v3', 'rel': 'related', 'type': 'application/pdf'}]}
-{'rawid': '2011.00901', 'version': 1, 'links': [{'href': 'http://arxiv.org/abs/2011.00901v1', 'rel': 'alternate', 'type': 'text/html'}, {'title': 'pdf', 'href': 'http://arxiv.org/pdf/2011.00901v1', 'rel': 'related', 'type': 'application/pdf'}]}
+Fetching 10 entries starting from index 30...
 
-{'rawid': '2011.00898', 'version': 1, 'links': [{'href': 'http://arxiv.org/abs/2011.00898v1', 'rel': 'alternate', 'type': 'text/html'}, {'title': 'pdf', 'href': 'http://arxiv.org/pdf/2011.00898v1', 'rel': 'related', 'type': 'application/pdf'}]}
-{'rawid': '2009.09706', 'version': 2, 'links': [{'href': 'http://arxiv.org/abs/2009.09706v2', 'rel': 'alternate', 'type': 'text/html'}, {'title': 'pdf', 'href': 'http://arxiv.org/pdf/2009.09706v2', 'rel': 'related', 'type': 'application/pdf'}]}
-{'rawid': '1910.03483', 'version': 2, 'links': [{'href': 'http://arxiv.org/abs/1910.03483v2', 'rel': 'alternate', 'type': 'text/html'}, {'title': 'pdf', 'href': 'http://arxiv.org/pdf/1910.03483v2', 'rel': 'related', 'type': 'application/pdf'}]}
-{'rawid': '2011.00871', 'version': 1, 'links': [{'href': 'http://arxiv.org/abs/2011.00871v1', 'rel': 'alternate', 'type': 'text/html'}, {'title': 'pdf', 'href': 'http://arxiv.org/pdf/2011.00871v1', 'rel': 'related', 'type': 'application/pdf'}]}
-{'rawid': '2007.00873', 'version': 2, 'links': [{'href': 'http://arxiv.org/abs/2007.00873v2', 'rel': 'alternate', 'type': 'text/html'}, {'title': 'pdf', 'href': 'http://arxiv.org/pdf/2007.00873v2', 'rel': 'related', 'type': 'application/pdf'}]}
-{'rawid': '2011.00865', 'version': 1, 'links': [{'href': 'http://arxiv.org/abs/2011.00865v1', 'rel': 'alternate', 'type': 'text/html'}, {'title': 'pdf', 'href': 'http://arxiv.org/pdf/2011.00865v1', 'rel': 'related', 'type': 'application/pdf'}]}
+Entries added: 0
+Entries updated: 0
+Entries skipped: 10
 
-{'rawid': '1912.03758', 'version': 2, 'links': [{'title': 'doi', 'href': 'http://dx.doi.org/10.1038/s41598-020-67970-y', 'rel': 'related', 'type': 'text/html'}, {'href': 'http://arxiv.org/abs/1912.03758v2', 'rel': 'alternate', 'type': 'text/html'}, {'title': 'pdf', 'href': 'http://arxiv.org/pdf/1912.03758v2', 'rel': 'related', 'type': 'application/pdf'}]}
-{'rawid': '2006.08242', 'version': 3, 'links': [{'href': 'http://arxiv.org/abs/2006.08242v3', 'rel': 'alternate', 'type': 'text/html'}, {'title': 'pdf', 'href': 'http://arxiv.org/pdf/2006.08242v3', 'rel': 'related', 'type': 'application/pdf'}]}
+Fetching 10 entries starting from index 40...
 
-{'rawid': '2011.00835', 'version': 1, 'links': [{'href': 'http://arxiv.org/abs/2011.00835v1', 'rel': 'alternate', 'type': 'text/html'}, {'title': 'pdf', 'href': 'http://arxiv.org/pdf/2011.00835v1', 'rel': 'related', 'type': 'application/pdf'}]}
-{'rawid': '2011.00819', 'version': 1, 'links': [{'href': 'http://arxiv.org/abs/2011.00819v1', 'rel': 'alternate', 'type': 'text/html'}, {'title': 'pdf', 'href': 'http://arxiv.org/pdf/2011.00819v1', 'rel': 'related', 'type': 'application/pdf'}]}
-{'rawid': '2011.00813', 'version': 1, 'links': [{'href': 'http://arxiv.org/abs/2011.00813v1', 'rel': 'alternate', 'type': 'text/html'}, {'title': 'pdf', 'href': 'http://arxiv.org/pdf/2011.00813v1', 'rel': 'related', 'type': 'application/pdf'}]}
-{'rawid': '2011.00810', 'version': 1, 'links': [{'href': 'http://arxiv.org/abs/2011.00810v1', 'rel': 'alternate', 'type': 'text/html'}, {'title': 'pdf', 'href': 'http://arxiv.org/pdf/2011.00810v1', 'rel': 'related', 'type': 'application/pdf'}]}
-{'rawid': '2006.00939', 'version': 3, 'links': [{'href': 'http://arxiv.org/abs/2006.00939v3', 'rel': 'alternate', 'type': 'text/html'}, {'title': 'pdf', 'href': 'http://arxiv.org/pdf/2006.00939v3', 'rel': 'related', 'type': 'application/pdf'}]}
-{'rawid': '2006.05606', 'version': 2, 'links': [{'href': 'http://arxiv.org/abs/2006.05606v2', 'rel': 'alternate', 'type': 'text/html'}, {'title': 'pdf', 'href': 'http://arxiv.org/pdf/2006.05606v2', 'rel': 'related', 'type': 'application/pdf'}]}
-{'rawid': '1912.01192', 'version': 5, 'links': [{'href': 'http://arxiv.org/abs/1912.01192v5', 'rel': 'alternate', 'type': 'text/html'}, {'title': 'pdf', 'href': 'http://arxiv.org/pdf/1912.01192v5', 'rel': 'related', 'type': 'application/pdf'}]}
-{'rawid': '1812.08113', 'version': 3, 'links': [{'href': 'http://arxiv.org/abs/1812.08113v3', 'rel': 'alternate', 'type': 'text/html'}, {'title': 'pdf', 'href': 'http://arxiv.org/pdf/1812.08113v3', 'rel': 'related', 'type': 'application/pdf'}]}
+Entries added: 0
+Entries updated: 0
+Entries skipped: 10
+
+**Totals**
+Entries added: 0
+Entries updated: 0
+Entries skipped: 50
+
 null

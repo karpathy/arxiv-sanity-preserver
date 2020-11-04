@@ -83,7 +83,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/asp2/dev/1604095781640-2020-10-30T22:09:41.640Z/asp2.zip"
+                "S3Key": "serverless/asp2/dev/1604515445432-2020-11-04T18:44:05.432Z/asp2.zip"
               },
               "FunctionName": "asp2-dev-fetch_papers",
               "Handler": "lambdas/fetch_papers.main",
@@ -96,14 +96,14 @@
               "FetchUnderscorepapersLogGroup"
             ]
           },
-          "FetchUnderscorepapersLambdaVersion9sh0fhL8VkHeJjj2CmpZY16y1nRs929Ft1GG5Tydyc": {
+          "FetchUnderscorepapersLambdaVersiona6tYCRtiepBcC6r53k2zaieOhORE2qv0jkUUdmPI": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "FetchUnderscorepapersLambdaFunction"
               },
-              "CodeSha256": "xAXb7e4IGPnSnngE6VOOBn9hvjahIe9JFBk+18EQM4E="
+              "CodeSha256": "6eAAeHkQschT20ECuhAn/2palpBS0ZyBORUI/YEZmAc="
             }
           }
         },
@@ -116,7 +116,7 @@
           "FetchUnderscorepapersLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "FetchUnderscorepapersLambdaVersion9sh0fhL8VkHeJjj2CmpZY16y1nRs929Ft1GG5Tydyc"
+              "Ref": "FetchUnderscorepapersLambdaVersiona6tYCRtiepBcC6r53k2zaieOhORE2qv0jkUUdmPI"
             }
           }
         }
@@ -209,7 +209,7 @@
         "timeout": 6,
         "runtime": "python3.8",
         "vpc": {},
-        "versionLogicalId": "FetchUnderscorepapersLambdaVersion9sh0fhL8VkHeJjj2CmpZY16y1nRs929Ft1GG5Tydyc"
+        "versionLogicalId": "FetchUnderscorepapersLambdaVersiona6tYCRtiepBcC6r53k2zaieOhORE2qv0jkUUdmPI"
       }
     },
     "configValidationMode": "warn",
@@ -233,7 +233,7 @@
           "layers/**"
         ],
         "artifact": "/home/ezra20/Projects/arxiv-sanity-preserver/.serverless/asp2.zip",
-        "artifactDirectoryName": "serverless/asp2/dev/1604095781640-2020-10-30T22:09:41.640Z"
+        "artifactDirectoryName": "serverless/asp2/dev/1604515445432-2020-11-04T18:44:05.432Z"
       },
       "functions": {
         "$ref": "$[\"service\"][\"functions\"]"
@@ -249,7 +249,7 @@
     "artifact": "/home/ezra20/Projects/arxiv-sanity-preserver/.serverless/asp2.zip"
   },
   "package": {
-    "artifactDirectoryName": "serverless/asp2/dev/1604095781640-2020-10-30T22:09:41.640Z",
+    "artifactDirectoryName": "serverless/asp2/dev/1604515445432-2020-11-04T18:44:05.432Z",
     "artifact": "asp2.zip"
   }
 }
