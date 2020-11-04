@@ -1,0 +1,8 @@
+{
+    "search_query": "cat:stat.ML",
+    "start_index": 0,
+    "max_index": 50,
+    "res_per_iter": 10,
+    "wait_time": 0.0,
+    "break_on_no_add": 1
+}

@@ -1,0 +1,109 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "The AWS CloudFormation template for this Serverless application",
+  "Resources": {
+    "ServerlessDeploymentBucket": {
+      "Type": "AWS::S3::Bucket",
+      "Properties": {
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256"
+              }
+            }
+          ]
+        }
+      }
+    },
+    "ServerlessDeploymentBucketPolicy": {
+      "Type": "AWS::S3::BucketPolicy",
+      "Properties": {
+        "Bucket": {
+          "Ref": "ServerlessDeploymentBucket"
+        },
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "s3:*",
+              "Effect": "Deny",
+              "Principal": "*",
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":s3:::",
+                      {
+                        "Ref": "ServerlessDeploymentBucket"
+                      },
+                      "/*"
+                    ]
+                  ]
+                }
+              ],
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": false
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "FetchUnderscorepapersLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": "/aws/lambda/asp2-dev-fetch_papers"
+      }
+    },
+    "FetchUnderscorepapersLambdaFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Ref": "ServerlessDeploymentBucket"
+          },
+          "S3Key": "serverless/asp2/dev/1604515445432-2020-11-04T18:44:05.432Z/asp2.zip"
+        },
+        "FunctionName": "asp2-dev-fetch_papers",
+        "Handler": "lambdas/fetch_papers.main",
+        "MemorySize": 1024,
+        "Role": "arn:aws:iam::555989344246:role/asp2_role",
+        "Runtime": "python3.8",
+        "Timeout": 6
+      },
+      "DependsOn": [
+        "FetchUnderscorepapersLogGroup"
+      ]
+    },
+    "FetchUnderscorepapersLambdaVersiona6tYCRtiepBcC6r53k2zaieOhORE2qv0jkUUdmPI": {
+      "Type": "AWS::Lambda::Version",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "FetchUnderscorepapersLambdaFunction"
+        },
+        "CodeSha256": "6eAAeHkQschT20ECuhAn/2palpBS0ZyBORUI/YEZmAc="
+      }
+    }
+  },
+  "Outputs": {
+    "ServerlessDeploymentBucketName": {
+      "Value": {
+        "Ref": "ServerlessDeploymentBucket"
+      }
+    },
+    "FetchUnderscorepapersLambdaFunctionQualifiedArn": {
+      "Description": "Current Lambda function version",
+      "Value": {
+        "Ref": "FetchUnderscorepapersLambdaVersiona6tYCRtiepBcC6r53k2zaieOhORE2qv0jkUUdmPI"
+      }
+    }
+  }
+}

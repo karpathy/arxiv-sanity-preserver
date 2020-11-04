@@ -1,0 +1,29 @@
+
+service: asp2
+app: asp2
+
+provider:
+  name: aws
+  runtime: python3.8
+  stage: 'dev'
+  region: 'us-east-2'
+  role: arn:aws:iam::555989344246:role/asp2_role
+
+package:
+  exclude:
+      - test/**
+      - playground/**
+      - layers/**
+
+functions:
+  fetch_papers:
+    handler: lambdas/fetch_papers.main
+
+    
+
+plugins:
+  - serverless-python-requirements
+
+custom:
+  pythonRequirements:
+    dockerizePip: non-linux

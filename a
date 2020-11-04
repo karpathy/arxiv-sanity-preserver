@@ -1,0 +1,39 @@
+Searching arXiv for cat:stat.ML
+using these options: {'search_query': 'cat:stat.ML', 'start_index': 0, 'max_index': 50, 'res_per_iter': 10, 'wait_time': 0, 'break_on_no_add': 1}
+
+Fetching 10 entries starting from index 0...
+
+Entries added: 0
+Entries updated: 0
+Entries skipped: 10
+
+Fetching 10 entries starting from index 10...
+
+Entries added: 0
+Entries updated: 0
+Entries skipped: 10
+
+Fetching 10 entries starting from index 20...
+
+Entries added: 0
+Entries updated: 0
+Entries skipped: 10
+
+Fetching 10 entries starting from index 30...
+
+Entries added: 0
+Entries updated: 0
+Entries skipped: 10
+
+Fetching 10 entries starting from index 40...
+
+Entries added: 0
+Entries updated: 0
+Entries skipped: 10
+
+**Totals**
+Entries added: 0
+Entries updated: 0
+Entries skipped: 50
+
+null
