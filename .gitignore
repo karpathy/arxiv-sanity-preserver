@@ -13,3 +13,4 @@ twitter.txt
 node_modules
 *lock.json
 poetry.lock
+cap.txt

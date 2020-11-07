@@ -18,6 +18,9 @@ package:
 functions:
   fetch_papers:
     handler: lambdas/fetch_papers.main
+  
+  download_pdfs:
+    handler: lambdas/download_pdfs.main
 
     
 

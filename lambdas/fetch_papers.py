@@ -2,12 +2,13 @@ import argparse
 import requests
 import feedparser as fp
 import boto3
+import logging
 from boto3.dynamodb.conditions import Key
 from botocore.exceptions import ClientError
 
-#leverage freezing
+# leverage freezing
 TABLE = None
-#other globals
+# other globals
 API_URL = 'http://export.arxiv.org/api/query'
 DEFAULT_ARGS = {
     'search_query': 'cat:cs.CV+OR+cat:cs.AI+OR+cat:cs.LG+OR+cat:cs.CL+OR+cat:cs.NE+OR+cat:stat.ML',
@@ -18,7 +19,7 @@ DEFAULT_ARGS = {
     'break_on_no_add': 1
 }
 
-#args class to pull from the event
+# args class to pull from the event
 class FetchArgs:
 
     def __init__(self, data):
@@ -84,7 +85,7 @@ def fetch_entries(args):
             'max_results': args.data['res_per_iter'],
             'sortBy': 'lastUpdatedDate'
         }
-        print("\nFetching %i entries starting from index %i..." % (params['max_results'], params['start']))
+        logging.info("\nFetching %i entries starting from index %i..." % (params['max_results'], params['start']))
         response = requests.get(API_URL, params=params, timeout=5)
         if response.status_code != 200:
             raise Exception("Search returned with error code: %i" % response.status_code)
@@ -98,6 +99,7 @@ def extract_info(entries):
             rawid, version =  parse_arxiv_url(entry['id'])
             yield {
                 'rawid': rawid, 
+                'title': entry['title'],
                 'version': version, 
                 'links': entry['links'],
                 'authors': entry['authors']
@@ -116,7 +118,7 @@ def find_in_table(rawid, table):
             return {}
         return result['Items'][0]
     except ClientError as e:
-        print(e.response['Error']['Message']) 
+        logging.error(e.response['Error']['Message']) 
 
 def insert_into_table(entry_data, table, nums):
     # insert entry_data into the table using its rawid if:
@@ -137,16 +139,16 @@ def insert_into_table(entry_data, table, nums):
     )
 
 def main(event, context):
-    """
-    """
     # load table
     global TABLE
     if TABLE is None:
-        TABLE = boto3.resource('dynamodb').Table('asp2-fetch-results')    
+        TABLE = boto3.resource('dynamodb').Table('asp2-fetch-results')   
+    # logging
+    logging.root.setLevel(logging.NOTSET) 
 
     # start fetching and parsing
     args = parse_args(event)
-    print("Searching arXiv for %s\nusing these options: %s" % (args.data['search_query'], args.data))
+    logging.info("Searching arXiv for %s\nusing these options: %s" % (args.data['search_query'], args.data))
     
     
     total_nums = {
@@ -168,13 +170,13 @@ def main(event, context):
             for entry_data in extract_info(parsed_resp.entries):
                 insert_into_table(entry_data, TABLE, nums)
             # show numbers
-            print("Entries added: %i\nEntries updated: %i\nEntries skipped: %i" % 
+            logging.info("Entries added: %i\nEntries updated: %i\nEntries skipped: %i" % 
                 (nums['added'], nums['updated'], nums['skipped']))
             # add to totals
             total_nums = {k: total_nums[k] + nums[k] for k in set(nums)}
     except Exception as e:
-        print(e)
+        logging.error(e)
 
-    print("\n**Totals**\nEntries added: %i\nEntries updated: %i\nEntries skipped: %i" % 
+    logging.info("\n**Totals**\nEntries added: %i\nEntries updated: %i\nEntries skipped: %i" % 
         (total_nums['added'], total_nums['updated'], total_nums['skipped']))
 
