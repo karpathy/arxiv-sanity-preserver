@@ -75,7 +75,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/asp2/dev/1604739788669-2020-11-07T09:03:08.669Z/asp2.zip"
+          "S3Key": "serverless/asp2/dev/1604887608769-2020-11-09T02:06:48.769Z/asp2.zip"
         },
         "FunctionName": "asp2-dev-fetch_papers",
         "Handler": "lambdas/fetch_papers.main",
@@ -88,14 +88,14 @@
         "FetchUnderscorepapersLogGroup"
       ]
     },
-    "FetchUnderscorepapersLambdaVersionvJGBh6AyERzWc0uoSNwTnKu5AieijXzKBH5DcXEISI": {
+    "FetchUnderscorepapersLambdaVersionkz7J4uEmyBnnD2XNw6m5Jrv3RN3ger0WMD7HucHQyU": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "FetchUnderscorepapersLambdaFunction"
         },
-        "CodeSha256": "ldbMMzGo8iA9h0TqGPHEusk1uGd1S66V+gYIVsqSvEs="
+        "CodeSha256": "pECWG1UszcB9OhyxwEzcc0Rg1gbDKgejaeyL/ZjcrPs="
       }
     },
     "DownloadUnderscorepdfsLambdaFunction": {
@@ -105,7 +105,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/asp2/dev/1604739788669-2020-11-07T09:03:08.669Z/asp2.zip"
+          "S3Key": "serverless/asp2/dev/1604887608769-2020-11-09T02:06:48.769Z/asp2.zip"
         },
         "FunctionName": "asp2-dev-download_pdfs",
         "Handler": "lambdas/download_pdfs.main",
@@ -118,14 +118,14 @@
         "DownloadUnderscorepdfsLogGroup"
       ]
     },
-    "DownloadUnderscorepdfsLambdaVersion3jieuZpq1Y1Y737bhTUMPR3T2Qzj2WIH6TcPVeTdLs": {
+    "DownloadUnderscorepdfsLambdaVersionDKushMeZHYz7KRSFOqXXKiLhzTJ8grUDuPvGnBW1zs": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "DownloadUnderscorepdfsLambdaFunction"
         },
-        "CodeSha256": "ldbMMzGo8iA9h0TqGPHEusk1uGd1S66V+gYIVsqSvEs="
+        "CodeSha256": "pECWG1UszcB9OhyxwEzcc0Rg1gbDKgejaeyL/ZjcrPs="
       }
     }
   },
@@ -138,13 +138,13 @@
     "FetchUnderscorepapersLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "FetchUnderscorepapersLambdaVersionvJGBh6AyERzWc0uoSNwTnKu5AieijXzKBH5DcXEISI"
+        "Ref": "FetchUnderscorepapersLambdaVersionkz7J4uEmyBnnD2XNw6m5Jrv3RN3ger0WMD7HucHQyU"
       }
     },
     "DownloadUnderscorepdfsLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "DownloadUnderscorepdfsLambdaVersion3jieuZpq1Y1Y737bhTUMPR3T2Qzj2WIH6TcPVeTdLs"
+        "Ref": "DownloadUnderscorepdfsLambdaVersionDKushMeZHYz7KRSFOqXXKiLhzTJ8grUDuPvGnBW1zs"
       }
     }
   }

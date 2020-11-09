@@ -55,6 +55,9 @@
               { "M": { "name": { "S": "Lukas Pfahler" } } },
               { "M": { "name": { "S": "Katharina Morik" } } }
             ]
+          },
+          "title": {
+            "S": "Generalized Negative Correlation Learning for Deep Ensembling"
           }
         },
         "SequenceNumber": "12247700000000005054456435",
