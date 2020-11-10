@@ -70,76 +70,76 @@
               }
             }
           },
-          "FetchUnderscorepapersLogGroup": {
+          "FetchUnderscoreentryUnderscoredataLogGroup": {
             "Type": "AWS::Logs::LogGroup",
             "Properties": {
-              "LogGroupName": "/aws/lambda/asp2-dev-fetch_papers"
+              "LogGroupName": "/aws/lambda/asp2-dev-fetch_entry_data"
             }
           },
-          "DownloadUnderscorepdfsLogGroup": {
+          "ProcessUnderscorestreamLogGroup": {
             "Type": "AWS::Logs::LogGroup",
             "Properties": {
-              "LogGroupName": "/aws/lambda/asp2-dev-download_pdfs"
+              "LogGroupName": "/aws/lambda/asp2-dev-process_stream"
             }
           },
-          "FetchUnderscorepapersLambdaFunction": {
+          "FetchUnderscoreentryUnderscoredataLambdaFunction": {
             "Type": "AWS::Lambda::Function",
             "Properties": {
               "Code": {
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/asp2/dev/1604887608769-2020-11-09T02:06:48.769Z/asp2.zip"
+                "S3Key": "serverless/asp2/dev/1604998737254-2020-11-10T08:58:57.254Z/asp2.zip"
               },
-              "FunctionName": "asp2-dev-fetch_papers",
-              "Handler": "lambdas/fetch_papers.main",
+              "FunctionName": "asp2-dev-fetch_entry_data",
+              "Handler": "lambdas/fetch_entry_data.main",
               "MemorySize": 1024,
               "Role": "arn:aws:iam::555989344246:role/asp2_role",
               "Runtime": "python3.8",
               "Timeout": 6
             },
             "DependsOn": [
-              "FetchUnderscorepapersLogGroup"
+              "FetchUnderscoreentryUnderscoredataLogGroup"
             ]
           },
-          "FetchUnderscorepapersLambdaVersionkz7J4uEmyBnnD2XNw6m5Jrv3RN3ger0WMD7HucHQyU": {
+          "FetchUnderscoreentryUnderscoredataLambdaVersion6yB20hFwzkCxWNKsdRwFeajfzwkN1Wzi3vPmlisPmg": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
-                "Ref": "FetchUnderscorepapersLambdaFunction"
+                "Ref": "FetchUnderscoreentryUnderscoredataLambdaFunction"
               },
-              "CodeSha256": "pECWG1UszcB9OhyxwEzcc0Rg1gbDKgejaeyL/ZjcrPs="
+              "CodeSha256": "0k1ELvTrRG9PVQQ7ORKdy1sqeLudRHZDxYad7ymhG2w="
             }
           },
-          "DownloadUnderscorepdfsLambdaFunction": {
+          "ProcessUnderscorestreamLambdaFunction": {
             "Type": "AWS::Lambda::Function",
             "Properties": {
               "Code": {
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/asp2/dev/1604887608769-2020-11-09T02:06:48.769Z/asp2.zip"
+                "S3Key": "serverless/asp2/dev/1604998737254-2020-11-10T08:58:57.254Z/asp2.zip"
               },
-              "FunctionName": "asp2-dev-download_pdfs",
-              "Handler": "lambdas/download_pdfs.main",
+              "FunctionName": "asp2-dev-process_stream",
+              "Handler": "lambdas/process_stream.main",
               "MemorySize": 1024,
               "Role": "arn:aws:iam::555989344246:role/asp2_role",
               "Runtime": "python3.8",
               "Timeout": 6
             },
             "DependsOn": [
-              "DownloadUnderscorepdfsLogGroup"
+              "ProcessUnderscorestreamLogGroup"
             ]
           },
-          "DownloadUnderscorepdfsLambdaVersionDKushMeZHYz7KRSFOqXXKiLhzTJ8grUDuPvGnBW1zs": {
+          "ProcessUnderscorestreamLambdaVersionM0x6omTn64dEgXulnOU3UuVnbJ3JltTGkUROfFkhXM": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
-                "Ref": "DownloadUnderscorepdfsLambdaFunction"
+                "Ref": "ProcessUnderscorestreamLambdaFunction"
               },
-              "CodeSha256": "pECWG1UszcB9OhyxwEzcc0Rg1gbDKgejaeyL/ZjcrPs="
+              "CodeSha256": "0k1ELvTrRG9PVQQ7ORKdy1sqeLudRHZDxYad7ymhG2w="
             }
           }
         },
@@ -149,16 +149,16 @@
               "Ref": "ServerlessDeploymentBucket"
             }
           },
-          "FetchUnderscorepapersLambdaFunctionQualifiedArn": {
+          "FetchUnderscoreentryUnderscoredataLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "FetchUnderscorepapersLambdaVersionkz7J4uEmyBnnD2XNw6m5Jrv3RN3ger0WMD7HucHQyU"
+              "Ref": "FetchUnderscoreentryUnderscoredataLambdaVersion6yB20hFwzkCxWNKsdRwFeajfzwkN1Wzi3vPmlisPmg"
             }
           },
-          "DownloadUnderscorepdfsLambdaFunctionQualifiedArn": {
+          "ProcessUnderscorestreamLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "DownloadUnderscorepdfsLambdaVersionDKushMeZHYz7KRSFOqXXKiLhzTJ8grUDuPvGnBW1zs"
+              "Ref": "ProcessUnderscorestreamLambdaVersionM0x6omTn64dEgXulnOU3UuVnbJ3JltTGkUROfFkhXM"
             }
           }
         }
@@ -242,27 +242,27 @@
     ],
     "pluginsData": {},
     "functions": {
-      "fetch_papers": {
-        "handler": "lambdas/fetch_papers.main",
+      "fetch_entry_data": {
+        "handler": "lambdas/fetch_entry_data.main",
         "events": [],
-        "name": "asp2-dev-fetch_papers",
+        "name": "asp2-dev-fetch_entry_data",
         "package": {},
         "memory": 1024,
         "timeout": 6,
         "runtime": "python3.8",
         "vpc": {},
-        "versionLogicalId": "FetchUnderscorepapersLambdaVersionkz7J4uEmyBnnD2XNw6m5Jrv3RN3ger0WMD7HucHQyU"
+        "versionLogicalId": "FetchUnderscoreentryUnderscoredataLambdaVersion6yB20hFwzkCxWNKsdRwFeajfzwkN1Wzi3vPmlisPmg"
       },
-      "download_pdfs": {
-        "handler": "lambdas/download_pdfs.main",
+      "process_stream": {
+        "handler": "lambdas/process_stream.main",
         "events": [],
-        "name": "asp2-dev-download_pdfs",
+        "name": "asp2-dev-process_stream",
         "package": {},
         "memory": 1024,
         "timeout": 6,
         "runtime": "python3.8",
         "vpc": {},
-        "versionLogicalId": "DownloadUnderscorepdfsLambdaVersionDKushMeZHYz7KRSFOqXXKiLhzTJ8grUDuPvGnBW1zs"
+        "versionLogicalId": "ProcessUnderscorestreamLambdaVersionM0x6omTn64dEgXulnOU3UuVnbJ3JltTGkUROfFkhXM"
       }
     },
     "configValidationMode": "warn",
@@ -286,7 +286,7 @@
           "layers/**"
         ],
         "artifact": "/home/ezra20/Projects/arxiv-sanity-preserver/.serverless/asp2.zip",
-        "artifactDirectoryName": "serverless/asp2/dev/1604887608769-2020-11-09T02:06:48.769Z"
+        "artifactDirectoryName": "serverless/asp2/dev/1604998737254-2020-11-10T08:58:57.254Z"
       },
       "functions": {
         "$ref": "$[\"service\"][\"functions\"]"
@@ -302,7 +302,7 @@
     "artifact": "/home/ezra20/Projects/arxiv-sanity-preserver/.serverless/asp2.zip"
   },
   "package": {
-    "artifactDirectoryName": "serverless/asp2/dev/1604887608769-2020-11-09T02:06:48.769Z",
+    "artifactDirectoryName": "serverless/asp2/dev/1604998737254-2020-11-10T08:58:57.254Z",
     "artifact": "asp2.zip"
   }
 }

@@ -16,11 +16,11 @@ package:
       - layers/**
 
 functions:
-  fetch_papers:
-    handler: lambdas/fetch_papers.main
+  fetch_entry_data:
+    handler: lambdas/fetch_entry_data.main
   
-  download_pdfs:
-    handler: lambdas/download_pdfs.main
+  process_stream:
+    handler: lambdas/process_stream.main
 
     
 
