@@ -1,0 +1,33 @@
+{
+  "Records": [
+    {
+      "eventVersion": "2.1",
+      "eventSource": "aws:s3",
+      "awsRegion": "us-east-2",
+      "eventTime": "2020-11-11T08:45:58.100Z",
+      "eventName": "ObjectCreated:Put",
+      "userIdentity": { "principalId": "AWS:AIDAYC44MD73M2547MA5P" },
+      "requestParameters": { "sourceIPAddress": "66.191.91.244" },
+      "responseElements": {
+        "x-amz-request-id": "EC0082057F85F247",
+        "x-amz-id-2": "JS57hPOHdOnR9T+mm7PC409FoKTjRkLmDhf1Zx8yc5vfC+Elj9ByevJ/X7DNJIwFMbC7pkWxFczELQk9566RN1JtxgPQnVoZ"
+      },
+      "s3": {
+        "s3SchemaVersion": "1.0",
+        "configurationId": "a7327cc5-c307-4fe2-adea-466933b1763f",
+        "bucket": {
+          "name": "asp2-file-bucket",
+          "ownerIdentity": { "principalId": "AOZU4CSI3LE1F" },
+          "arn": "arn:aws:s3:::asp2-file-bucket"
+        },
+        "object": {
+          "key": "pdf/2011.02952.pdf",
+          "size": 399687,
+          "eTag": "8ff692029cdf50920f00282546e3969c",
+          "versionId": "YeuYXX3wN7nru7aUAIeN3vGR_24naklj",
+          "sequencer": "005FABA4CB63E35CA7"
+        }
+      }
+    }
+  ]
+}

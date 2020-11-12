@@ -5,15 +5,18 @@ app: asp2
 provider:
   name: aws
   runtime: python3.8
-  stage: 'dev'
+  stage: ${opt:stage, 'dev'}
   region: 'us-east-2'
-  role: arn:aws:iam::555989344246:role/asp2_role
+  # can replace with iamRoleStatements later
+  role: 'arn:aws:iam::555989344246:role/asp2_role'
 
 package:
   exclude:
       - test/**
       - playground/**
       - layers/**
+
+
 
 functions:
   fetch_entry_data:
@@ -22,11 +25,54 @@ functions:
   process_stream:
     handler: lambdas/process_stream.main
 
+  extract_text:
+    handler: lambdas/extract_text.main
+    environment: 
+      SNS_ARN: 
+        Fn::Join: 
+          - ":" 
+          - - "arn:aws:sns:${self:custom.region}"
+            - Ref: "AWS::AccountId"
+            - "${self:custom.snsTextractTopic}"
+      ROLE_ARN: '${self:provider.role}'
+
     
-
-plugins:
-  - serverless-python-requirements
-
+  output_text:
+    handler: lambdas/output_text.main
+    events:
+      - sns: ${self:custom.snsTextractTopic}
+  
 custom:
   pythonRequirements:
     dockerizePip: non-linux
+  stage: ${opt:stage, self:provider.stage}
+  region: ${opt:region, self:provider.region}
+  s3bucket: ${self:service}-file-bucket
+  snsTextractTopic: ${self:service}-textract
+
+
+resources:
+  Resources:
+    fileBucket:
+      Type: AWS::S3::Bucket 
+      Properties:
+        BucketName: ${self:custom.s3bucket}
+        AccessControl: Private
+    fileBucketPolicy:
+      Type: AWS::S3::BucketPolicy 
+      Properties:
+        Bucket: 
+          Ref: fileBucket
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Principal: 
+                AWS: 
+                  - ${self:provider.role}
+              Action: 's3:*'
+              Resource: 'arn:aws:s3:::${self:custom.s3bucket}'
+
+
+plugins:
+  - serverless-python-requirements

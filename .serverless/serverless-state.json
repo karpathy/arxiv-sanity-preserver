@@ -5,12 +5,12 @@
       "name": "asp2"
     },
     "provider": {
-      "stage": "dev",
-      "variableSyntax": "\\${([^{}]+?)}",
       "name": "aws",
       "runtime": "python3.8",
+      "stage": "dev",
       "region": "us-east-2",
       "role": "arn:aws:iam::555989344246:role/asp2_role",
+      "variableSyntax": "\\${([^{}:]+?(?:\\(|:)(?:[^:{}][^{}]*?)?)}",
       "versionFunctions": true,
       "compiledCloudFormationTemplate": {
         "AWSTemplateFormatVersion": "2010-09-09",
@@ -82,6 +82,18 @@
               "LogGroupName": "/aws/lambda/asp2-dev-process_stream"
             }
           },
+          "ExtractUnderscoretextLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/asp2-dev-extract_text"
+            }
+          },
+          "OutputUnderscoretextLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/asp2-dev-output_text"
+            }
+          },
           "FetchUnderscoreentryUnderscoredataLambdaFunction": {
             "Type": "AWS::Lambda::Function",
             "Properties": {
@@ -89,7 +101,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/asp2/dev/1604998737254-2020-11-10T08:58:57.254Z/asp2.zip"
+                "S3Key": "serverless/asp2/dev/1605171647885-2020-11-12T09:00:47.885Z/asp2.zip"
               },
               "FunctionName": "asp2-dev-fetch_entry_data",
               "Handler": "lambdas/fetch_entry_data.main",
@@ -102,14 +114,14 @@
               "FetchUnderscoreentryUnderscoredataLogGroup"
             ]
           },
-          "FetchUnderscoreentryUnderscoredataLambdaVersion6yB20hFwzkCxWNKsdRwFeajfzwkN1Wzi3vPmlisPmg": {
+          "FetchUnderscoreentryUnderscoredataLambdaVersionHIKs0yWdF2AZSBC7tXkQNdHsiFY9WzyORKXkyIQN4": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "FetchUnderscoreentryUnderscoredataLambdaFunction"
               },
-              "CodeSha256": "0k1ELvTrRG9PVQQ7ORKdy1sqeLudRHZDxYad7ymhG2w="
+              "CodeSha256": "hcRZv5IVYrRyxhcOixwunkL7UoAOBT7fSmi2lFOhTgg="
             }
           },
           "ProcessUnderscorestreamLambdaFunction": {
@@ -119,7 +131,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/asp2/dev/1604998737254-2020-11-10T08:58:57.254Z/asp2.zip"
+                "S3Key": "serverless/asp2/dev/1605171647885-2020-11-12T09:00:47.885Z/asp2.zip"
               },
               "FunctionName": "asp2-dev-process_stream",
               "Handler": "lambdas/process_stream.main",
@@ -132,14 +144,172 @@
               "ProcessUnderscorestreamLogGroup"
             ]
           },
-          "ProcessUnderscorestreamLambdaVersionM0x6omTn64dEgXulnOU3UuVnbJ3JltTGkUROfFkhXM": {
+          "ProcessUnderscorestreamLambdaVersionrW6KnU3e3NUKn6yAyenmq5OrEW5OiCuGfLiR38Ni4c": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "ProcessUnderscorestreamLambdaFunction"
               },
-              "CodeSha256": "0k1ELvTrRG9PVQQ7ORKdy1sqeLudRHZDxYad7ymhG2w="
+              "CodeSha256": "hcRZv5IVYrRyxhcOixwunkL7UoAOBT7fSmi2lFOhTgg="
+            }
+          },
+          "ExtractUnderscoretextLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": {
+                  "Ref": "ServerlessDeploymentBucket"
+                },
+                "S3Key": "serverless/asp2/dev/1605171647885-2020-11-12T09:00:47.885Z/asp2.zip"
+              },
+              "FunctionName": "asp2-dev-extract_text",
+              "Handler": "lambdas/extract_text.main",
+              "MemorySize": 1024,
+              "Role": "arn:aws:iam::555989344246:role/asp2_role",
+              "Runtime": "python3.8",
+              "Timeout": 6,
+              "Environment": {
+                "Variables": {
+                  "SNS_ARN": {
+                    "Fn::Join": [
+                      ":",
+                      [
+                        "arn:aws:sns:us-east-2",
+                        {
+                          "Ref": "AWS::AccountId"
+                        },
+                        "asp2-textract"
+                      ]
+                    ]
+                  },
+                  "ROLE_ARN": "arn:aws:iam::555989344246:role/asp2_role"
+                }
+              }
+            },
+            "DependsOn": [
+              "ExtractUnderscoretextLogGroup"
+            ]
+          },
+          "ExtractUnderscoretextLambdaVersion3tw7WUV5ac6YsnudjXzj20aRfOxdyq4wM6u53ZzSr4g": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "ExtractUnderscoretextLambdaFunction"
+              },
+              "CodeSha256": "hcRZv5IVYrRyxhcOixwunkL7UoAOBT7fSmi2lFOhTgg="
+            }
+          },
+          "OutputUnderscoretextLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": {
+                  "Ref": "ServerlessDeploymentBucket"
+                },
+                "S3Key": "serverless/asp2/dev/1605171647885-2020-11-12T09:00:47.885Z/asp2.zip"
+              },
+              "FunctionName": "asp2-dev-output_text",
+              "Handler": "lambdas/output_text.main",
+              "MemorySize": 1024,
+              "Role": "arn:aws:iam::555989344246:role/asp2_role",
+              "Runtime": "python3.8",
+              "Timeout": 6
+            },
+            "DependsOn": [
+              "OutputUnderscoretextLogGroup"
+            ]
+          },
+          "OutputUnderscoretextLambdaVersionKR1REZxuDXf8SuAwlUOjB6s4ai6MLauBayHJcuJKsRU": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "OutputUnderscoretextLambdaFunction"
+              },
+              "CodeSha256": "hcRZv5IVYrRyxhcOixwunkL7UoAOBT7fSmi2lFOhTgg="
+            }
+          },
+          "SNSTopicAsp2textract": {
+            "Type": "AWS::SNS::Topic",
+            "Properties": {
+              "TopicName": "asp2-textract",
+              "Subscription": [
+                {
+                  "Endpoint": {
+                    "Fn::GetAtt": [
+                      "OutputUnderscoretextLambdaFunction",
+                      "Arn"
+                    ]
+                  },
+                  "Protocol": "lambda"
+                }
+              ]
+            }
+          },
+          "OutputUnderscoretextLambdaPermissionAsp2textractSNS": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "OutputUnderscoretextLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "sns.amazonaws.com",
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":sns:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    "asp2-textract"
+                  ]
+                ]
+              }
+            }
+          },
+          "fileBucket": {
+            "Type": "AWS::S3::Bucket",
+            "Properties": {
+              "BucketName": "asp2-file-bucket",
+              "AccessControl": "Private"
+            }
+          },
+          "fileBucketPolicy": {
+            "Type": "AWS::S3::BucketPolicy",
+            "Properties": {
+              "Bucket": {
+                "Ref": "fileBucket"
+              },
+              "PolicyDocument": {
+                "Version": "2012-10-17",
+                "Statement": [
+                  {
+                    "Effect": "Allow",
+                    "Principal": {
+                      "AWS": [
+                        "arn:aws:iam::555989344246:role/asp2_role"
+                      ]
+                    },
+                    "Action": "s3:*",
+                    "Resource": "arn:aws:s3:::asp2-file-bucket"
+                  }
+                ]
+              }
             }
           }
         },
@@ -152,13 +322,25 @@
           "FetchUnderscoreentryUnderscoredataLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "FetchUnderscoreentryUnderscoredataLambdaVersion6yB20hFwzkCxWNKsdRwFeajfzwkN1Wzi3vPmlisPmg"
+              "Ref": "FetchUnderscoreentryUnderscoredataLambdaVersionHIKs0yWdF2AZSBC7tXkQNdHsiFY9WzyORKXkyIQN4"
             }
           },
           "ProcessUnderscorestreamLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "ProcessUnderscorestreamLambdaVersionM0x6omTn64dEgXulnOU3UuVnbJ3JltTGkUROfFkhXM"
+              "Ref": "ProcessUnderscorestreamLambdaVersionrW6KnU3e3NUKn6yAyenmq5OrEW5OiCuGfLiR38Ni4c"
+            }
+          },
+          "ExtractUnderscoretextLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "ExtractUnderscoretextLambdaVersion3tw7WUV5ac6YsnudjXzj20aRfOxdyq4wM6u53ZzSr4g"
+            }
+          },
+          "OutputUnderscoretextLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "OutputUnderscoretextLambdaVersionKR1REZxuDXf8SuAwlUOjB6s4ai6MLauBayHJcuJKsRU"
             }
           }
         }
@@ -235,7 +417,11 @@
     "custom": {
       "pythonRequirements": {
         "dockerizePip": "non-linux"
-      }
+      },
+      "stage": "dev",
+      "region": "us-east-2",
+      "s3bucket": "asp2-file-bucket",
+      "snsTextractTopic": "asp2-textract"
     },
     "plugins": [
       "serverless-python-requirements"
@@ -251,7 +437,7 @@
         "timeout": 6,
         "runtime": "python3.8",
         "vpc": {},
-        "versionLogicalId": "FetchUnderscoreentryUnderscoredataLambdaVersion6yB20hFwzkCxWNKsdRwFeajfzwkN1Wzi3vPmlisPmg"
+        "versionLogicalId": "FetchUnderscoreentryUnderscoredataLambdaVersionHIKs0yWdF2AZSBC7tXkQNdHsiFY9WzyORKXkyIQN4"
       },
       "process_stream": {
         "handler": "lambdas/process_stream.main",
@@ -262,22 +448,87 @@
         "timeout": 6,
         "runtime": "python3.8",
         "vpc": {},
-        "versionLogicalId": "ProcessUnderscorestreamLambdaVersionM0x6omTn64dEgXulnOU3UuVnbJ3JltTGkUROfFkhXM"
+        "versionLogicalId": "ProcessUnderscorestreamLambdaVersionrW6KnU3e3NUKn6yAyenmq5OrEW5OiCuGfLiR38Ni4c"
+      },
+      "extract_text": {
+        "handler": "lambdas/extract_text.main",
+        "environment": {
+          "SNS_ARN": {
+            "$ref": "$[\"service\"][\"provider\"][\"compiledCloudFormationTemplate\"][\"Resources\"][\"ExtractUnderscoretextLambdaFunction\"][\"Properties\"][\"Environment\"][\"Variables\"][\"SNS_ARN\"]"
+          },
+          "ROLE_ARN": "arn:aws:iam::555989344246:role/asp2_role"
+        },
+        "events": [],
+        "name": "asp2-dev-extract_text",
+        "package": {},
+        "memory": 1024,
+        "timeout": 6,
+        "runtime": "python3.8",
+        "vpc": {},
+        "versionLogicalId": "ExtractUnderscoretextLambdaVersion3tw7WUV5ac6YsnudjXzj20aRfOxdyq4wM6u53ZzSr4g"
+      },
+      "output_text": {
+        "handler": "lambdas/output_text.main",
+        "events": [
+          {
+            "sns": "asp2-textract"
+          }
+        ],
+        "name": "asp2-dev-output_text",
+        "package": {},
+        "memory": 1024,
+        "timeout": 6,
+        "runtime": "python3.8",
+        "vpc": {},
+        "versionLogicalId": "OutputUnderscoretextLambdaVersionKR1REZxuDXf8SuAwlUOjB6s4ai6MLauBayHJcuJKsRU"
       }
+    },
+    "resources": {
+      "Resources": {
+        "fileBucket": {
+          "Type": "AWS::S3::Bucket",
+          "Properties": {
+            "BucketName": "asp2-file-bucket",
+            "AccessControl": "Private"
+          }
+        },
+        "fileBucketPolicy": {
+          "Type": "AWS::S3::BucketPolicy",
+          "Properties": {
+            "Bucket": {
+              "Ref": "fileBucket"
+            },
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Principal": {
+                    "AWS": [
+                      "arn:aws:iam::555989344246:role/asp2_role"
+                    ]
+                  },
+                  "Action": "s3:*",
+                  "Resource": "arn:aws:s3:::asp2-file-bucket"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "Outputs": {}
     },
     "configValidationMode": "warn",
     "serviceFilename": "serverless.yml",
     "app": "asp2",
     "layers": {},
     "initialServerlessConfig": {
-      "service": "asp2",
+      "service": {
+        "$ref": "$[\"service\"][\"serviceObject\"]"
+      },
       "app": "asp2",
       "provider": {
-        "name": "aws",
-        "runtime": "python3.8",
-        "stage": "dev",
-        "region": "us-east-2",
-        "role": "arn:aws:iam::555989344246:role/asp2_role"
+        "$ref": "$[\"service\"][\"provider\"]"
       },
       "package": {
         "exclude": [
@@ -286,23 +537,26 @@
           "layers/**"
         ],
         "artifact": "/home/ezra20/Projects/arxiv-sanity-preserver/.serverless/asp2.zip",
-        "artifactDirectoryName": "serverless/asp2/dev/1604998737254-2020-11-10T08:58:57.254Z"
+        "artifactDirectoryName": "serverless/asp2/dev/1605171647885-2020-11-12T09:00:47.885Z"
       },
       "functions": {
         "$ref": "$[\"service\"][\"functions\"]"
       },
-      "plugins": {
-        "$ref": "$[\"service\"][\"plugins\"]"
-      },
       "custom": {
         "$ref": "$[\"service\"][\"custom\"]"
+      },
+      "resources": {
+        "$ref": "$[\"service\"][\"resources\"]"
+      },
+      "plugins": {
+        "$ref": "$[\"service\"][\"plugins\"]"
       }
     },
     "isDashboardMonitoringPreconfigured": false,
     "artifact": "/home/ezra20/Projects/arxiv-sanity-preserver/.serverless/asp2.zip"
   },
   "package": {
-    "artifactDirectoryName": "serverless/asp2/dev/1604998737254-2020-11-10T08:58:57.254Z",
+    "artifactDirectoryName": "serverless/asp2/dev/1605171647885-2020-11-12T09:00:47.885Z",
     "artifact": "asp2.zip"
   }
 }
