@@ -87,7 +87,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/asp2/dev/1605171647885-2020-11-12T09:00:47.885Z/asp2.zip"
+          "S3Key": "serverless/asp2/dev/1605291191874-2020-11-13T18:13:11.874Z/asp2.zip"
         },
         "FunctionName": "asp2-dev-fetch_entry_data",
         "Handler": "lambdas/fetch_entry_data.main",
@@ -117,7 +117,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/asp2/dev/1605171647885-2020-11-12T09:00:47.885Z/asp2.zip"
+          "S3Key": "serverless/asp2/dev/1605291191874-2020-11-13T18:13:11.874Z/asp2.zip"
         },
         "FunctionName": "asp2-dev-process_stream",
         "Handler": "lambdas/process_stream.main",
@@ -127,7 +127,8 @@
         "Timeout": 6
       },
       "DependsOn": [
-        "ProcessUnderscorestreamLogGroup"
+        "ProcessUnderscorestreamLogGroup",
+        "dynamoDBInstance"
       ]
     },
     "ProcessUnderscorestreamLambdaVersionrW6KnU3e3NUKn6yAyenmq5OrEW5OiCuGfLiR38Ni4c": {
@@ -147,7 +148,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/asp2/dev/1605171647885-2020-11-12T09:00:47.885Z/asp2.zip"
+          "S3Key": "serverless/asp2/dev/1605291191874-2020-11-13T18:13:11.874Z/asp2.zip"
         },
         "FunctionName": "asp2-dev-extract_text",
         "Handler": "lambdas/extract_text.main",
@@ -194,7 +195,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/asp2/dev/1605171647885-2020-11-12T09:00:47.885Z/asp2.zip"
+          "S3Key": "serverless/asp2/dev/1605291191874-2020-11-13T18:13:11.874Z/asp2.zip"
         },
         "FunctionName": "asp2-dev-output_text",
         "Handler": "lambdas/output_text.main",
@@ -217,54 +218,41 @@
         "CodeSha256": "hcRZv5IVYrRyxhcOixwunkL7UoAOBT7fSmi2lFOhTgg="
       }
     },
-    "SNSTopicAsp2textract": {
-      "Type": "AWS::SNS::Topic",
+    "ProcessUnderscorestreamEventSourceMappingDynamodbDynamoDBInstance": {
+      "Type": "AWS::Lambda::EventSourceMapping",
+      "DependsOn": [],
       "Properties": {
-        "TopicName": "asp2-textract",
-        "Subscription": [
-          {
-            "Endpoint": {
-              "Fn::GetAtt": [
-                "OutputUnderscoretextLambdaFunction",
-                "Arn"
-              ]
-            },
-            "Protocol": "lambda"
-          }
-        ]
-      }
-    },
-    "OutputUnderscoretextLambdaPermissionAsp2textractSNS": {
-      "Type": "AWS::Lambda::Permission",
-      "Properties": {
+        "BatchSize": 100,
+        "EventSourceArn": {
+          "Fn::GetAtt": [
+            "dynamoDBInstance",
+            "StreamArn"
+          ]
+        },
         "FunctionName": {
           "Fn::GetAtt": [
-            "OutputUnderscoretextLambdaFunction",
+            "ProcessUnderscorestreamLambdaFunction",
             "Arn"
           ]
         },
-        "Action": "lambda:InvokeFunction",
-        "Principal": "sns.amazonaws.com",
-        "SourceArn": {
-          "Fn::Join": [
-            "",
-            [
-              "arn:",
-              {
-                "Ref": "AWS::Partition"
-              },
-              ":sns:",
-              {
-                "Ref": "AWS::Region"
-              },
-              ":",
-              {
-                "Ref": "AWS::AccountId"
-              },
-              ":",
-              "asp2-textract"
-            ]
-          ]
+        "StartingPosition": "LATEST",
+        "Enabled": true,
+        "MaximumRetryAttempts": 1
+      }
+    },
+    "dynamoDBInstance": {
+      "Type": "AWS::DynamoDB::Table",
+      "Properties": {
+        "TableName": "asp2-fetch-results",
+        "BillingMode": "PAY_PER_REQUEST",
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "rawid",
+            "AttributeType": "S"
+          }
+        ],
+        "StreamSpecification": {
+          "StreamViewType": "NEW_AND_OLD_IMAGES"
         }
       }
     },
@@ -272,7 +260,13 @@
       "Type": "AWS::S3::Bucket",
       "Properties": {
         "BucketName": "asp2-file-bucket",
-        "AccessControl": "Private"
+        "AccessControl": "Private",
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": true,
+          "RestrictPublicBuckets": true
+        }
       }
     },
     "fileBucketPolicy": {
@@ -296,6 +290,12 @@
             }
           ]
         }
+      }
+    },
+    "snsTopic": {
+      "Type": "AWS::SNS::snsTextractTopic",
+      "Properties": {
+        "DisplayName": "asp2-textract"
       }
     }
   },

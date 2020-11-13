@@ -5,10 +5,10 @@ app: asp2
 provider:
   name: aws
   runtime: python3.8
-  stage: ${opt:stage, 'dev'}
-  region: 'us-east-2'
+  stage: ${opt:stage, "dev"}
+  region: "us-east-2"
   # can replace with iamRoleStatements later
-  role: 'arn:aws:iam::555989344246:role/asp2_role'
+  role: "arn:aws:iam::555989344246:role/asp2_role" 
 
 package:
   exclude:
@@ -17,47 +17,92 @@ package:
       - layers/**
 
 
-
 functions:
   fetch_entry_data:
     handler: lambdas/fetch_entry_data.main
   
   process_stream:
     handler: lambdas/process_stream.main
+    dependsOn:
+      - dynamoDBInstance
+    events: 
+      - stream:
+          type: dynamodb 
+          arn: ${self:custom.ARN.dynamoStream}
+          batchSize: 100
+          startingPosition: LATEST
+          maximumRetryAttempts: 1
+          enabled: True
+
 
   extract_text:
     handler: lambdas/extract_text.main
     environment: 
-      SNS_ARN: 
-        Fn::Join: 
-          - ":" 
-          - - "arn:aws:sns:${self:custom.region}"
-            - Ref: "AWS::AccountId"
-            - "${self:custom.snsTextractTopic}"
-      ROLE_ARN: '${self:provider.role}'
+      SNS_ARN: ${self:custom.ARN.snsTextractTopic}
+      ROLE_ARN: ${self:provider.role}
 
     
   output_text:
     handler: lambdas/output_text.main
     events:
-      - sns: ${self:custom.snsTextractTopic}
+      - sns: 
+        arn: ${self:custom.ARN.snsTextractTopic}
   
 custom:
   pythonRequirements:
     dockerizePip: non-linux
+
   stage: ${opt:stage, self:provider.stage}
   region: ${opt:region, self:provider.region}
-  s3bucket: ${self:service}-file-bucket
-  snsTextractTopic: ${self:service}-textract
+
+
+  resourceNames:
+    s3Bucket: ${self:service}-file-bucket
+    snsTextractTopic: ${self:service}-textract
+    dynamoTable: ${self:service}-fetch-results
+
+  ARN:
+    snsTextractTopic:
+      Fn::Join: 
+        - ":" 
+        - - "arn:aws:sns:${self:custom.region}"
+          - Ref: "AWS::AccountId"
+          - "${self:custom.resourceNames.snsTextractTopic}"
+    dynamoTable:
+      Fn::Join:
+        - ":"
+        - - "arn:aws:dynamodb:${self:custom.region}"
+          - Ref: "AWS::AccountId"
+          - "table/${self:custom.resourceNames.dynamoTable}"
+    dynamoStream: !GetAtt dynamoDBInstance.StreamArn
+
 
 
 resources:
   Resources:
+    dynamoDBInstance:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.resourceNames.dynamoTable}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          -
+            AttributeName: "rawid"
+            AttributeType: "S"
+        StreamSpecification:
+          StreamViewType: NEW_AND_OLD_IMAGES
+
     fileBucket:
       Type: AWS::S3::Bucket 
       Properties:
-        BucketName: ${self:custom.s3bucket}
+        BucketName: ${self:custom.resourceNames.s3Bucket}
         AccessControl: Private
+        PublicAccessBlockConfiguration: 
+            BlockPublicAcls: True
+            BlockPublicPolicy: True
+            IgnorePublicAcls: True
+            RestrictPublicBuckets: True
+
     fileBucketPolicy:
       Type: AWS::S3::BucketPolicy 
       Properties:
@@ -71,7 +116,13 @@ resources:
                 AWS: 
                   - ${self:provider.role}
               Action: 's3:*'
-              Resource: 'arn:aws:s3:::${self:custom.s3bucket}'
+              Resource: 'arn:aws:s3:::${self:custom.resourceNames.s3Bucket}'
+      
+    snsTopic:
+      Type: AWS::SNS::snsTextractTopic
+      Properties:
+        DisplayName: ${self:custom.resourceNames.snsTextractTopic}
+
 
 
 plugins:
