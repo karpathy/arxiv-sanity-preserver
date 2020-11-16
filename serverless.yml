@@ -20,6 +20,8 @@ package:
 functions:
   fetch_entry_data:
     handler: lambdas/fetch_entry_data.main
+    environment:
+      TABLE_NAME: ${self:custom.resourceNames.dynamoTable}
   
   process_stream:
     handler: lambdas/process_stream.main
@@ -33,10 +35,21 @@ functions:
           startingPosition: LATEST
           maximumRetryAttempts: 1
           enabled: True
+    environment:
+      BUCKET_NAME: ${self:custom.resourceNames.s3Bucket}
 
 
   extract_text:
     handler: lambdas/extract_text.main
+    events:
+      - s3:
+          bucket: ${self:custom.resourceNames.s3Bucket}
+          event: s3:ObjectCreated:*
+          rules:
+            - prefix: pdf/
+            - suffix: .pdf
+          existing: true
+
     environment: 
       SNS_ARN: ${self:custom.ARN.snsTextractTopic}
       ROLE_ARN: ${self:provider.role}
@@ -46,7 +59,8 @@ functions:
     handler: lambdas/output_text.main
     events:
       - sns: 
-        arn: ${self:custom.ARN.snsTextractTopic}
+          topicName: ${self:custom.resourceNames.snsTextractTopic}
+          arn: ${self:custom.ARN.snsTextractTopic}
   
 custom:
   pythonRequirements:
@@ -85,6 +99,10 @@ resources:
       Properties:
         TableName: ${self:custom.resourceNames.dynamoTable}
         BillingMode: PAY_PER_REQUEST
+        KeySchema:
+          - 
+            AttributeName: "rawid"
+            KeyType: HASH
         AttributeDefinitions:
           -
             AttributeName: "rawid"
@@ -119,7 +137,7 @@ resources:
               Resource: 'arn:aws:s3:::${self:custom.resourceNames.s3Bucket}'
       
     snsTopic:
-      Type: AWS::SNS::snsTextractTopic
+      Type: AWS::SNS::Topic
       Properties:
         DisplayName: ${self:custom.resourceNames.snsTextractTopic}
 

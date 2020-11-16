@@ -26,9 +26,9 @@ def start_job(bucket, object):
             'S3Object': {
                 'Bucket': bucket,
                 'Name': object
-            }}
+            }},
         NotificationChannel={
-            'SNSTopicArn': SNS_ARN
+            'SNSTopicArn': SNS_ARN,
             'RoleArn': ROLE_ARN
         }
     )

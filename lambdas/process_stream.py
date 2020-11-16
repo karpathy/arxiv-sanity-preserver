@@ -12,6 +12,7 @@ from multiprocessing import Process, Pipe
 TABLE = None
 S3CLIENT = None
 DESERIALIZER = None
+BUCKET_NAME = os.environ['BUCKET_NAME']
 
 def upload_file(target_names, bucket_details):
     # upload file to S3 bucket
@@ -76,9 +77,8 @@ def generate_csv(event):
             'src': local_file_name,
             'dest': file_name
         },
-        S3CLIENT,
         {
-            'bucket': 'asp2-file-bucket',
+            'bucket': BUCKET_NAME,
             'folder': 'csv'
         }
     )
@@ -106,9 +106,8 @@ def fetch_pdf(raw_id, url, conn):
                 'src': local_file_name,
                 'dest': file_name
             },
-            S3CLIENT,
             {
-                'bucket': 'asp2-file-bucket',
+                'bucket': BUCKET_NAME,
                 'folder': 'pdf'
             }
         )
@@ -145,10 +144,7 @@ def process_records(event):
 
 
 def main(event, context):
-    # load table
-    global TABLE, S3CLIENT, DESERIALIZER
-    if TABLE is None:
-        TABLE = boto3.resource('dynamodb').Table('asp2-fetch-results')
+    global S3CLIENT, DESERIALIZER
     # load bucket
     if S3CLIENT is None:
         S3CLIENT = boto3.client('s3')
