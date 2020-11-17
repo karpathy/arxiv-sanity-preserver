@@ -1,4 +1,5 @@
 import argparse
+import os
 import requests
 import feedparser as fp
 import boto3
@@ -7,9 +8,13 @@ from boto3.dynamodb.conditions import Key
 from botocore.exceptions import ClientError
 
 # leverage freezing
+TABLE_NAME = os.environ['TABLE_NAME']
 TABLE = None
+
 # other globals
 API_URL = 'http://export.arxiv.org/api/query'
+
+
 DEFAULT_ARGS = {
     'search_query': 'cat:cs.CV+OR+cat:cs.AI+OR+cat:cs.LG+OR+cat:cs.CL+OR+cat:cs.NE+OR+cat:stat.ML',
     'start_index': 0,
@@ -111,7 +116,7 @@ def main(event, context):
     # load table
     global TABLE
     if TABLE is None:
-        TABLE = boto3.resource('dynamodb').Table('asp2-fetch-results')   
+        TABLE = boto3.resource('dynamodb').Table(TABLE_NAME)   
     # logging
     logging.root.setLevel(logging.INFO) 
 

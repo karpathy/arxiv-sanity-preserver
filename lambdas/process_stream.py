@@ -12,8 +12,9 @@ from multiprocessing import Process, Pipe
 TABLE = None
 S3CLIENT = None
 DESERIALIZER = None
+BUCKET_NAME = os.environ['BUCKET_NAME']
 
-def upload_file(target_names, s3, bucket_details):
+def upload_file(target_names, bucket_details):
     # upload file to S3 bucket
     
     if sub_folder := bucket_details['folder']:
@@ -21,7 +22,7 @@ def upload_file(target_names, s3, bucket_details):
     else:
         object_name = target_names['dest']
     try:
-        response = s3.upload_file(
+        response = S3CLIENT.upload_file(
             target_names['src'], 
             bucket_details['bucket'], 
             object_name
@@ -64,7 +65,7 @@ def write_to_csv(file_name, event):
         os.remove(file_name)
 
 
-def generate_csv(event, s3):
+def generate_csv(event):
     # write and upload a csv file containing the record data from the stream
     # this data shall be put in an RD solution later
     file_name = create_csv_name()
@@ -76,9 +77,8 @@ def generate_csv(event, s3):
             'src': local_file_name,
             'dest': file_name
         },
-        s3,
         {
-            'bucket': 'asp2-file-bucket',
+            'bucket': BUCKET_NAME,
             'folder': 'csv'
         }
     )
@@ -91,7 +91,7 @@ def extract_pdf_link(data):
             if link['type'] == "application/pdf"
         ), "")
 
-def fetch_pdf(raw_id, url, s3, conn):
+def fetch_pdf(raw_id, url, conn):
     # stream response from url into pdf file
     file_name = raw_id + ".pdf"
     local_file_name = "/tmp/" + file_name
@@ -106,16 +106,15 @@ def fetch_pdf(raw_id, url, s3, conn):
                 'src': local_file_name,
                 'dest': file_name
             },
-            s3,
             {
-                'bucket': 'asp2-file-bucket',
+                'bucket': BUCKET_NAME,
                 'folder': 'pdf'
             }
         )
     conn.close()
 
 
-def download_pdfs(event, s3):
+def download_pdfs(event):
     # download and then upload article pdfs to s3 storage
     # leverage pipes for parallel execution (pools and queues not available in Lambda)
     procs = []
@@ -124,7 +123,7 @@ def download_pdfs(event, s3):
         url = extract_pdf_link(data)
         # one process per download
         parent_conn, child_conn = Pipe()
-        process = Process(target=fetch_pdf, args=(raw_id, url, s3, child_conn))
+        process = Process(target=fetch_pdf, args=(raw_id, url, child_conn))
         procs.append(process)
     # start
     for proc in procs:
@@ -135,20 +134,17 @@ def download_pdfs(event, s3):
 
 
 
-def process_records(event, s3):
+def process_records(event):
     # create a csv in an s3 bucket containing the entry data recorded in the event
     # download the article pdfs to an s3 bucket
-    generate_csv(event, s3)
-    download_pdfs(event, s3)
+    generate_csv(event)
+    download_pdfs(event)
     
 
 
 
 def main(event, context):
-    # load table
-    global TABLE, S3CLIENT, DESERIALIZER
-    if TABLE is None:
-        TABLE = boto3.resource('dynamodb').Table('asp2-fetch-results')
+    global S3CLIENT, DESERIALIZER
     # load bucket
     if S3CLIENT is None:
         S3CLIENT = boto3.client('s3')
@@ -162,7 +158,7 @@ def main(event, context):
     try:
         logging.info(event['Records'])
         logging.info("Processing %i records..." % len(event['Records']))
-        process_records(event, S3CLIENT)
+        process_records(event)
     except ClientError as cerr:
         logging.error(cerr)
     except Exception as ex:
