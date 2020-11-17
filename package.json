@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/TresTres/arxiv-sanity-preserver#readme",
   "dependencies": {
-    "serverless-python-requirements": "^5.1.0"
+    "serverless-python-requirements": "^5.1.0",
+    "serverless-s3-remover": "^0.6.0"
   }
 }

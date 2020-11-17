@@ -1,0 +1,22 @@
+{
+  "Records": [
+    {
+      "EventSource": "aws:sns",
+      "EventVersion": "1.0",
+      "EventSubscriptionArn": "arn:aws:sns:us-east-2:555989344246:asp2-textract:ddcebcf6-06c1-4ec2-887d-c961e0733bf2",
+      "Sns": {
+        "Type": "Notification",
+        "MessageId": "0f426013-49f8-515a-9d3f-383e218fb86c",
+        "TopicArn": "arn:aws:sns:us-east-2:555989344246:asp2-textract",
+        "Subject": null,
+        "Message": "{\"JobId\":\"e775afb7ca0336455be0d1f9753821c210d6c89c5a5028799a9157b3b98257c1\",\"Status\":\"SUCCEEDED\",\"API\":\"StartDocumentTextDetection\",\"Timestamp\":1605592631292,\"DocumentLocation\":{\"S3ObjectName\":\"pdf/2011.04845.pdf\",\"S3Bucket\":\"asp2-file-bucket\"}}",
+        "Timestamp": "2020-11-17T05:57:11.348Z",
+        "SignatureVersion": "1",
+        "Signature": "PqS8JQaGnYKkEM8X875gACQOyG3lfQ5OfMPSWxeP+AEgnNlknlf9XLDgNRe23l6kEXJzPmM8VaoTk4mm8WPY/fSQ0J/SAKSSC/+vN02FLy7XhCDAYSwl7bIbeyM4xuq3JaTVRkBRs6jU7oOmjaVE4zGok4pOHkixyCzrdZm1p0uyCCNMITQ/OFEdHVZMQqZupwQUhpopaKMcw2J2VuDEHu4fITIs8YNoiUCUe3kxmikunpNvGBlp1VDECueRfY5oPIWvTyIRholgWIJjaG29ZiyYX8eEboc/F9wbx/gKLbFaE8C7T8VN42l2xo7w5k9YRbhhtLzXlhAOSwf4v1srdQ==",
+        "SigningCertUrl": "https://sns.us-east-2.amazonaws.com/SimpleNotificationService-010a507c1833636cd94bdb98bd93083a.pem",
+        "UnsubscribeUrl": "https://sns.us-east-2.amazonaws.com/?Action=Unsubscribe&SubscriptionArn=arn:aws:sns:us-east-2:555989344246:asp2-textract:ddcebcf6-06c1-4ec2-887d-c961e0733bf2",
+        "MessageAttributes": {}
+      }
+    }
+  ]
+}

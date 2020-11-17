@@ -18,6 +18,7 @@ package:
 
 
 functions:
+
   fetch_entry_data:
     handler: lambdas/fetch_entry_data.main
     environment:
@@ -30,67 +31,65 @@ functions:
     events: 
       - stream:
           type: dynamodb 
-          arn: ${self:custom.ARN.dynamoStream}
+          arn: ${self:custom.ARNs.dynamoStream}
           batchSize: 100
           startingPosition: LATEST
           maximumRetryAttempts: 1
           enabled: True
     environment:
-      BUCKET_NAME: ${self:custom.resourceNames.s3Bucket}
+      BUCKET_NAME: ${self:custom.resourceNames.s3ArticleBucket}
 
 
   extract_text:
     handler: lambdas/extract_text.main
     events:
       - s3:
-          bucket: ${self:custom.resourceNames.s3Bucket}
+          bucket: ${self:custom.resourceNames.s3ArticleBucket}
           event: s3:ObjectCreated:*
           rules:
             - prefix: pdf/
             - suffix: .pdf
           existing: true
-
     environment: 
-      SNS_ARN: ${self:custom.ARN.snsTextractTopic}
+      SNS_ARN: ${self:custom.ARNs.snsTextractTopic}
       ROLE_ARN: ${self:provider.role}
+      OUTPUT_BUCKET: ${self:custom.resourceNames.s3TextractBucket}
 
     
-  output_text:
-    handler: lambdas/output_text.main
+  extract_done:
+    handler: lambdas/extract_done.main
     events:
       - sns: 
+          arn: ${self:custom.ARNs.snsTextractTopic}
           topicName: ${self:custom.resourceNames.snsTextractTopic}
-          arn: ${self:custom.ARN.snsTextractTopic}
-  
+          redrivePolicy:
+            deadLetterTargetRef: deadLetterQueue
+
 custom:
   pythonRequirements:
     dockerizePip: non-linux
+
+  remover:
+    buckets:
+      - ${self:custom.resourceNames.s3ArticleBucket}
+      - ${self:custom.resourceNames.s3TextractBucket}
 
   stage: ${opt:stage, self:provider.stage}
   region: ${opt:region, self:provider.region}
 
 
   resourceNames:
-    s3Bucket: ${self:service}-file-bucket
+    s3ArticleBucket: ${self:service}-article-bucket
+    s3TextractBucket: ${self:service}-textract-bucket
     snsTextractTopic: ${self:service}-textract
     dynamoTable: ${self:service}-fetch-results
+    sqsDead: ${self:service}-dead-queue
 
-  ARN:
-    snsTextractTopic:
-      Fn::Join: 
-        - ":" 
-        - - "arn:aws:sns:${self:custom.region}"
-          - Ref: "AWS::AccountId"
-          - "${self:custom.resourceNames.snsTextractTopic}"
-    dynamoTable:
-      Fn::Join:
-        - ":"
-        - - "arn:aws:dynamodb:${self:custom.region}"
-          - Ref: "AWS::AccountId"
-          - "table/${self:custom.resourceNames.dynamoTable}"
+  ARNs:
+    snsTextractTopic: !Ref snsTopic
+    s3ArticleBucket: !Ref s3ArticleBucket
+    dynamoTable: !Ref dynamoDBInstance
     dynamoStream: !GetAtt dynamoDBInstance.StreamArn
-
-
 
 resources:
   Resources:
@@ -110,10 +109,21 @@ resources:
         StreamSpecification:
           StreamViewType: NEW_AND_OLD_IMAGES
 
-    fileBucket:
+    articleBucket:
       Type: AWS::S3::Bucket 
       Properties:
-        BucketName: ${self:custom.resourceNames.s3Bucket}
+        BucketName: ${self:custom.resourceNames.s3ArticleBucket}
+        AccessControl: Private
+        PublicAccessBlockConfiguration: 
+            BlockPublicAcls: True
+            BlockPublicPolicy: True
+            IgnorePublicAcls: True
+            RestrictPublicBuckets: True
+      
+    textractBucket:
+      Type: AWS::S3::Bucket 
+      Properties:
+        BucketName: ${self:custom.resourceNames.s3TextractBucket}
         AccessControl: Private
         PublicAccessBlockConfiguration: 
             BlockPublicAcls: True
@@ -121,27 +131,33 @@ resources:
             IgnorePublicAcls: True
             RestrictPublicBuckets: True
 
-    fileBucketPolicy:
-      Type: AWS::S3::BucketPolicy 
+    fullBucketPolicy:
+      Type: AWS::IAM::Policy 
       Properties:
-        Bucket: 
-          Ref: fileBucket
+        PolicyName: FullBucketPolicy
         PolicyDocument:
           Version: "2012-10-17"
           Statement:
             - Effect: Allow
-              Principal: 
-                AWS: 
-                  - ${self:provider.role}
               Action: 's3:*'
-              Resource: 'arn:aws:s3:::${self:custom.resourceNames.s3Bucket}'
+              Resource: 
+                - !GetAtt articleBucket.Arn 
+                - !GetAtt textractBucket.Arn 
+        Roles:
+          - asp2_role
       
     snsTopic:
       Type: AWS::SNS::Topic
       Properties:
         DisplayName: ${self:custom.resourceNames.snsTextractTopic}
+        TopicName: ${self:custom.resourceNames.snsTextractTopic}
+    
+    deadLetterQueue:
+      Type: AWS::SQS::Queue 
+      Properties:
+        QueueName: ${self:custom.resourceNames.sqsDead}
 
-
-
+    
 plugins:
   - serverless-python-requirements
+  - serverless-s3-remover

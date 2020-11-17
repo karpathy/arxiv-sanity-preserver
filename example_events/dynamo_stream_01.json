@@ -9,11 +9,11 @@
       "dynamodb": {
         "ApproximateCreationDateTime": 1604701128.0,
         "Keys": {
-          "rawid": { "S": "2011.02952" }
+          "rawid": { "S": "2011.04845" }
         },
         "NewImage": {
           "rawid": {
-            "S": "2011.02952"
+            "S": "2011.04845"
           },
           "links": {
             "L": [
@@ -23,7 +23,7 @@
                     "S": "alternate"
                   },
                   "href": {
-                    "S": "http://arxiv.org/abs/2011.02952v1"
+                    "S": "https://arxiv.org/pdf/2011.04845v2.pdf"
                   },
                   "type": {
                     "S": "text/html"
@@ -36,7 +36,7 @@
                     "S": "related"
                   },
                   "href": {
-                    "S": "http://arxiv.org/pdf/2011.02952v1"
+                    "S": "https://arxiv.org/pdf/2011.04845v2"
                   },
                   "title": {
                     "S": "pdf"

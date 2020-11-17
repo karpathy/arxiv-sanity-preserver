@@ -1,7 +1,5 @@
 import boto3
 import os
-import time
-from datetime import datetime
 import logging
 from botocore.exceptions import ClientError
 from multiprocessing import Process, Pipe
@@ -10,7 +8,7 @@ from multiprocessing import Process, Pipe
 TEXTRACT = None
 SNS_ARN = os.environ['SNS_ARN']
 ROLE_ARN = os.environ['ROLE_ARN']
-
+OUTPUT_BUCKET = os.environ['OUTPUT_BUCKET']
 
 def extract_record_data(event):
     # extract info from put record
@@ -19,17 +17,21 @@ def extract_record_data(event):
             yield record['s3']['bucket']['name'], record['s3']['object']['key']
 
 
-def start_job(bucket, object):
+def start_job(bucket, obj):
     # asynchronously start parsing
     response = TEXTRACT.start_document_text_detection(
         DocumentLocation={
             'S3Object': {
                 'Bucket': bucket,
-                'Name': object
+                'Name': obj
             }},
         NotificationChannel={
             'SNSTopicArn': SNS_ARN,
             'RoleArn': ROLE_ARN
+        },
+        OutputConfig={
+            'S3Bucket': OUTPUT_BUCKET,
+            'S3Prefix': 'raw_textract'
         }
     )
     jobid = response['JobId']
@@ -48,6 +50,6 @@ def main(event, context):
     try:
         for bucket, obj in extract_record_data(event):
             jobid = start_job(bucket, obj)
-            logging.info('Job %s started at %s.' % (jobid, datetime.now().strftime("%H:%M:%S")))
+            logging.info('Job %s started.' % jobid)
     except Exception as ex:
         logging.error(ex)
