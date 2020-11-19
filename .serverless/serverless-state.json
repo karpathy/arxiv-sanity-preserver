@@ -70,6 +70,12 @@
               }
             }
           },
+          "ClearUnderscorebucketsLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/asp2-dev-clear_buckets"
+            }
+          },
           "FetchUnderscoreentryUnderscoredataLogGroup": {
             "Type": "AWS::Logs::LogGroup",
             "Properties": {
@@ -94,6 +100,42 @@
               "LogGroupName": "/aws/lambda/asp2-dev-extract_done"
             }
           },
+          "ClearUnderscorebucketsLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": {
+                  "Ref": "ServerlessDeploymentBucket"
+                },
+                "S3Key": "serverless/asp2/dev/1605822281737-2020-11-19T21:44:41.737Z/asp2.zip"
+              },
+              "FunctionName": "asp2-dev-clear_buckets",
+              "Handler": "lambdas/clear_buckets.main",
+              "MemorySize": 1024,
+              "Role": "arn:aws:iam::555989344246:role/asp2_role",
+              "Runtime": "python3.8",
+              "Timeout": 6,
+              "Environment": {
+                "Variables": {
+                  "FILE_BUCKET": "asp2-article-bucket",
+                  "TEXT_BUCKET": "asp2-textract-bucket"
+                }
+              }
+            },
+            "DependsOn": [
+              "ClearUnderscorebucketsLogGroup"
+            ]
+          },
+          "ClearUnderscorebucketsLambdaVersionP0mFH9UcjaG0f8M0Zykz9bkKWo86CrApR6rDaYMDYtY": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "ClearUnderscorebucketsLambdaFunction"
+              },
+              "CodeSha256": "aDX3TN+99o/I4KCFwI/4kUYf5h62YHhi7l7NFyAwSKc="
+            }
+          },
           "FetchUnderscoreentryUnderscoredataLambdaFunction": {
             "Type": "AWS::Lambda::Function",
             "Properties": {
@@ -101,7 +143,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/asp2/dev/1605600431069-2020-11-17T08:07:11.069Z/asp2.zip"
+                "S3Key": "serverless/asp2/dev/1605822281737-2020-11-19T21:44:41.737Z/asp2.zip"
               },
               "FunctionName": "asp2-dev-fetch_entry_data",
               "Handler": "lambdas/fetch_entry_data.main",
@@ -119,14 +161,14 @@
               "FetchUnderscoreentryUnderscoredataLogGroup"
             ]
           },
-          "FetchUnderscoreentryUnderscoredataLambdaVersionbFR9yJNYecCgJfrqo6wXp1vepNNJcW4dbIDjvNiTio": {
+          "FetchUnderscoreentryUnderscoredataLambdaVersion9lZ4BcvlxXC95mtFtCdBUjtMBch0unVDW9tNuYhL0": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "FetchUnderscoreentryUnderscoredataLambdaFunction"
               },
-              "CodeSha256": "yHGm5QCKQvNA48oSSlmzNr/s74gYw1gWRZ3wnSxKARE="
+              "CodeSha256": "aDX3TN+99o/I4KCFwI/4kUYf5h62YHhi7l7NFyAwSKc="
             }
           },
           "ProcessUnderscorestreamLambdaFunction": {
@@ -136,7 +178,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/asp2/dev/1605600431069-2020-11-17T08:07:11.069Z/asp2.zip"
+                "S3Key": "serverless/asp2/dev/1605822281737-2020-11-19T21:44:41.737Z/asp2.zip"
               },
               "FunctionName": "asp2-dev-process_stream",
               "Handler": "lambdas/process_stream.main",
@@ -155,14 +197,14 @@
               "dynamoDBInstance"
             ]
           },
-          "ProcessUnderscorestreamLambdaVersionQwBlmM0xzSPPmlmxEsYDM7orM9KG6QZIHZE86ciZumo": {
+          "ProcessUnderscorestreamLambdaVersionrEW6kIu1HEArWew36RZZZ6NFwJXeVFP2N6MzEGs": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "ProcessUnderscorestreamLambdaFunction"
               },
-              "CodeSha256": "yHGm5QCKQvNA48oSSlmzNr/s74gYw1gWRZ3wnSxKARE="
+              "CodeSha256": "aDX3TN+99o/I4KCFwI/4kUYf5h62YHhi7l7NFyAwSKc="
             }
           },
           "ExtractUnderscoretextLambdaFunction": {
@@ -172,7 +214,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/asp2/dev/1605600431069-2020-11-17T08:07:11.069Z/asp2.zip"
+                "S3Key": "serverless/asp2/dev/1605822281737-2020-11-19T21:44:41.737Z/asp2.zip"
               },
               "FunctionName": "asp2-dev-extract_text",
               "Handler": "lambdas/extract_text.main",
@@ -194,14 +236,14 @@
               "ExtractUnderscoretextLogGroup"
             ]
           },
-          "ExtractUnderscoretextLambdaVersionVJfhc073UJ6xo60EYYTZBtw3eGTB9sUpPlscPfYbs": {
+          "ExtractUnderscoretextLambdaVersionPafGT5HWki8u7ePVQF9po2XZDPwPPySZ0NmZ9vZQZC4": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "ExtractUnderscoretextLambdaFunction"
               },
-              "CodeSha256": "yHGm5QCKQvNA48oSSlmzNr/s74gYw1gWRZ3wnSxKARE="
+              "CodeSha256": "aDX3TN+99o/I4KCFwI/4kUYf5h62YHhi7l7NFyAwSKc="
             }
           },
           "ExtractUnderscoredoneLambdaFunction": {
@@ -211,7 +253,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/asp2/dev/1605600431069-2020-11-17T08:07:11.069Z/asp2.zip"
+                "S3Key": "serverless/asp2/dev/1605822281737-2020-11-19T21:44:41.737Z/asp2.zip"
               },
               "FunctionName": "asp2-dev-extract_done",
               "Handler": "lambdas/extract_done.main",
@@ -224,14 +266,14 @@
               "ExtractUnderscoredoneLogGroup"
             ]
           },
-          "ExtractUnderscoredoneLambdaVersionGC9O6eJkjpvhHMEGH63MUPrtHYgaYjeIYkRvA3bq3mU": {
+          "ExtractUnderscoredoneLambdaVersionbJih2YioNidQ4z32OXgoZ6DkcCjjMknazkoI3msOfus": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "ExtractUnderscoredoneLambdaFunction"
               },
-              "CodeSha256": "yHGm5QCKQvNA48oSSlmzNr/s74gYw1gWRZ3wnSxKARE="
+              "CodeSha256": "aDX3TN+99o/I4KCFwI/4kUYf5h62YHhi7l7NFyAwSKc="
             }
           },
           "ExtractUnderscoretextCustomS31": {
@@ -361,7 +403,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/asp2/dev/1605600431069-2020-11-17T08:07:11.069Z/custom-resources.zip"
+                "S3Key": "serverless/asp2/dev/1605822281737-2020-11-19T21:44:41.737Z/custom-resources.zip"
               },
               "FunctionName": "asp2-dev-custom-resource-existing-s3",
               "Handler": "s3/handler.handler",
@@ -576,28 +618,34 @@
               "Ref": "ServerlessDeploymentBucket"
             }
           },
+          "ClearUnderscorebucketsLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "ClearUnderscorebucketsLambdaVersionP0mFH9UcjaG0f8M0Zykz9bkKWo86CrApR6rDaYMDYtY"
+            }
+          },
           "FetchUnderscoreentryUnderscoredataLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "FetchUnderscoreentryUnderscoredataLambdaVersionbFR9yJNYecCgJfrqo6wXp1vepNNJcW4dbIDjvNiTio"
+              "Ref": "FetchUnderscoreentryUnderscoredataLambdaVersion9lZ4BcvlxXC95mtFtCdBUjtMBch0unVDW9tNuYhL0"
             }
           },
           "ProcessUnderscorestreamLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "ProcessUnderscorestreamLambdaVersionQwBlmM0xzSPPmlmxEsYDM7orM9KG6QZIHZE86ciZumo"
+              "Ref": "ProcessUnderscorestreamLambdaVersionrEW6kIu1HEArWew36RZZZ6NFwJXeVFP2N6MzEGs"
             }
           },
           "ExtractUnderscoretextLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "ExtractUnderscoretextLambdaVersionVJfhc073UJ6xo60EYYTZBtw3eGTB9sUpPlscPfYbs"
+              "Ref": "ExtractUnderscoretextLambdaVersionPafGT5HWki8u7ePVQF9po2XZDPwPPySZ0NmZ9vZQZC4"
             }
           },
           "ExtractUnderscoredoneLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "ExtractUnderscoredoneLambdaVersionGC9O6eJkjpvhHMEGH63MUPrtHYgaYjeIYkRvA3bq3mU"
+              "Ref": "ExtractUnderscoredoneLambdaVersionbJih2YioNidQ4z32OXgoZ6DkcCjjMknazkoI3msOfus"
             }
           }
         }
@@ -675,12 +723,6 @@
       "pythonRequirements": {
         "dockerizePip": "non-linux"
       },
-      "remover": {
-        "buckets": [
-          "asp2-article-bucket",
-          "asp2-textract-bucket"
-        ]
-      },
       "stage": "dev",
       "region": "us-east-2",
       "resourceNames": {
@@ -709,11 +751,25 @@
       }
     },
     "plugins": [
-      "serverless-python-requirements",
-      "serverless-s3-remover"
+      "serverless-python-requirements"
     ],
     "pluginsData": {},
     "functions": {
+      "clear_buckets": {
+        "handler": "lambdas/clear_buckets.main",
+        "environment": {
+          "FILE_BUCKET": "asp2-article-bucket",
+          "TEXT_BUCKET": "asp2-textract-bucket"
+        },
+        "events": [],
+        "name": "asp2-dev-clear_buckets",
+        "package": {},
+        "memory": 1024,
+        "timeout": 6,
+        "runtime": "python3.8",
+        "vpc": {},
+        "versionLogicalId": "ClearUnderscorebucketsLambdaVersionP0mFH9UcjaG0f8M0Zykz9bkKWo86CrApR6rDaYMDYtY"
+      },
       "fetch_entry_data": {
         "handler": "lambdas/fetch_entry_data.main",
         "environment": {
@@ -726,7 +782,7 @@
         "timeout": 6,
         "runtime": "python3.8",
         "vpc": {},
-        "versionLogicalId": "FetchUnderscoreentryUnderscoredataLambdaVersionbFR9yJNYecCgJfrqo6wXp1vepNNJcW4dbIDjvNiTio"
+        "versionLogicalId": "FetchUnderscoreentryUnderscoredataLambdaVersion9lZ4BcvlxXC95mtFtCdBUjtMBch0unVDW9tNuYhL0"
       },
       "process_stream": {
         "handler": "lambdas/process_stream.main",
@@ -756,7 +812,7 @@
         "timeout": 6,
         "runtime": "python3.8",
         "vpc": {},
-        "versionLogicalId": "ProcessUnderscorestreamLambdaVersionQwBlmM0xzSPPmlmxEsYDM7orM9KG6QZIHZE86ciZumo"
+        "versionLogicalId": "ProcessUnderscorestreamLambdaVersionrEW6kIu1HEArWew36RZZZ6NFwJXeVFP2N6MzEGs"
       },
       "extract_text": {
         "handler": "lambdas/extract_text.main",
@@ -790,7 +846,7 @@
         "timeout": 6,
         "runtime": "python3.8",
         "vpc": {},
-        "versionLogicalId": "ExtractUnderscoretextLambdaVersionVJfhc073UJ6xo60EYYTZBtw3eGTB9sUpPlscPfYbs"
+        "versionLogicalId": "ExtractUnderscoretextLambdaVersionPafGT5HWki8u7ePVQF9po2XZDPwPPySZ0NmZ9vZQZC4"
       },
       "extract_done": {
         "handler": "lambdas/extract_done.main",
@@ -813,7 +869,7 @@
         "timeout": 6,
         "runtime": "python3.8",
         "vpc": {},
-        "versionLogicalId": "ExtractUnderscoredoneLambdaVersionGC9O6eJkjpvhHMEGH63MUPrtHYgaYjeIYkRvA3bq3mU"
+        "versionLogicalId": "ExtractUnderscoredoneLambdaVersionbJih2YioNidQ4z32OXgoZ6DkcCjjMknazkoI3msOfus"
       }
     },
     "resources": {
@@ -933,7 +989,7 @@
           "layers/**"
         ],
         "artifact": "/home/ezra20/Projects/arxiv-sanity-preserver/.serverless/asp2.zip",
-        "artifactDirectoryName": "serverless/asp2/dev/1605600431069-2020-11-17T08:07:11.069Z"
+        "artifactDirectoryName": "serverless/asp2/dev/1605822281737-2020-11-19T21:44:41.737Z"
       },
       "functions": {
         "$ref": "$[\"service\"][\"functions\"]"
@@ -952,7 +1008,7 @@
     "artifact": "/home/ezra20/Projects/arxiv-sanity-preserver/.serverless/asp2.zip"
   },
   "package": {
-    "artifactDirectoryName": "serverless/asp2/dev/1605600431069-2020-11-17T08:07:11.069Z",
+    "artifactDirectoryName": "serverless/asp2/dev/1605822281737-2020-11-19T21:44:41.737Z",
     "artifact": "asp2.zip"
   }
 }

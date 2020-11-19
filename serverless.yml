@@ -19,6 +19,13 @@ package:
 
 functions:
 
+  clear_buckets:
+    handler: lambdas/clear_buckets.main
+    environment:
+      FILE_BUCKET: ${self:custom.resourceNames.s3ArticleBucket}
+      TEXT_BUCKET: ${self:custom.resourceNames.s3TextractBucket}
+
+
   fetch_entry_data:
     handler: lambdas/fetch_entry_data.main
     environment:
@@ -68,11 +75,6 @@ functions:
 custom:
   pythonRequirements:
     dockerizePip: non-linux
-
-  remover:
-    buckets:
-      - ${self:custom.resourceNames.s3ArticleBucket}
-      - ${self:custom.resourceNames.s3TextractBucket}
 
   stage: ${opt:stage, self:provider.stage}
   region: ${opt:region, self:provider.region}
@@ -160,4 +162,3 @@ resources:
     
 plugins:
   - serverless-python-requirements
-  - serverless-s3-remover

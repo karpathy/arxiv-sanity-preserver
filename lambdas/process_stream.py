@@ -139,9 +139,6 @@ def process_records(event):
     # download the article pdfs to an s3 bucket
     generate_csv(event)
     download_pdfs(event)
-    
-
-
 
 def main(event, context):
     global S3CLIENT, DESERIALIZER
