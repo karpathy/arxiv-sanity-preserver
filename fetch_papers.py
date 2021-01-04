@@ -59,7 +59,7 @@ if __name__ == "__main__":
 
   # misc hardcoded variables
   base_url = 'http://export.arxiv.org/api/query?' # base api query url
-  print('Searching arXiv for %s' % (args.search_query, ))
+  print(f'Searching arXiv for {args.search_query}')
 
   # lets load the existing database to memory
   try:
@@ -72,13 +72,12 @@ if __name__ == "__main__":
 
   # -----------------------------------------------------------------------------
   # main loop where we fetch the new results
-  print('database has %d entries at start' % (len(db), ))
+  print(f'database has {len(db)} entries at start')
   num_added_total = 0
   for i in range(args.start_index, args.max_index, args.results_per_iteration):
 
-    print("Results %i - %i" % (i,i+args.results_per_iteration))
-    query = 'search_query=%s&sortBy=lastUpdatedDate&start=%i&max_results=%i' % (args.search_query,
-                                                         i, args.results_per_iteration)
+    print(f"Results {i} - {i+args.results_per_iteration}")
+    query = f'search_query={args.search_query}&sortBy=lastUpdatedDate&start={i}&max_results={args.results_per_iteration}'
     with urllib.request.urlopen(base_url+query) as url:
       response = url.read()
     parse = feedparser.parse(response)
@@ -96,14 +95,14 @@ if __name__ == "__main__":
       # add to our database if we didn't have it before, or if this is a new version
       if not rawid in db or j['_version'] > db[rawid]['_version']:
         db[rawid] = j
-        print('Updated %s added %s' % (j['updated'].encode('utf-8'), j['title'].encode('utf-8')))
+        print(f'Updated {j["updated"].encode("utf-8")} added {j["title"].encode("utf-8")}')
         num_added += 1
         num_added_total += 1
       else:
         num_skipped += 1
 
     # print some information
-    print('Added %d papers, already had %d.' % (num_added, num_skipped))
+    print(f'Added {num_added} papers, already had {num_skipped}.')
 
     if len(parse.entries) == 0:
       print('Received no results from arxiv. Rate limiting? Exiting. Restart later maybe.')
@@ -114,11 +113,11 @@ if __name__ == "__main__":
       print('No new papers were added. Assuming no new papers exist. Exiting.')
       break
 
-    print('Sleeping for %i seconds' % (args.wait_time , ))
+    print(f'Sleeping for {args.wait_time} seconds')
     time.sleep(args.wait_time + random.uniform(0, 3))
 
   # save the database before we quit, if we found anything new
   if num_added_total > 0:
-    print('Saving database with %d papers to %s' % (len(db), Config.db_path))
+    print(f'Saving database with {len(db)} papers to {Config.db_path}' % (len(db), Config.db_path))
     safe_pickle_dump(db, Config.db_path)
 
