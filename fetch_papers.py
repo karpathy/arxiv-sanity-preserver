@@ -118,6 +118,6 @@ if __name__ == "__main__":
 
   # save the database before we quit, if we found anything new
   if num_added_total > 0:
-    print(f'Saving database with {len(db)} papers to {Config.db_path}' % (len(db), Config.db_path))
+    print(f'Saving database with {len(db)} papers to {Config.db_path}')
     safe_pickle_dump(db, Config.db_path)
 
