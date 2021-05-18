@@ -4,6 +4,8 @@ requires: sudo apt-get install imagemagick
 """
 
 import os
+import pickle
+import sys
 import time
 import shutil
 from subprocess import Popen
@@ -21,15 +23,19 @@ if not os.path.exists(Config.thumbs_dir): os.makedirs(Config.thumbs_dir)
 if not os.path.exists(Config.tmp_dir): os.makedirs(Config.tmp_dir)
 
 # fetch all pdf filenames in the pdf directory
-files_in_pdf_dir = os.listdir(pdf_dir)
-pdf_files = [x for x in files_in_pdf_dir if x.endswith('.pdf')] # filter to just pdfs, just in case
+db = pickle.load(open(Config.db_path, 'rb'))
+db_filenames = set([([x['href'] for x in db[j]['links'] if x['type'] == 'application/pdf'][0] + '.pdf').split('/')[-1] for j in db])
+files_in_pdf_dir = list()
+for (dirpath, dirnames, filenames) in os.walk(Config.pdf_dir):
+  files_in_pdf_dir += [os.path.join(dirpath, file) for file in filenames if file in db_filenames]
+pdf_files = [x for x in files_in_pdf_dir if x.endswith('.pdf')]  # filter to just pdfs, just in case
 
 # iterate over all pdf files and create the thumbnails
-for i,p in enumerate(pdf_files):
-  pdf_path = os.path.join(pdf_dir, p)
+for i, pdf_path in enumerate(pdf_files):
+  p = os.path.split(pdf_path)[-1]
   thumb_path = os.path.join(Config.thumbs_dir, p + '.jpg')
 
-  if os.path.isfile(thumb_path): 
+  if os.path.isfile(thumb_path):
     print("skipping %s, thumbnail already exists." % (pdf_path, ))
     continue
 
@@ -39,7 +45,7 @@ for i,p in enumerate(pdf_files):
   # tile them horizontally, use JPEG compression 80, trim the borders for each image
   #cmd = "montage %s[0-7] -mode Concatenate -tile x1 -quality 80 -resize x230 -trim %s" % (pdf_path, "thumbs/" + f + ".jpg")
   #print "EXEC: " + cmd
-  
+
   # nvm, below using a roundabout alternative that is worse and requires temporary files, yuck!
   # but i found that it succeeds more often. I can't remember wha thappened anymore but I remember
   # that the version above, while more elegant, had some problem with it on some pdfs. I think.

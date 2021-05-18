@@ -9,13 +9,20 @@ from utils import Config
 
 timeout_secs = 10 # after this many seconds we give up on a paper
 if not os.path.exists(Config.pdf_dir): os.makedirs(Config.pdf_dir)
-have = set(os.listdir(Config.pdf_dir)) # get list of all pdfs we already have
+
+print('Reading pdf list')
+files = list()
+for (dirpath, dirnames, filenames) in os.walk(Config.pdf_dir):
+    files += [os.path.join(dirpath, file) for file in filenames]
+
+have = set([os.path.split(pdf_path)[-1] for pdf_path in files])  # get list of all pdfs we already have
+print('Read pdf list')
 
 numok = 0
 numtot = 0
 db = pickle.load(open(Config.db_path, 'rb'))
 for pid,j in db.items():
-  
+
   pdfs = [x['href'] for x in j['links'] if x['type'] == 'application/pdf']
   assert len(pdfs) == 1
   pdf_url = pdfs[0] + '.pdf'
@@ -37,8 +44,8 @@ for pid,j in db.items():
   except Exception as e:
     print('error downloading: ', pdf_url)
     print(e)
-  
+
   print('%d/%d of %d downloaded ok.' % (numok, numtot, len(db)))
-  
+
 print('final number of papers downloaded okay: %d/%d' % (numok, len(db)))
 

@@ -24,6 +24,7 @@ n = 0
 for pid,j in db.items():
   n += 1
   idvv = '%sv%d' % (j['_rawid'], j['_version'])
+  idvv = idvv.split('/')[-1]  # older papers
   txt_path = os.path.join('data', 'txt', idvv) + '.pdf.txt'
   if os.path.isfile(txt_path): # some pdfs dont translate to txt
     with open(txt_path, 'r') as f:
@@ -39,13 +40,13 @@ for pid,j in db.items():
 print("in total read in %d text files out of %d db entries." % (len(txt_paths), len(db)))
 
 # compute tfidf vectors with scikits
-v = TfidfVectorizer(input='content', 
-        encoding='utf-8', decode_error='replace', strip_accents='unicode', 
-        lowercase=True, analyzer='word', stop_words='english', 
+v = TfidfVectorizer(input='content',
+        encoding='utf-8', decode_error='replace', strip_accents='unicode',
+        lowercase=True, analyzer='word', stop_words='english',
         token_pattern=r'(?u)\b[a-zA-Z_][a-zA-Z0-9_]+\b',
-        ngram_range=(1, 2), max_features = max_features, 
+        ngram_range=(1, 2), max_features = max_features,
         norm='l2', use_idf=True, smooth_idf=True, sublinear_tf=True,
-        max_df=1.0, min_df=1)
+        max_df=1.0, min_df=1, dtype=np.float32)
 
 # create an iterator object to conserve memory
 def make_corpus(paths):

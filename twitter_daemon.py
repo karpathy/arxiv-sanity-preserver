@@ -32,7 +32,7 @@ def extract_arxiv_pids(r):
   pids = []
   for u in r.urls:
     m = re.search('arxiv.org/abs/(.+)', u.expanded_url)
-    if m: 
+    if m:
       rawid = m.group(1)
       pids.append(rawid)
   return pids
@@ -98,13 +98,14 @@ while True:
     last_db_load = time.time()
     print('(re-) loading the paper database', Config.db_path)
     db = pickle.load(open(Config.db_path, 'rb'))
+    dp_pids = set(db.keys())
 
   # fetch the latest mentioning arxiv.org
   results = get_latest_or_loop('arxiv.org')
   to_insert = []
   for r in results:
     arxiv_pids = extract_arxiv_pids(r)
-    arxiv_pids = [p for p in arxiv_pids if p in db] # filter to those that are in our paper db
+    arxiv_pids = [p for p in arxiv_pids if p in dp_pids] # filter to those that are in our paper db
     if not arxiv_pids: continue # nothing we know about here, lets move on
     if tweets.find_one({'id':r.id}): continue # we already have this item
     if r.user.screen_name in banned: continue # banned user, very likely a bot
@@ -145,9 +146,9 @@ while True:
       # give people with more followers more vote, as it's seen by more people and contributes to more hype
       float_vote = min(math.log10(tweet['user_followers_count'] + 1), 4.0)/2.0
       for pid in tweet['pids']:
-        if not pid in records_dict: 
+        if not pid in records_dict:
           records_dict[pid] = {'pid':pid, 'tweets':[], 'vote': 0.0, 'raw_vote': 0} # create a new entry for this pid
-        
+
         # good tweets make a comment, not just a boring RT, or exactly the post title. Detect these.
         if pid in pid_to_words_cache:
           title_words = pid_to_words_cache[pid]
@@ -166,7 +167,7 @@ while True:
     # record the total amount of vote/raw_vote for each pid
     for pid in votes:
       records_dict[pid]['vote'] = votes[pid] # record the total amount of vote across relevant tweets
-      records_dict[pid]['raw_vote'] = raw_votes[pid] 
+      records_dict[pid]['raw_vote'] = raw_votes[pid]
 
     # crop the tweets to only some number of highest weight ones (for efficiency)
     for pid, d in records_dict.items():

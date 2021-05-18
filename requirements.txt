@@ -16,3 +16,9 @@ flask
 flask_limiter
 tornado
 pymongo
+
+tqdm
+
+kaggle
+jsonlines
+google-cloud-storage
