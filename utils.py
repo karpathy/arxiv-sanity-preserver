@@ -114,6 +114,7 @@ def isvalidid(pid):
 # -----------------------------------------------------------------------------
 
 DEFAULT_TIME_FORMAT = '%Y%m%d%H%M%S'
+PAPER_INIT_YEAR = 19900101000000
 
 
 def add_zero(num: int):
@@ -188,6 +189,16 @@ def to_struct_time(obj):
         raise NotImplementedError('convert to struct time failed:type unsupported')
 
 
+def time_diff_in_seconds(src_time, tgt_time):
+    src_time = to_datetime(src_time)
+    tgt_time = to_datetime(tgt_time)
+    if src_time > tgt_time:
+        delta = src_time - tgt_time
+    else:
+        delta = tgt_time - src_time
+    return delta.days * 24 * 3600
+
+
 def separate_by_month(start, end, month):
     result = []
     loop_start = to_datetime(start)
@@ -202,11 +213,14 @@ def separate_by_month(start, end, month):
 
 
 def get_left_time_str(history_take_seconds, remain_counts):
+    if remain_counts == 0:
+        return "completed!"
     remain_seconds = sum(history_take_seconds) / len(history_take_seconds) * remain_counts
     remain_days, remain_seconds = remain_seconds // 86400, remain_seconds % 86400
     remain_hours, remain_seconds = remain_seconds // 3600, remain_seconds % 3600
     remain_minutes, remain_seconds = remain_seconds // 60, remain_seconds % 60
-    return '%d days %d:%d:%d left' % (remain_days, remain_hours, remain_minutes, remain_seconds)
+    return 'will take another %s%d:%d:%d to finish' % ('' if remain_days == 0 else str(int(remain_days)) + ' days ',
+                                                       remain_hours, remain_minutes, remain_seconds)
 
 
 # db utils
