@@ -2,7 +2,6 @@ import os
 import time
 import pickle
 import argparse
-import dateutil.parser
 from random import randrange, uniform
 
 from sqlite3 import dbapi2 as sqlite3
@@ -12,7 +11,7 @@ from flask_limiter import Limiter
 from werkzeug.security import check_password_hash, generate_password_hash
 import pymongo
 
-from utils import strip_version, isvalidid, Config
+from utils import strip_version, isvalidid, Config, time_diff_in_seconds
 
 # various globals
 # -----------------------------------------------------------------------------
@@ -142,8 +141,8 @@ def papers_from_svm(recent_days=None):
 
         if recent_days is not None:
             # filter as well to only most recent papers
-            curtime = int(time.time())  # in seconds
-            out = [x for x in out if curtime - x['time_published'] < recent_days * 24 * 60 * 60]
+            curtime = time.time()  # in seconds
+            out = [x for x in out if time_diff_in_seconds(curtime, x['published_parsed']) < recent_days * 24 * 60 * 60]
 
     return out
 
@@ -183,10 +182,10 @@ def encode_json(ps, n=10, send_images=True, send_abstracts=True):
         struct['tags'] = [t['term'] for t in p['tags']]
 
         # render time information nicely
-        timestruct = dateutil.parser.parse(p['updated'])
-        struct['published_time'] = '%s/%s/%s' % (timestruct.month, timestruct.day, timestruct.year)
-        timestruct = dateutil.parser.parse(p['published'])
-        struct['originally_published_time'] = '%s/%s/%s' % (timestruct.month, timestruct.day, timestruct.year)
+        timestruct = p['updated_parsed']
+        struct['published_time'] = '%s/%s/%s' % (timestruct.tm_mon, timestruct.tm_mday, timestruct.tm_year)
+        timestruct = p['published_parsed']
+        struct['originally_published_time'] = '%s/%s/%s' % (timestruct.tm_mon, timestruct.tm_mday, timestruct.tm_year)
 
         # fetch amount of discussion on this paper
         struct['num_discussion'] = comments.count({'pid': p['_rawid']})
@@ -402,9 +401,9 @@ def top():
     vstr = request.args.get('vfilter', 'all')  # default is all (no filter)
     legend = {'day': 1, '3days': 3, 'week': 7, 'month': 30, 'year': 365, 'alltime': 10000}
     tt = legend.get(ttstr, 7)
-    curtime = int(time.time())  # in seconds
+    curtime = time.time()  # in seconds
     top_sorted_papers = [db[p] for p in TOP_SORTED_PIDS]
-    papers = [p for p in top_sorted_papers if curtime - p['time_published'] < tt * 24 * 60 * 60]
+    papers = [p for p in top_sorted_papers if time_diff_in_seconds(curtime, p['published_parsed']) < tt * 24 * 60 * 60]
     papers = papers_filter_version(papers, vstr)
     ctx = default_context(papers, render_format='top',
                           msg='Top papers based on people\'s libraries:')
@@ -510,8 +509,8 @@ def friends():
         keys.sort(key=lambda k: len(counts[k]), reverse=True)  # descending by count
         papers = [db[x] for x in keys]
         # finally filter by date
-        curtime = int(time.time())  # in seconds
-        papers = [x for x in papers if curtime - x['time_published'] < tt * 24 * 60 * 60]
+        curtime = time.time()  # in seconds
+        papers = [x for x in papers if time_diff_in_seconds(curtime, x['published_parsed']) < tt * 24 * 60 * 60]
         # trim at like 100
         if len(papers) > 100: papers = papers[:100]
         # trim counts as well correspondingly
