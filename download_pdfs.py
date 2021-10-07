@@ -29,7 +29,6 @@ def cache_clear(file_name):
 
 def download_paper(url, dst_name):
     timeout_secs = 10  # after this many seconds we give up on a paper
-    success = False
     try:
         print('fetching %s into %s' % (url, dst_name))
         req = urlopen(url, None, timeout_secs)
@@ -46,7 +45,6 @@ def download_paper(url, dst_name):
                 os.system('cp %s %s' % (missing_pdf_path, dst_name))
                 print("could not find pdf, creating a missing pdf placeholder")
                 success = True
-        time.sleep(0.05 + random.uniform(0, 0.1))
     except timeout as e:
         print('error downloading:%s,%s' % (url, str(e)))
         cache_clear(dst_name)
@@ -61,7 +59,7 @@ def download_paper(url, dst_name):
     return success
 
 
-def thread_download(db_items, start_idx, batch_size, time_max_count=100):
+def thread_download(db_items, start_idx, batch_size, time_max_count=100, sleep_secs=30):
     end_idx = min(start_idx + batch_size, len(db_items))
     loop = 0
     num_total = end_idx - start_idx
@@ -70,6 +68,7 @@ def thread_download(db_items, start_idx, batch_size, time_max_count=100):
     while num_total != num_ok:
         print('starting download for %dth loop' % loop)
         time_records = []
+        failed_records = []
         for idx in range(start_idx, end_idx):
             time_start = datetime.datetime.now()
 
@@ -84,13 +83,24 @@ def thread_download(db_items, start_idx, batch_size, time_max_count=100):
                 if len(time_records) > time_max_count:
                     time_records.pop(0)
                 time_records.append(time_take.seconds)
+            else:
+                raw_id = basename.split('v')[0]
+                # arxiv add some constrain for long term download
+                failed_records.append((idx, raw_id))
+                if len(failed_records) > 3:
+                    idx_continuous = failed_records[-1][0] == failed_records[-2][0] + 1 == failed_records[-3][0] + 2
+                    same_contents = failed_records[-1][1] == failed_records[-2][1] == failed_records[-3][1]
+                    if idx_continuous and not same_contents:
+                        print('===============forbidden detected,sleep for %d seconds===============' % sleep_secs)
+                        time.sleep(sleep_secs + random.uniform(0, 0.1))
+                        failed_records = []
 
             print('%d/%d downloaded, %s' % (num_ok, num_total, get_left_time_str(time_records, num_left)))
 
         num_ok = 0
         loop += 1
         print(
-            'papers downloaded okay: %d/%d,%s' % (num_ok, num_total, 'exiting' if num_ok == num_total else 'retrying'))
+            'papers downloaded okay: %d/%d, %s' % (num_ok, num_total, 'exiting' if num_ok == num_total else 'retrying'))
 
 
 def get_need_download(db):
