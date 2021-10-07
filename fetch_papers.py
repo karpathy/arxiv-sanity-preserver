@@ -10,9 +10,7 @@ import urllib.request
 import feedparser
 
 from utils import Config, safe_pickle_dump, to_int_time, separate_by_month, to_datetime, several_days_around, load_db, \
-    is_first_day_of_month, several_months_around
-
-PAPER_INIT_YEAR = 19900101000000
+    is_first_day_of_month, several_months_around, PAPER_INIT_YEAR
 
 
 def encode_feedparser_dict(d):
