@@ -2,28 +2,13 @@
 Use imagemagick to convert all pfds to a sequence of thumbnail images
 requires: sudo apt-get install imagemagick
 """
-
+import datetime
 import os, sys
 import time
 import shutil
 from subprocess import Popen
 
-from utils import Config
-
-# make sure imagemagick is installed
-if not shutil.which('convert'):  # shutil.which needs Python 3.3+
-    print("ERROR: you don\'t have imagemagick installed. Install it first before calling this script")
-    sys.exit()
-
-# create if necessary the directories we're using for processing and output
-pdf_dir = os.path.join('data', 'pdf')
-if not os.path.exists(Config.thumbs_dir): os.makedirs(Config.thumbs_dir)
-if not os.path.exists(Config.tmp_dir): os.makedirs(Config.tmp_dir)
-
-# fetch all pdf filenames in the pdf directory
-files_in_pdf_dir = os.listdir(pdf_dir)
-pdf_files = [x for x in files_in_pdf_dir if x.endswith('.pdf')]  # filter to just pdfs, just in case
-pdf_files.sort(reverse=True)
+from utils import Config, get_left_time_str
 
 
 def create_thumbnail(pdf_path, thumb_path):
@@ -69,7 +54,8 @@ def create_thumbnail(pdf_path, thumb_path):
             print(cmd)
             os.system(cmd)
         elif os.path.isfile(os.path.join(Config.tmp_dir, 'thumb.png')):
-            cmd = 'magick convert %s -background white -flatten %s' % (os.path.join(Config.tmp_dir, 'thumb.png'), thumb_path)
+            cmd = 'magick convert %s -background white -flatten %s' % (
+                os.path.join(Config.tmp_dir, 'thumb.png'), thumb_path)
             os.system(cmd)
         else:
             # failed to render pdf, replace with missing image
@@ -86,14 +72,60 @@ def create_thumbnail(pdf_path, thumb_path):
         print('error converting:%s,%s' % (pdf_path, str(e)))
 
 
-for i, p in enumerate(pdf_files):
-    pdf_path = os.path.join(pdf_dir, p)
-    thumb_path = os.path.join(Config.thumbs_dir, p + '.jpg')
+def create_thumbnails(pdf_files, time_max_count=100):
+    print("%d pdf files need to make thumbnail,starting in 3 seconds" % len(pdf_files))
+    time.sleep(3)
+    time_records = []
+    num_left = len(pdf_files)
+    for i, p in enumerate(pdf_files):
+        time_start = datetime.datetime.now()
+        pdf_path = os.path.join(Config.pdf_dir, p)
+        thumb_path = os.path.join(Config.thumbs_dir, p + '.jpg')
 
-    if os.path.isfile(thumb_path):
-        print("skipping %s, thumbnail already exists." % (pdf_path,))
-        continue
+        create_thumbnail(pdf_path, thumb_path)
 
-    print("%d/%d processing %s" % (i, len(pdf_files), p))
+        time_take = datetime.datetime.now() - time_start
+        num_left -= 1
+        if len(time_records) > time_max_count:
+            time_records.pop(0)
+        time_records.append(time_take.seconds)
+        print("%d/%d %s thumbnail created, %s." % (i + 1, len(pdf_files), p, get_left_time_str(time_records, num_left)))
 
-    create_thumbnail(pdf_path, thumb_path)
+
+def check_requirement():
+    # make sure imagemagick is installed
+    if not shutil.which('convert'):  # shutil.which needs Python 3.3+
+        print("ERROR: you don\'t have imagemagick installed. Install it first before calling this script")
+        sys.exit()
+
+    # create if necessary the directories we're using for processing and output
+    if not os.path.exists(Config.thumbs_dir): os.makedirs(Config.thumbs_dir)
+    if not os.path.exists(Config.tmp_dir): os.makedirs(Config.tmp_dir)
+
+
+def need_to_convert_pdf_files():
+    result = []
+
+    # fetch all pdf filenames in the pdf directory
+    all_pdf_files = [x for x in os.listdir(Config.pdf_dir) if x.endswith('.pdf')]  # filter to just pdfs, just in case
+    all_jpg_files = [x for x in os.listdir(Config.thumbs_dir) if
+                     x.endswith('.jpg')]  # filter to just pdfs, just in case
+    all_pdf_files.sort(reverse=True)
+    tmp_jpgs = set()
+    for jpg in all_jpg_files:
+        tmp_jpgs.add(jpg)
+    for pdf in all_pdf_files:
+        set_len_before = len(tmp_jpgs)
+        tmp_jpgs.add(pdf + ".jpg")
+        if set_len_before != len(tmp_jpgs):
+            result.append(pdf)
+
+    return result
+
+
+if __name__ == "__main__":
+    check_requirement()
+
+    pdf_files = need_to_convert_pdf_files()
+
+    create_thumbnails(pdf_files)
