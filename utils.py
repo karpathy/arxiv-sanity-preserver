@@ -126,6 +126,11 @@ def is_first_day_of_month():
     return current_struct_time.tm_mday == 1
 
 
+def is_first_day_of_half_year():
+    current_struct_time = time.localtime()
+    return current_struct_time.tm_mday == 1 and (current_struct_time.tm_mon == 1 or current_struct_time.tm_mon == 7)
+
+
 def several_months_around(anchor, months: int, is_raise=True):
     anchor = to_datetime(anchor)
     if is_raise:
