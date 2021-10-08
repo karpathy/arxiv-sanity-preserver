@@ -8,7 +8,6 @@ import pickle
 import shutil
 import random
 from urllib.request import urlopen
-from socket import timeout
 
 from utils import Config, get_left_time_str
 
@@ -45,12 +44,9 @@ def download_paper(url, dst_name):
                 os.system('cp %s %s' % (missing_pdf_path, dst_name))
                 print("could not find pdf, creating a missing pdf placeholder")
                 success = True
-    except timeout as e:
-        print('error downloading:%s,%s' % (url, str(e)))
-        cache_clear(dst_name)
-        success = False
     except Exception as e:
         print('error downloading:%s,%s' % (url, str(e)))
+        cache_clear(dst_name)
         success = False
     except KeyboardInterrupt:
         print('keyboard interrupted while downloading %s' % url)
