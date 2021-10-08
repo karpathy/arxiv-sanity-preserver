@@ -7,7 +7,6 @@ import argparse
 import time
 import random
 import urllib.request
-from socket import timeout
 
 import feedparser
 
