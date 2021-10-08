@@ -80,8 +80,8 @@ def query(time_start, time_end, start_idx: int, max_len: int, type):
     default_categories = '%28cat:cs.AI+OR+cat:cs.CL+OR+cat:cs.CV+OR+cat:cs.CY+OR+cat:cs.LG+OR+cat:cs.NE+OR+cat:cs.SD+OR+cat:eess.AS+OR+cat:eess.IV+OR+cat:eess.SP+OR+cat:eess.SY+OR+cat:stat.ML%29'
     default_query = 'search_query=%s+AND+' + type + ':[' + time_start + '+TO+' + time_end + ']&sortBy=' + type + '&sortOrder=descending&start=%i&max_results=%i'
 
-    with urllib.request.urlopen(base_url + (default_query % (default_categories, start_idx, max_len)), None,
-                                timeout_secs) as url:
+    with urllib.request.urlopen(base_url + (default_query % (default_categories, start_idx, max_len)),
+                                timeout=timeout_secs) as url:
         response = url.read()
     parsed = feedparser.parse(response)
     info, result = parsed.feed, parsed.entries
@@ -159,7 +159,7 @@ def fetching_papers(start_arr, end_arr, db, query_order_by):
                 try:
                     _, result = query(start_arr[i], end_arr[i], 0, max_index + 1, query_order_by)
                     total = update_data(db, max_index, result)
-                except timeout as e:
+                except Exception as e:
                     print('error downloading:%d,%s' % (start_arr[i], str(e)))
                     total = 0
 
