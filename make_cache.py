@@ -56,7 +56,7 @@ def loop_db_for_infos(db, vocab, idf):
     return db, date_sorted_pids, search_dict
 
 
-def get_top_papers():
+def get_top_papers(sqldb):
     # compute top papers in peoples' libraries
     print('computing top papers...')
     libs = sqldb.execute('''select * from library''').fetchall()
@@ -68,12 +68,11 @@ def get_top_papers():
     return [q[1] for q in top_paper_counts]
 
 
-# some utilities for creating a search index for faster search
-punc = "'!\"#$%&\'()*+,./:;<=>?@[\\]^_`{|}~'"  # removed hyphen from string.punctuation
-trans_table = {ord(c): None for c in punc}
-
-
 def makedict(s, vocab, idf, forceidf=None, scale=1.0):
+    # some utilities for creating a search index for faster search
+    punc = "'!\"#$%&\'()*+,./:;<=>?@[\\]^_`{|}~'"  # removed hyphen from string.punctuation
+    trans_table = {ord(c): None for c in punc}
+
     words = set(s.lower().translate(trans_table).strip().split())
     idfd = {}
     for w in words:  # todo: if we're using bigrams in vocab then this won't search over them
@@ -105,13 +104,17 @@ def save_cache(cache, updated_db):
     safe_pickle_dump(updated_db, Config.db_serve_path)
 
 
-if __name__ == "__main__":
+def run():
     sqldb, db, meta = load_dbs()
     vocab, idf = meta['vocab'], meta['idf']
 
-    top_sorted_pids = get_top_papers()
+    top_sorted_pids = get_top_papers(sqldb)
     updated_db, date_sorted_pids, search_dict = loop_db_for_infos(db, vocab, idf)
 
     cache = {"top_sorted_pids": top_sorted_pids, "date_sorted_pids": date_sorted_pids, "search_dict": search_dict}
 
     save_cache(cache, updated_db)
+
+
+if __name__ == "__main__":
+    run()
