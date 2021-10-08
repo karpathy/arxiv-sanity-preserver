@@ -76,7 +76,7 @@ def query(time_start, time_end, start_idx: int, max_len: int, type):
     time_end = str(to_int_time(time_end))
     type = 'lastUpdatedDate' if type == 'last_updated' else 'submittedDate'
     base_url = 'http://export.arxiv.org/api/query?'
-    default_categories = '%28cat:cs.AI+OR+cat:cs.CL+OR+cat:cs.CV+OR+cat:cs.CY+OR+cat:cs.LG+OR+cat:cs.NE+OR+cat:cs.SD+OR+cat:eess.AS+OR+cat:eess.IV+OR+cat:eess.SP+OR+cat:eess.SY+OR+cat:stat.ML%29'
+    default_categories = '%28cat:cs.AI+OR+cat:cs.CL+OR+cat:cs.CV+OR+cat:cs.LG+OR+cat:cs.NE+OR+cat:cs.SD+OR+cat:eess.AS+OR+cat:eess.IV+OR+cat:stat.ML%29'
     default_query = 'search_query=%s+AND+' + type + ':[' + time_start + '+TO+' + time_end + ']&sortBy=' + type + '&sortOrder=descending&start=%i&max_results=%i'
 
     with urllib.request.urlopen(base_url + (default_query % (default_categories, start_idx, max_len)),
@@ -173,8 +173,7 @@ def fetching_papers(start_arr, end_arr, db, query_order_by):
         start_arr, end_arr = wrong_download_start, wrong_download_end
 
 
-if __name__ == "__main__":
-
+def run():
     # parse input arguments
     parser = argparse.ArgumentParser()
     parser.add_argument('--wait', type=float, default=5.0,
@@ -194,3 +193,7 @@ if __name__ == "__main__":
         time_start, time_end = get_time(several_months_around(last_updated_time, 3, False))
         print('First day of month,fetching all published data')
         fetching_papers(time_start, time_end, db, 'published')
+
+
+if __name__ == "__main__":
+    run()
