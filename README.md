@@ -55,7 +55,7 @@ You also want to create a `secret_key.txt` file and fill it with random text (se
 
 ### Current workflow
 
-`all_in_one.py` contains all command mentioned above, so just running executer.py to do fetching,downloading,analyzing etc.:
+`all_in_one.py` contains all command mentioned above, so just running all_in_one.py to do fetching,downloading,analyzing etc.:
 
 ```bash
 python all_in_one.py
