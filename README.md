@@ -1,7 +1,7 @@
 
 # arxiv sanity preserver
 
-This project is a web interface that attempts to tame the overwhelming flood of papers on Arxiv. It allows researchers to keep track of recent papers, search for papers, sort papers by similarity to any paper, see recent popular papers, to add papers to a personal library, and to get personalized recommendations of (new or old) Arxiv papers. This code is currently running live at [www.arxiv-sanity.com/](http://www.arxiv-sanity.com/), where it's serving 25,000+ Arxiv papers from Machine Learning (cs.[AI|CL|CV|CY|LG|NE|SD]/eess.[AS|IV]/stat.ML) over all years. With this code base you could replicate the website to any of your favorite subsets of Arxiv by simply changing the categories in `fetch_papers.py`.
+This project is a web interface that attempts to tame the overwhelming flood of papers on Arxiv. It allows researchers to keep track of recent papers, search for papers, sort papers by similarity to any paper, see recent popular papers, to add papers to a personal library, and to get personalized recommendations of (new or old) Arxiv papers. This code is currently running live at [www.arxiv-sanity.com/](http://www.arxiv-sanity.com/), where it's serving 25,000+ Arxiv papers from Machine Learning (cs.[AI|CL|CV|CY|LG|NE|SD]/eess.[AS|IV]/stat.ML) over the last ~3 years. With this code base you could replicate the website to any of your favorite subsets of Arxiv by simply changing the categories in `fetch_papers.py`.
 
 ![user interface](ui.jpeg)
 
@@ -55,15 +55,10 @@ You also want to create a `secret_key.txt` file and fill it with random text (se
 
 ### Current workflow
 
-Running the site live is not currently set up for a fully automatic plug and play operation. Instead it's a bit of a manual process and I thought I should document how I'm keeping this code alive right now. I have a script that performs the following update early morning after arxiv papers come out (~midnight PST):
+`all_in_one.py` contains all command mentioned above, so just running executer.py to do fetching,downloading,analyzing etc.:
 
 ```bash
-python fetch_papers.py
-python download_pdfs.py
-python thumb_pdf.py
-python analyze.py
-python buildsvm.py
-python make_cache.py
+python all_in_one.py
 ```
 
 I run the server in a screen session, so `screen -S serve` to create it (or `-r` to reattach to it) and run:
