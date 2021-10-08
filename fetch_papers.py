@@ -143,39 +143,34 @@ def fetching_papers(start_arr, end_arr, db, query_order_by):
     wait_time = 0.5  # query need min wait seconds
     first_start = True
     while first_start or len(start_arr) > 0:
-
         wrong_download_start, wrong_download_end = [], []
-        try:
-            for i in range(len(start_arr)):
 
+        for i in range(len(start_arr)):
+            max_index = -1
+            try:
                 info, _ = query(start_arr[i], end_arr[i], 0, 1, query_order_by)
                 max_index = int(info.opensearch_totalresults)
 
-                print('year:%d → %d, exp:%d' % (start_arr[i], end_arr[i], max_index))
+                print('year:%d → %d, exp:%d, start downloading...' % (start_arr[i], end_arr[i], max_index))
+                _, result = query(start_arr[i], end_arr[i], 0, max_index + 1, query_order_by)
+                total = update_data(db, max_index, result)
+            except Exception as e:
+                print('error downloading:%d,%s' % (start_arr[i], str(e)))
+                total = 0
 
-                print("starting download")
+            if total != max_index:
+                wrong_download_start.append(start_arr[i])
+                wrong_download_end.append(end_arr[i])
 
-                try:
-                    _, result = query(start_arr[i], end_arr[i], 0, max_index + 1, query_order_by)
-                    total = update_data(db, max_index, result)
-                except Exception as e:
-                    print('error downloading:%d,%s' % (start_arr[i], str(e)))
-                    total = 0
+            time_sleep = wait_time + random.uniform(0, 3)
+            print('Sleeping for %f seconds' % (time_sleep))
+            time.sleep(time_sleep)
 
-                if total != max_index:
-                    wrong_download_start.append(start_arr[i])
-                    wrong_download_end.append(end_arr[i])
-
-                time_sleep = wait_time + random.uniform(0, 3)
-                print('Sleeping for %f seconds' % (time_sleep))
-                time.sleep(time_sleep)
-
-        finally:
-            first_start = False
-            print('start time %s data count mismatch, corresponding end time %s, %s' % (
-                str(wrong_download_start), str(wrong_download_end),
-                'retrying...' if len(wrong_download_start) > 0 else 'exiting...'))
-            start_arr, end_arr = wrong_download_start, wrong_download_end
+        first_start = False
+        print('start time %s data count mismatch, corresponding end time %s, %s' % (
+            str(wrong_download_start), str(wrong_download_end),
+            'retrying...' if len(wrong_download_start) > 0 else 'exiting...'))
+        start_arr, end_arr = wrong_download_start, wrong_download_end
 
 
 if __name__ == "__main__":
