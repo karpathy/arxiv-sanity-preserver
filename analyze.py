@@ -9,7 +9,7 @@ import re
 import numpy as np
 from random import shuffle, seed
 from sklearn.feature_extraction.text import TfidfVectorizer
-from utils import Config, safe_pickle_dump, is_first_day_of_month
+from utils import Config, safe_pickle_dump, is_first_day_of_half_year
 
 
 def load_pids():
@@ -81,9 +81,7 @@ def data_preparing():
 
     handled = 0
     txts, pids, new_pids = [], load_pids(), []
-    tmp_pids = set()
-    for pid in pids:
-        tmp_pids.add(pid)
+    tmp_pids = set(pids)
     print('adding new pids...')
     for pid, _ in db.items():
         set_len_before = len(tmp_pids)
@@ -186,13 +184,13 @@ def calc_sim(X, cur_pids_len, new_pids, max_sim=50, batch_size=200, scale=100000
     safe_pickle_dump(sim_dict, Config.sim_path)
 
 
-if __name__ == "__main__":
+def run():
     seed(1337)
     max_train = 5000  # max number of tfidf training documents (chosen randomly), for memory efficiency
     max_features = 5000
 
-    # fix update not consider idf effect for old data every month
-    if is_first_day_of_month():
+    # fix update not consider idf effect for old data every half year
+    if is_first_day_of_half_year():
         clear_cache()
 
     txts, pids, new_pids = data_preparing()
@@ -201,3 +199,7 @@ if __name__ == "__main__":
         X = get_tfidf(txts, pids, max_features, max_train)
         X = X.todense()  # originally it's a sparse matrix
         calc_sim(X, len(pids), new_pids)
+
+
+if __name__ == "__main__":
+    run()
