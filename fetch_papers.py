@@ -7,6 +7,8 @@ import argparse
 import time
 import random
 import urllib.request
+from socket import timeout
+
 import feedparser
 
 from utils import Config, safe_pickle_dump, to_int_time, separate_by_month, to_datetime, several_days_around, load_db, \
@@ -70,13 +72,16 @@ def get_time(last_updated_time):
 
 
 def query(time_start, time_end, start_idx: int, max_len: int, type):
+    timeout_secs = 120  # after this many seconds we give up on a paper
     time_start = str(to_int_time(time_start))
     time_end = str(to_int_time(time_end))
     type = 'lastUpdatedDate' if type == 'last_updated' else 'submittedDate'
     base_url = 'http://export.arxiv.org/api/query?'
     default_categories = '%28cat:cs.AI+OR+cat:cs.CL+OR+cat:cs.CV+OR+cat:cs.CY+OR+cat:cs.LG+OR+cat:cs.NE+OR+cat:cs.SD+OR+cat:eess.AS+OR+cat:eess.IV+OR+cat:eess.SP+OR+cat:eess.SY+OR+cat:stat.ML%29'
     default_query = 'search_query=%s+AND+' + type + ':[' + time_start + '+TO+' + time_end + ']&sortBy=' + type + '&sortOrder=descending&start=%i&max_results=%i'
-    with urllib.request.urlopen(base_url + (default_query % (default_categories, start_idx, max_len))) as url:
+
+    with urllib.request.urlopen(base_url + (default_query % (default_categories, start_idx, max_len)), None,
+                                timeout_secs) as url:
         response = url.read()
     parsed = feedparser.parse(response)
     info, result = parsed.feed, parsed.entries
@@ -151,16 +156,20 @@ def fetching_papers(start_arr, end_arr, db, query_order_by):
 
                 print("starting download")
 
-                _, result = query(start_arr[i], end_arr[i], 0, max_index + 1, query_order_by)
-
-                total = update_data(db, max_index, result)
+                try:
+                    _, result = query(start_arr[i], end_arr[i], 0, max_index + 1, query_order_by)
+                    total = update_data(db, max_index, result)
+                except timeout as e:
+                    print('error downloading:%d,%s' % (start_arr[i], str(e)))
+                    total = 0
 
                 if total != max_index:
                     wrong_download_start.append(start_arr[i])
                     wrong_download_end.append(end_arr[i])
 
-                print('Sleeping for %i seconds' % (wait_time))
-                time.sleep(wait_time + random.uniform(0, 3))
+                time_sleep = wait_time + random.uniform(0, 3)
+                print('Sleeping for %f seconds' % (time_sleep))
+                time.sleep(time_sleep)
 
         finally:
             first_start = False
@@ -188,6 +197,6 @@ if __name__ == "__main__":
 
     if is_first_day_of_month():
         # sync every month tracking last 3 months published data because of arxiv data error
-        time_start, time_end = get_time(several_months_around(last_updated_time,3,False))
+        time_start, time_end = get_time(several_months_around(last_updated_time, 3, False))
         print('First day of month,fetching all published data')
         fetching_papers(time_start, time_end, db, 'published')
