@@ -16,12 +16,16 @@ have = set(os.listdir(Config.pdf_dir))  # get list of all pdfs we already have
 
 db = pickle.load(open(Config.db_path, 'rb'))
 db = collections.OrderedDict(sorted(db.items(), reverse=True))
+TMP_SUFFIX = ".tmp"
 
 
 def cache_clear(file_name):
     if os.path.exists(file_name):
         print("cache file %s found,cleaning buffer..." % file_name)
         os.remove(file_name)
+    elif os.path.exists(file_name + TMP_SUFFIX):
+        print("cache file %s found,cleaning buffer..." % file_name + TMP_SUFFIX)
+        os.remove(file_name + TMP_SUFFIX)
     else:
         print("cache %s not found, no need to clean..." % file_name)
 
@@ -32,8 +36,9 @@ def download_paper(url, dst_name):
         print('fetching %s into %s' % (url, dst_name))
         req = urlopen(url, None, timeout_secs)
         if req.headers['Content-Type'] == 'application/pdf':
-            with open(dst_name, 'wb') as fp:
+            with open(dst_name + TMP_SUFFIX, 'wb') as fp:
                 shutil.copyfileobj(req, fp)
+            os.rename(dst_name + TMP_SUFFIX, dst_name)
             success = True
         else:
             if 'Pragma' in req.headers.keys():
