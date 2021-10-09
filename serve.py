@@ -8,6 +8,7 @@ from sqlite3 import dbapi2 as sqlite3
 from flask import Flask, request, session, url_for, redirect, \
     render_template, g, flash, send_from_directory
 from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from werkzeug.security import check_password_hash, generate_password_hash
 import pymongo
 
@@ -23,7 +24,7 @@ else:
     SECRET_KEY = 'devkey, should be in a file'
 app = Flask(__name__)
 app.config.from_object(__name__)
-limiter = Limiter(app, global_limits=["10000 per hour", "2000 per minute"])
+limiter = Limiter(app, key_func=get_remote_address, application_limits=["10000/hour", "2000/minute"])
 
 
 # -----------------------------------------------------------------------------
@@ -188,7 +189,7 @@ def encode_json(ps, n=10, send_images=True, send_abstracts=True):
         struct['originally_published_time'] = '%s/%s/%s' % (timestruct.tm_mon, timestruct.tm_mday, timestruct.tm_year)
 
         # fetch amount of discussion on this paper
-        struct['num_discussion'] = comments.count({'pid': p['_rawid']})
+        struct['num_discussion'] = comments.count_documents({'pid': p['_rawid']})
 
         # arxiv comments from the authors (when they submit the paper)
         cc = p.get('arxiv_comment', '')
@@ -274,8 +275,8 @@ def discuss():
     # fetch the counts for all tags
     tag_counts = []
     for c in comms:
-        cc = [tags_collection.count({'comment_id': c['_id'], 'tag_name': t}) for t in TAGS]
-        tag_counts.append(cc);
+        cc = [tags_collection.count_documents({'comment_id': c['_id'], 'tag_name': t}) for t in TAGS]
+        tag_counts.append(cc)
 
     # and render
     ctx = default_context(papers, render_format='default', comments=comms, gpid=pid, tags=TAGS, tag_counts=tag_counts)
@@ -658,19 +659,7 @@ def base_static(filename):
     return send_from_directory(app.root_path + '/data/pdf/', filename)
 
 
-# -----------------------------------------------------------------------------
-# int main
-# -----------------------------------------------------------------------------
-if __name__ == "__main__":
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-p', '--prod', dest='prod', action='store_true', help='run in prod?')
-    parser.add_argument('-r', '--num_results', dest='num_results', type=int, default=200,
-                        help='number of results to return per query')
-    parser.add_argument('--port', dest='port', type=int, default=5000, help='port to serve on')
-    args = parser.parse_args()
-    print(args)
-
+def load_data():
     if not os.path.isfile(Config.database_path):
         print('did not find as.db, trying to create an empty database from schema.sql...')
         print('this needs sqlite3 to be installed!')
@@ -681,8 +670,6 @@ if __name__ == "__main__":
 
     print('loading tfidf_meta', Config.meta_path)
     meta = pickle.load(open(Config.meta_path, "rb"))
-    vocab = meta['vocab']
-    idf = meta['idf']
     pids = meta['pids']
     ptoi = meta['ptoi']
 
@@ -710,15 +697,31 @@ if __name__ == "__main__":
     tags_collection = mdb.tags
     goaway_collection = mdb.goaway
     follow_collection = mdb.follow
-    print('mongodb tweets_top1 collection size:', tweets_top1.count())
-    print('mongodb tweets_top7 collection size:', tweets_top7.count())
-    print('mongodb tweets_top30 collection size:', tweets_top30.count())
-    print('mongodb comments collection size:', comments.count())
-    print('mongodb tags collection size:', tags_collection.count())
-    print('mongodb goaway collection size:', goaway_collection.count())
-    print('mongodb follow collection size:', follow_collection.count())
+    print('mongodb tweets_top1 collection size:', tweets_top1.estimated_document_count())
+    print('mongodb tweets_top7 collection size:', tweets_top7.estimated_document_count())
+    print('mongodb tweets_top30 collection size:', tweets_top30.estimated_document_count())
+    print('mongodb comments collection size:', comments.estimated_document_count())
+    print('mongodb tags collection size:', tags_collection.estimated_document_count())
+    print('mongodb goaway collection size:', goaway_collection.estimated_document_count())
+    print('mongodb follow collection size:', follow_collection.estimated_document_count())
 
     TAGS = ['insightful!', 'thank you', 'agree', 'disagree', 'not constructive', 'troll', 'spam']
+
+    return follow_collection, db, tweets_top1, tweets_top7, tweets_top30, TOP_SORTED_PIDS, tags_collection, TAGS, \
+           comments, DATE_SORTED_PIDS, goaway_collection, pids, SEARCH_DICT, user_sim, sim_dict, ptoi
+
+
+if __name__ == "__main__":
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-p', '--prod', dest='prod', action='store_true', help='run in prod?')
+    parser.add_argument('-r', '--num_results', dest='num_results', type=int, default=200,
+                        help='number of results to return per query')
+    parser.add_argument('--port', dest='port', type=int, default=5000, help='port to serve on')
+    args = parser.parse_args()
+
+    follow_collection, db, tweets_top1, tweets_top7, tweets_top30, TOP_SORTED_PIDS, tags_collection, TAGS, comments, \
+    DATE_SORTED_PIDS, goaway_collection, pids, SEARCH_DICT, user_sim, sim_dict, ptoi = load_data()
 
     # start
     if args.prod:
