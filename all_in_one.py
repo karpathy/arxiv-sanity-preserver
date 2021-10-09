@@ -2,36 +2,41 @@ import os
 import signal
 import subprocess
 import time
+import fetch_papers, analyze, buildsvm, make_cache
 
 from utils import to_struct_time, Config
 
+
+def async_execs():
+    fetch_papers.run()
+    analyze.run()
+    buildsvm.run()
+    make_cache.run()
+
+
+def download_pdfs(pre_proc):
+    if pre_proc is not None and pre_proc.poll() is not None:
+        pre_proc.send_signal(signal.CTRL_C_EVENT)
+        time.sleep(30)  # waiting 30 seconds of terminate time
+    return subprocess.Popen(downloader, shell=True)
+
+
 if __name__ == '__main__':
-    fetcher = "python fetch_papers.py\n"
-    sim = "python analyze.py\n"
-    user_sim = "python buildsvm.py\n"
-    cache = "python make_cache.py\n"
     downloader = "python download_pdfs.py"
     thumbnail = "python thumb_pdf.py"
-    tmp_script_file = "tmp_script.py"
 
-    download_process = None
-    if os.path.exists(Config.db_path):
-        download_process = subprocess.Popen(downloader, shell=True)
+    download_proc, next_day_float, first_start = None, time.time() + 24 * 3600, True
+
+    if not os.path.exists(Config.db_path):
+        async_execs()
+        time.sleep(45 * 60)  # download some data
+    download_proc = download_pdfs(None)
 
     while True:
-        if to_struct_time(time.localtime()).tm_hour == 12:  # exec async tmp file every day at 12:00
-            tmp_script = open(tmp_script_file, "a")
-            tmp_script.writelines([fetcher, sim, user_sim, cache])
-            tmp_script.close()
-            time.sleep(30)  # waiting 30 seconds of create file
-            subprocess.Popen("python " + tmp_script_file, creationflags=subprocess.CREATE_NEW_CONSOLE)
-        if to_struct_time(time.localtime()).tm_hour == 14:  # restart download at 14:00
-            if os.path.exists(tmp_script_file):
-                os.remove(tmp_script_file)
-            if downloader is not None:
-                download_process.send_signal(signal.CTRL_C_EVENT)
-                time.sleep(30)  # waiting 30 seconds of terminate time
-            if os.path.exists(Config.db_path):
-                download_process = subprocess.Popen(fetcher, shell=True)
+        cur_hour = to_struct_time(time.localtime()).tm_hour
+        if cur_hour == 12 and time.time() > next_day_float:
+            async_execs()
+        if cur_hour == 14 and time.time() > next_day_float:  # restart download at 14:00
+            download_proc = download_pdfs(download_proc)
         subprocess.Popen(thumbnail, creationflags=subprocess.CREATE_NEW_CONSOLE)
-        time.sleep(45 * 60)  # sync every 40 minutes
+        time.sleep(60 * 60)  # sync every 1 hour
