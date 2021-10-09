@@ -45,7 +45,7 @@ def create_thumbnail(pdf_path, thumb_path):
             time.sleep(0.1)
         ret = pp.poll()
         if ret is None:
-            print("convert command did not terminate in 20 seconds, terminating.")
+            print("magick command did not terminate in 20 seconds, terminating.")
             pp.terminate()  # give up
 
         if os.path.isfile(os.path.join(Config.tmp_dir, 'thumb-0.png')):
@@ -94,7 +94,7 @@ def create_thumbnails(pdf_files, time_max_count=100):
 
 def check_requirement():
     # make sure imagemagick is installed
-    if not shutil.which('convert'):  # shutil.which needs Python 3.3+
+    if not shutil.which('magick'):  # shutil.which needs Python 3.3+
         print("ERROR: you don\'t have imagemagick installed. Install it first before calling this script")
         sys.exit()
 
@@ -111,9 +111,7 @@ def need_to_convert_pdf_files():
     all_jpg_files = [x for x in os.listdir(Config.thumbs_dir) if
                      x.endswith('.jpg')]  # filter to just pdfs, just in case
     all_pdf_files.sort(reverse=True)
-    tmp_jpgs = set()
-    for jpg in all_jpg_files:
-        tmp_jpgs.add(jpg)
+    tmp_jpgs = set(all_jpg_files)
     for pdf in all_pdf_files:
         set_len_before = len(tmp_jpgs)
         tmp_jpgs.add(pdf + ".jpg")
