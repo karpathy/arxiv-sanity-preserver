@@ -7,7 +7,7 @@ import fetch_papers, analyze, buildsvm, make_cache
 from utils import to_struct_time, Config
 
 
-def async_execs():
+def sync_execs():
     fetch_papers.run()
     analyze.run()
     buildsvm.run()
@@ -28,14 +28,13 @@ if __name__ == '__main__':
     download_proc, next_day_float, first_start = None, time.time() + 24 * 3600, True
 
     if not os.path.exists(Config.db_path):
-        async_execs()
-        time.sleep(45 * 60)  # download some data
+        sync_execs()
     download_proc = download_pdfs(None)
 
     while True:
         cur_hour = to_struct_time(time.localtime()).tm_hour
         if cur_hour == 12 and time.time() > next_day_float:
-            async_execs()
+            sync_execs()
         if cur_hour == 14 and time.time() > next_day_float:  # restart download at 14:00
             download_proc = download_pdfs(download_proc)
         subprocess.Popen(thumbnail, creationflags=subprocess.CREATE_NEW_CONSOLE)
