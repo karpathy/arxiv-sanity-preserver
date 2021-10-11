@@ -33,9 +33,8 @@ if __name__ == '__main__':
 
     while True:
         cur_hour = to_struct_time(time.localtime()).tm_hour
-        if cur_hour == 12 and time.time() > next_day_float:
+        if cur_hour == 12 and time.time() > next_day_float:  # update data and restart download at 12:00
             sync_execs()
-        if cur_hour == 14 and time.time() > next_day_float:  # restart download at 14:00
             download_proc = download_pdfs(download_proc)
         subprocess.Popen(thumbnail, creationflags=subprocess.CREATE_NEW_CONSOLE)
         time.sleep(60 * 60)  # sync every 1 hour
