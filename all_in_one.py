@@ -1,5 +1,4 @@
 import os
-import signal
 import subprocess
 import time
 import fetch_papers, analyze, buildsvm, make_cache
@@ -15,16 +14,16 @@ def sync_execs():
 
 
 def download_pdfs(pre_proc):
-    if pre_proc is not None and pre_proc.poll() is not None:
-        pre_proc.send_signal(signal.CTRL_C_EVENT)
-        time.sleep(30)  # waiting 30 seconds of terminate time
-    return subprocess.Popen(downloader, shell=True)
+    if pre_proc is not None:
+        print("preparing to restart downloading...")
+        pre_proc.stdin.write('restart\n'.encode())
+        pre_proc.stdin.flush()
+        return pre_proc
+    else:
+        return subprocess.Popen("python download_pdfs.py", stdin=subprocess.PIPE)
 
 
 if __name__ == '__main__':
-    downloader = "python download_pdfs.py"
-    thumbnail = "python thumb_pdf.py"
-
     download_proc, next_day_float, first_start = None, time.time() + 24 * 3600, True
 
     if not os.path.exists(Config.db_path):
@@ -36,5 +35,5 @@ if __name__ == '__main__':
         if cur_hour == 12 and time.time() > next_day_float:  # update data and restart download at 12:00
             sync_execs()
             download_proc = download_pdfs(download_proc)
-        subprocess.Popen(thumbnail, creationflags=subprocess.CREATE_NEW_CONSOLE)
+        subprocess.Popen("python thumb_pdf.py", creationflags=subprocess.CREATE_NEW_CONSOLE)
         time.sleep(60 * 60)  # sync every 1 hour
