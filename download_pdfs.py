@@ -69,18 +69,18 @@ def download_paper(url, dst_name):
 def thread_download(db_items, start_idx, batch_size, time_max_count=100):
     global RESTART
     end_idx = min(start_idx + batch_size, len(db_items))
-    loop, num_ok, need_to_download, failed_records = 0, 0, db_items[start_idx:end_idx], []
+    loop, need_to_download, time_records = 0, db_items[start_idx:end_idx], []
     need_to_download_len = len(need_to_download)
-    while need_to_download_len > 0 and not RESTART:
+    while need_to_download_len > 0:
         print('starting download for %dth loop' % loop)
-        time_records = []
+        num_ok, failed_records = 0, []
         for idx in range(need_to_download_len):
             if RESTART:
-                break
+                return
 
             time_start = datetime.datetime.now()
 
-            pdf_url = db_items[idx]
+            pdf_url = need_to_download[idx]
             basename = get_file_info(pdf_url)[0]
             fname = os.path.join(Config.pdf_dir, basename)
 
@@ -102,9 +102,10 @@ def thread_download(db_items, start_idx, batch_size, time_max_count=100):
         print(
             'papers downloaded okay: %d/%d, %s' % (
                 num_ok, need_to_download_len,
-                'exiting' if num_ok == need_to_download_len and not RESTART else 'retrying'))
+                'exiting' if num_ok == need_to_download_len else 'retrying'))
         need_to_download = [x for idx, x in failed_records]
         need_to_download_len = len(need_to_download)
+    RESTART = True
 
 
 def check_forbidden(failed_records, sleep_secs=30):
@@ -147,18 +148,19 @@ def get_need_download():
 if __name__ == "__main__":
     if not os.path.exists(Config.pdf_dir): os.makedirs(Config.pdf_dir)
 
-    threading.Thread(target=cmd_listener).start()
+    threading.Thread(target=cmd_listener, daemon=True).start()
 
     while RESTART:
         db_items = get_need_download()
         n_threads = 1
         batch_size = len(db_items) // n_threads
-        print('%d papers need to download,starting in 3 seconds...' % (len(db_items)))
-        time.sleep(3)
-
-        RESTART = False
-        thread_download(db_items, 0, batch_size)
-
-        while not RESTART:
-            time.sleep(60)  # empty loop for download finished
+        if len(db_items) > 0:
+            RESTART = False
+            print('%d papers need to download,starting in 3 seconds...' % (len(db_items)))
+            time.sleep(3)
+            thread_download(db_items, 0, batch_size)
+        else:
+            RESTART = True
+            print("0 papers need to download,waiting for one hour...")
+            time.sleep(3600)  # empty loop for download finished
         print("restarting download process...")
