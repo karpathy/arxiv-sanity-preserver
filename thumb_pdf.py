@@ -37,7 +37,7 @@ def create_thumbnail(pdf_path, thumb_path):
         pp = Popen(['magick', '%s[0-7]' % (pdf_path,), '-define', 'png:color-type=6', '-thumbnail', 'x156',
                     os.path.join(Config.tmp_dir, 'thumb.png')])
         t0 = time.time()
-        while time.time() - t0 < 20:  # give it 15 seconds deadline
+        while time.time() - t0 < 300:  # give it 5 minutes deadline
             ret = pp.poll()
             if not (ret is None):
                 # process terminated
@@ -45,7 +45,7 @@ def create_thumbnail(pdf_path, thumb_path):
             time.sleep(0.1)
         ret = pp.poll()
         if ret is None:
-            print("magick command did not terminate in 20 seconds, terminating.")
+            print("magick command did not terminate in 5 minutes, terminating.")
             pp.terminate()  # give up
 
         if os.path.isfile(os.path.join(Config.tmp_dir, 'thumb-0.png')):
