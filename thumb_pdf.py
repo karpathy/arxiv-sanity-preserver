@@ -28,11 +28,9 @@ def create_thumbnail(pdf_path, thumb_path):
                 f = os.path.join(Config.tmp_dir, 'thumb-%d.png' % (i,))
                 f2 = os.path.join(Config.tmp_dir, 'thumbbuf-%d.png' % (i,))
                 if os.path.isfile(f):
-                    cmd = 'mv %s %s' % (f, f2)
-                    os.system(cmd)
+                    os.replace(f, f2)
         elif os.path.isfile(os.path.join(Config.tmp_dir, 'thumb.png')):
-            cmd = 'mv %s %s' % (os.path.join(Config.tmp_dir, 'thumb.png'), os.path.join(Config.tmp_dir, 'thumbbuf.png'))
-            os.system(cmd)
+            os.replace(os.path.join(Config.tmp_dir, 'thumb.png'), os.path.join(Config.tmp_dir, 'thumbbuf.png'))
 
         pp = Popen(['magick', '%s[0-7]' % (pdf_path,), '-define', 'png:color-type=6', '-thumbnail', 'x156',
                     os.path.join(Config.tmp_dir, 'thumb.png')])
