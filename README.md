@@ -1,7 +1,7 @@
 
 # arxiv sanity preserver
 
-## about
+## About
 This project is a web interface that attempts to tame the overwhelming flood of papers on Arxiv. It allows researchers to keep track of recent papers, search for papers, sort papers by similarity to any paper, see recent popular papers, to add papers to a personal library, and to get personalized recommendations of (new or old) Arxiv papers. This code is currently running live at [www.arxiv-sanity.com/](http://www.arxiv-sanity.com/), where it's serving 25,000+ Arxiv papers from Machine Learning (cs.[AI|CL|CV|LG|NE|SD]/eess.[AS|IV]/stat.ML) over all years. With this code base you could replicate the website to any of your favorite subsets of Arxiv by simply changing the categories in `fetch_papers.py`.
 
 ![user interface](ui.jpeg)
@@ -45,6 +45,7 @@ python all_in_one.py
 #### Running online and visiting
 Run `python serve.py` and visit `your_ip:5000`. you can change port by using `port` parameter.
 
-If you'd like to run server to outer world (e.g. AWS) run it as `python serve.py --prod` to use tornado instead of flask
+If you'd like to run server to outer world (e.g. AWS) run it as `python serve.py --prod` to use tornado instead of flask.
+
 You also want to create a `secret_key.txt` file and fill it with random text (see top of `serve.py`).
 
