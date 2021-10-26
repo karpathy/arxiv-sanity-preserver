@@ -18,11 +18,14 @@ RESTART = True
 
 def cmd_listener():
     while True:
-        cmd = sys.stdin.readline()
-        print("cmd received:%s" % cmd)
-        if cmd == "restart\n":
-            global RESTART
-            RESTART = True
+        try:
+            cmd = sys.stdin.readline()
+            print("cmd received:%s" % cmd)
+            if cmd == "restart\n":
+                global RESTART
+                RESTART = True
+        except KeyboardInterrupt:
+            break
 
 
 def cache_clear(file_name):
