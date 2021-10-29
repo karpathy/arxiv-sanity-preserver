@@ -131,7 +131,7 @@ def need_to_convert_pdf_files(max_threads):
 
 
 if __name__ == "__main__":
-    max_thread = 6
+    max_thread = os.cpu_count() // 2  # using half of cpu
 
     check_requirement()
 
