@@ -97,7 +97,7 @@ def thread_create_thumbnails(pdf_files):
         t.join()
 
 
-def check_requirement(max_threads=12):
+def check_requirement(max_threads):
     # make sure imagemagick is installed
     if not shutil.which('magick'):  # shutil.which needs Python 3.3+
         print("ERROR: you don\'t have imagemagick installed. Install it first before calling this script")
@@ -133,7 +133,7 @@ def need_to_convert_pdf_files(max_threads):
 if __name__ == "__main__":
     max_thread = os.cpu_count() // 2  # using half of cpu
 
-    check_requirement()
+    check_requirement(max_thread)
 
     pdf_files = need_to_convert_pdf_files(max_thread)
 
