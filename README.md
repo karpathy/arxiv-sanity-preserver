@@ -1,6 +1,8 @@
 
 # arxiv sanity preserver
 
+**Update Nov 27, 2021**: you may wish to look at my from-scratch re-write of arxiv-sanity: [arxiv-sanity-lite](https://github.com/karpathy/arxiv-sanity-lite). It is a smaller version of arxiv-sanity that focuses on the core value proposition, is significantly less likely to ever go down, scales better, and has a few additional goodies such as multiple possible tags per account, regular emails of new papers of interest, etc. It is also running live on [arxiv-sanity-lite.com](https://arxiv-sanity-lite.com).
+
 This project is a web interface that attempts to tame the overwhelming flood of papers on Arxiv. It allows researchers to keep track of recent papers, search for papers, sort papers by similarity to any paper, see recent popular papers, to add papers to a personal library, and to get personalized recommendations of (new or old) Arxiv papers. This code is currently running live at [www.arxiv-sanity.com/](http://www.arxiv-sanity.com/), where it's serving 25,000+ Arxiv papers from Machine Learning (cs.[CV|AI|CL|LG|NE]/stat.ML) over the last ~3 years. With this code base you could replicate the website to any of your favorite subsets of Arxiv by simply changing the categories in `fetch_papers.py`.
 
 ![user interface](https://raw.github.com/karpathy/arxiv-sanity-preserver/master/ui.jpeg)
