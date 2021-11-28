@@ -1,0 +1,306 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Arxiv Sanity Preserver</title>
+
+<!-- MathJax -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_CHTML">
+</script>
+
+<!-- CSS -->
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+
+<!-- Favicon -->
+<link rel="shortcut icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}" />
+
+<!-- JS -->
+<script src="{{ url_for('static', filename='jquery-1.8.3.min.js') }}"></script>
+<script src="{{ url_for('static', filename='d3.min.js') }}"></script>
+<script src="{{ url_for('static', filename='marked.min.js') }}"></script>
+<script src="{{ url_for('static', filename='as-common.js') }}"></script>
+
+<!-- Google Analytics JS -->
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-3698471-25', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+<script>
+
+// passed in from flask as json
+var tweets = {{ tweets | tojson }};
+var papers = {{ papers | tojson }};
+var comments = {{ comments | tojson }};
+var msg = "{{ msg }}";
+var render_format = "{{ render_format }}";
+var username = "{{ g.user.username }}";
+var numresults = "{{ numresults }}";
+var gpid = "{{ gpid }}";
+var tags = {{ tags | tojson }};
+var tag_counts = {{ tag_counts | tojson }};
+
+var cid_highlight;
+var node_scroll_to;
+
+function renderComments() {
+  var root = d3.select("#discussion");
+  var n = comments.length;
+  if(n === 0) { root.append('div').html('none, so far.'); }
+  for(var i=0;i<n;i++) {
+    // show the comment
+    var c = comments[i];
+    if(typeof c.text === 'undefined') { var text = ''; } else { var text = c.text; }
+    var time_text = timeConverter(c.time_posted);
+    var cdiv = root.append('div').classed('comment', true);
+    // add action items
+    cdiv.append('div').classed('caction', true)
+        .append('a').attr('href', 'discuss?id='+gpid+'&cid='+c._id)
+        .append('img').attr('src', 'static/linkto.png').attr('alt', 'link to this comment');
+    // header information: user/time/version
+    var cdiv_header = cdiv.append('div').classed('cheader', true);
+    if(typeof cid_highlight !== 'undefined' && cid_highlight === c._id) {
+      cdiv_header.attr('style', 'background-color:#ff0'); // highlight this comment specifically
+      node_scroll_to = cdiv_header[0][0]; // raw dom element
+    }
+    cdiv_header.append('div').classed('cuser', true).html('@'+c.user);
+    cdiv_header.append('div').classed('ctime', true).html(time_text);
+    cdiv_header.append('div').classed('cver', true).html('v'+c.version);
+    cdiv_header.append('div').classed('cconf', true).html(c.conf);
+    // actual comment
+    cdiv.append('div').classed('ctext', true).html(marked(text));
+    // tags
+    var cdiv_tags = cdiv.append('div').classed('ctags', true);
+    // error div
+    var cerr = cdiv.append('div').classed('cerr', true); // hidden initially
+    // now insert tags into tags div
+    for(var j=0,m=tags.length;j<m;j++) {
+      var tag_count = tag_counts[i][j];
+      var cdiv_tag_count = cdiv_tags.append('div').classed('ctag-count', true).html(tag_count);
+      if(tag_count === 0) { cdiv_tag_count.classed('ctag-count-zero', true); }
+      var cdiv_tag = cdiv_tags.append('div').classed('ctag', true).html(tags[j]);
+      // attach a click handler
+      cdiv_tag.on('click', function(elt, celt, cid, errelt){return function(){
+        // inform the server with a POST request
+        var request_data = {}
+        request_data.tag_name = elt.html();
+        request_data.comment_id = cid;
+        request_data.pid = gpid;
+        $.post("/toggletag", request_data).done(function(data){
+          if(data != 'OK') { errelt.html(data); }
+          else {
+            // toggle the visual state
+            var is_active = !elt.classed('ctag-active');
+            elt.classed('ctag-active', is_active);
+            // also (de/in)crement the count
+            var new_count = parseInt(celt.html()) + (is_active ? 1.0 : -1.0);
+            if(new_count < 0) { new_count = 0; } // should never happen
+            celt.html(new_count);
+          }
+        });
+      }}(cdiv_tag, cdiv_tag_count, c._id, cerr));
+    }
+  }
+}
+
+var prev_txt = '';
+function renderPost() {
+  var txt = $("#post-text").val(); // raw text of textarea contents
+  if(txt === prev_txt) { return; } // break out early, no changes from before.
+  prev_txt = txt;
+
+  console.log('rendering preview...');
+  $("#preview-wrap").slideDown("fast");
+
+  // render to html with marked
+  var html = marked(txt);
+  // insert into preview div
+  $("#preview").html(html);
+  // fire off a request to process any latex
+  if (typeof MathJax !== 'undefined') { MathJax.Hub.Queue(["Typeset",MathJax.Hub]); }
+}
+
+function doPost() {
+  // lets put together a POST request to submit a new post in the discussion.
+  var txt = $("#post-text").val();
+  // do some checks etc
+  if(txt.length <= 5) {
+    $("#errors-etc").html('Post is too short. Come on, what are you doing?').slideDown("fast");
+    return;
+  }
+  if(txt.length > 10000) {
+    $("#errors-etc").html('Post is too long! What are you doing?').slideDown("fast");
+    return;
+  }
+
+  var conf = '';
+  var sel = document.querySelector('input[name="conf"]:checked');
+  if(sel !== null) { conf = sel.value; }
+
+  var anon = 0;
+  var sel = document.querySelector('input[name="anon"]:checked');
+  if(sel !== null) { anon = 1; }
+
+  var request_data = {}
+  request_data.text = txt;
+  request_data.conf = conf;
+  request_data.anon = anon;
+  request_data.pid = gpid;
+  console.log('request data:');
+  console.log(request_data);
+
+  $.post("/comment", request_data)
+   .done(function(data){
+      // toggle state of the image to reflect the state of the server, as reported by response
+      if(data === 'OK') {
+        $("#errors-etc").html('Posted!').slideDown("fast");
+        setInterval(function(){location.reload(false);}, 1000);
+      } else {
+        $("#errors-etc").html(data).slideDown("fast");
+      }
+   })
+   .fail(function(xhr, status, error) {
+      console.log(xhr);
+      console.log(status);
+      console.log(error);
+      $("#errors-etc").html('Request failed, sorry. See console to maybe debug.').slideDown("fast");
+   });
+}
+
+// when page loads...
+$(document).ready(function(){
+
+  cid_highlight = QueryString.cid;
+
+  // display message, if any
+  if(msg !== '') { d3.select("#rtable").append('div').classed('msg', true).html(msg); }
+  // display the subject-of-disussion paper on top
+	addPapers(1, false);
+  // display the comments
+  renderComments();
+
+  // click on Pitch in! call for action toggle expansion of comment textarea etc
+  $("#pitchin-cfa").click(function() {
+    $("#pitchin").slideToggle("fast", function() { });
+  });
+
+  $("#btnpost").click(function(){
+    doPost();
+  })
+  // periodically try to render a preview of the post
+  setInterval(renderPost, 250);
+
+  // scroll to a comment if any
+  if(typeof node_scroll_to !== 'undefined') {
+    $('html, body').animate({
+        scrollTop: $(node_scroll_to).offset().top
+    }, 1000);
+  }
+});
+
+</script>
+</head>
+
+<body>
+<a href="https://github.com/karpathy/arxiv-sanity-preserver"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/38ef81f8aca64bb9a64448d0d70f1308ef5341ab/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6461726b626c75655f3132313632312e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png"></a>
+
+<div id ="titdiv">
+
+  <!-- User account information on top right -->
+  <div id="userinfo">
+    {% if not g.user %}
+    <form action="{{ url_for('login') }}" method="post">
+      User:
+      <input type="text" name="username" class="input-no-border">
+      Pass:
+      <input type="password" name="password" class="input-no-border">
+      <input type="submit" value="Login or Create" class="btn-fancy">
+    </form>
+    {% else %}
+    {{ g.user.username }}
+    <a href="{{ url_for('logout') }}">log out</a>
+    {% endif %}
+  </div>
+
+  <!-- Site information/banner on top left -->
+	<a href="/">
+	<div id="tittxt">
+		<h1>Arxiv Sanity Preserver</h1>
+		Built in spare time by <a href="https://twitter.com/karpathy">@karpathy</a> to accelerate research.<br>
+		Serving last {{ totpapers }} papers from cs.[CV|CL|LG|AI|NE]/stat.ML
+	</div>
+	</a>
+</div>
+
+<div id="flashesdiv">
+{% with flashes = get_flashed_messages() %}
+    {% if flashes %}
+      <ul class="flashes">
+      {% for message in flashes %}
+        <li>{{ message }}
+      {% endfor %}
+      </ul>
+    {% endif %}
+{% endwith %}
+</div>
+
+<div id="maindiv">
+  <!-- contains the paper of interest -->
+  <div id="rtable" style="margin-top:40px;"></div>
+  <!-- functionality to add new comments -->
+  <div id="pitchin-cfa" style="background-color:#d7e5ff; padding: 10px; margin-top: 5px; border: 1px solid #b7c5e0; cursor: pointer;">Pitch in!</div>
+  <div id="pitchin" style="padding: 5px 5px 10px 5px; border-radius: 0px 0px 5px 5px; display: none;">
+    <div>
+      <div class="piitemdo">- <b>DO</b>: Add helpful links to code, project page, or related discussion.</div>
+      <div class="piitemdo">- <b>DO</b>: Offer <u>constructive</u> comments on this work.</div>
+      <div class="piitemdo">- <b>DON'T</b>: Post generic comments of little value, e.g. "this is great.", "nice", etc.</div>
+      <div class="piitemdo">- <b>DON'T</b>: Troll, call people names, be disrespectful. Pretty please.</div>
+    </div>
+    <div>
+      <!-- form for submitting a new discussion -->
+      <div style="border-top:1px solid black; margin-top:5px; padding-top:5px;">
+        <textarea id="post-text" rows="15" style="width: 98.5%;font-size: 16px;padding: 6px 6px;color: #333;line-height1.42857143:;border: 1px solid #ccc;box-shadow: inset 0 1px 1px rgba(0,0,0,.075);overflow: auto;border-radius: 4px;margin-top: 4px;"></textarea>
+        <div style="color:#555">(You can use $\LaTeX$ and markdown)</div>
+      </div>
+      <div>
+        <div id="preview-wrap" style="display:none; margin-bottom:5px;">
+          <div style="margin-top: 5px;padding-top: 5px;font-size: 20px;">Live preview:</div>
+          <div id="preview" style="background-color: #fff;padding: 5px;border: 1px solid #999;"></div>
+        </div>
+        <div style="background-color: #eee; padding:5px;">
+          <form action="">
+            On this paper's topic, I am:
+            <input type="radio" name="conf" value="expert"> expert
+            <input type="radio" name="conf" value="confident"> confident
+            <input type="radio" name="conf" value="uncertain"> uncertain
+            <br>
+            <input type="checkbox" name="anon" value="anon"> Post anonymously
+          </form>
+        </div>
+        <div><button id="btnpost" style="margin-top:5px;" class="ppbutton">Post</button></div>
+        <div id="errors-etc" style="display:none; background-color:#fee; padding:5px; margin-top:5px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- contains the discussion -->
+  <div id="discussion">
+    <div style="padding:5px; margin-top:10px; font-size:20px;">Discussion:</div>
+  </div>
+</div>
+
+<br><br><br><br><br><br>
+</body>
+
+</html>

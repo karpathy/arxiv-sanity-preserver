@@ -20,9 +20,12 @@ class Config(object):
     sim_path = 'sim_dict.p'
     user_sim_path = 'user_sim.p'
     # sql database file
+    db_serve_path = 'db2.p' # an enriched db.p with various preprocessing info
     database_path = 'as.db'
-    search_dict_path = 'search_dict.p'
+    serve_cache_path = 'serve_cache.p'
     
+    beg_for_hosting_money = 1 # do we beg the active users randomly for money? 0 = no.
+    banned_path = 'banned.txt' # for twitter users who are banned
     tmp_dir = 'tmp'
 
 # Context managers for atomic writes courtesy of
@@ -77,7 +80,7 @@ def open_atomic(filepath, *args, **kwargs):
             yield f
             if fsync:
                 f.flush()
-                os.fsync(file.fileno())
+                os.fsync(f.fileno())
         os.rename(tmppath, filepath)
 
 def safe_pickle_dump(obj, fname):

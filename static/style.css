@@ -277,7 +277,7 @@ ul.flashes li {
 	border-top: 1px solid #AAA;
 	
 	padding: 10px 5px 10px 5px;
-	background-color: #FFF;
+	background-color: #CCE;
 }
 #pagebar a:link{ text-decoration: none; color: #338;}
 #pagebar a:visited{ text-decoration: none; color: #338;}
@@ -321,7 +321,7 @@ ul.flashes li {
 	background-color: #CEC;
 }
 .tab-selected {
-	background-color: #CCE;
+	background-color: #FFF;
 }
 .fdivider {
 	display: inline-block;
@@ -339,4 +339,123 @@ ul.flashes li {
 	margin-top: 10px;
 	padding: 10px;
 	text-align: center;
+}
+.twdiv {
+	margin-top:2px;
+}
+.twimg {
+	width: 36px;
+	height: 36px;
+	border: 2px solid #fff;
+}
+.twcont {
+	background-color: #e8f6ff;
+	border: 1px solid #e1e8ed;
+	padding: 4px;
+	font-size: 14px;
+	display: none;
+}
+#loadmore {
+	text-align: center;
+}
+#loadmorebtn {
+	height:50px;
+	width:200px;
+	margin-top:20px;
+	background-color: #fff;
+}
+.tweetcount {
+	height: 26px;
+	border: 2px solid #fff;
+	background-color: #eee;
+	display: inline-block;
+	vertical-align: top;
+	padding: 10px 4px 0px 4px;
+	font-size: 14px;
+}
+/* comments-specific */
+.cheader {
+	background-color: #eee;
+	padding: 5px;
+	font-size: 12px;
+}
+.cuser {
+	display: inline-block;
+	color: #0000ad;
+	margin-left: 5px;
+}
+.ctime {
+	color: #2a9e3f;
+	display: inline-block;
+	margin-left: 10px;
+}
+.cver {
+	color: #9e2a3f;
+	display: inline-block;
+	margin-left: 10px;
+}
+.cconf {
+	color: #c316ea;
+	display: inline-block;
+	margin-left: 10px;
+}
+.ctext {
+	background-color: #fff;
+	border: 1px solid #eee;
+	padding: 0px 5px 0px 5px;
+	font-size: 14px;
+}
+.ppbutton {
+    background-color: #4CAF50; /* Green */
+    border: none;
+    color: white;
+    padding: 15px 32px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    cursor: pointer;
+}
+.ctags {
+	margin: -2px 0px 10px 0px;
+	color: #555;
+}
+.ctag {
+	display: inline-block;
+	padding: 2px 5px 2px 5px;
+	margin: 0px 5px 0px 0px;
+	background-color: #eee;
+	cursor: pointer;
+	font-size: 12px;
+	border-radius: 0px 0px 3px 0px;
+}
+.ctag-count {
+	display: inline-block;
+	padding: 2px;
+	background-color: #83ff00;
+	font-size: 12px;
+	border-radius: 0px 0px 0px 3px;
+}
+.ctag-count-zero {
+	background-color: #ddd !important;
+}
+.ctag-active {
+	background-color: #ff5050 !important;
+}
+.cerr {
+	background-color: #fdd;
+}
+.caction {
+	display:inline-block;
+	float:right; 
+	padding:2px;
+}
+.caction img {
+	width: 20px;
+	height: 20px;
+}
+.inlibsof {
+  background-color: #ffc;
+  padding: 2px;
+  font-size: 14px;
 }

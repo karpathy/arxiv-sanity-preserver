@@ -12,7 +12,8 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from utils import Config, safe_pickle_dump
 
 seed(1337)
-max_train = 10000 # max number of tfidf training documents (chosen randomly), for memory efficiency
+max_train = 5000 # max number of tfidf training documents (chosen randomly), for memory efficiency
+max_features = 5000
 
 # read database
 db = pickle.load(open(Config.db_path, 'rb'))
@@ -42,7 +43,7 @@ v = TfidfVectorizer(input='content',
         encoding='utf-8', decode_error='replace', strip_accents='unicode', 
         lowercase=True, analyzer='word', stop_words='english', 
         token_pattern=r'(?u)\b[a-zA-Z_][a-zA-Z0-9_]+\b',
-        ngram_range=(1, 2), max_features = 10000, 
+        ngram_range=(1, 2), max_features = max_features, 
         norm='l2', use_idf=True, smooth_idf=True, sublinear_tf=True,
         max_df=1.0, min_df=1)
 

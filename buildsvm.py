@@ -9,7 +9,7 @@ from sqlite3 import dbapi2 as sqlite3
 # local imports
 from utils import safe_pickle_dump, strip_version, Config
 
-num_recommendations = 500 # papers to recommend per user
+num_recommendations = 1000 # papers to recommend per user
 # -----------------------------------------------------------------------------
 
 if not os.path.isfile(Config.database_path):
@@ -35,7 +35,7 @@ print('number of users: ', len(users))
 meta = pickle.load(open(Config.meta_path, 'rb'))
 out = pickle.load(open(Config.tfidf_path, 'rb'))
 X = out['X']
-X = X.todense()
+X = X.todense().astype(np.float32)
 
 xtoi = { strip_version(x):i for x,i in meta['ptoi'].items() }
 
