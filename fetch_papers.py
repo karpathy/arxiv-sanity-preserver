@@ -37,8 +37,8 @@ def parse_arxiv_url(url):
   examples is http://arxiv.org/abs/1512.08756v2
   we want to extract the raw id and the version
   """
-  ix = url.rfind('/')
-  idversion = url[ix+1:] # extract just the id (and the version)
+  ix = url.rfind('abs/')
+  idversion = url[ix+4:] # extract just the id (and the version)
   parts = idversion.split('v')
   assert len(parts) == 2, 'error parsing url ' + url
   return parts[0], int(parts[1])
