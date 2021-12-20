@@ -50,6 +50,14 @@ I have a simple shell script that runs these commands one by one, and every day 
 
 **protip: numpy/BLAS**: The script `analyze.py` does quite a lot of heavy lifting with numpy. I recommend that you carefully set up your numpy to use BLAS (e.g. OpenBLAS), otherwise the computations will take a long time. With ~25,000 papers and ~5000 users the script runs in several hours on my current machine with a BLAS-linked numpy.
 
+Edit policy.xml in /etc/ImageMagic/ in order to generate thumbnails from pdf without getting error 
+"Could not render: incorrectly formatted pdf"
+
+edit:
+  <policy domain="coder" rights="none" pattern="PDF" />
+replace with:
+   <policy domain="coder" rights="read | write" pattern="PDF" />
+
 ### Running online
 
 If you'd like to run the flask server online (e.g. AWS) run it as `python serve.py --prod`.
