@@ -12,7 +12,7 @@ from hashlib import md5
 from flask import Flask, request, session, url_for, redirect, \
      render_template, abort, g, flash, _app_ctx_stack
 from flask_limiter import Limiter
-from werkzeug import check_password_hash, generate_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
 import pymongo
 
 from utils import safe_pickle_dump, strip_version, isvalidid, Config
@@ -596,6 +596,41 @@ def addfollow():
             return 'OK'
         
     return 'NOTOK'
+
+@app.route('/update_password', methods=['POST'])
+def update_password():
+
+  if not g.user:
+    flash('You need to login first')
+    return redirect(url_for('intmain'))
+
+  username = get_username(session['user_id'])
+  password = request.form['password']
+  new_password = request.form['new_password']
+  new_password_again = request.form['new_password_again']
+
+  if get_user_id(username) is None:
+    raise ValueError("User should exist! " + username)
+
+  if new_password != new_password_again:
+    flash("New password must match")
+    return redirect(url_for('intmain'))
+
+  user = query_db('''select * from user where
+          username = ?''', [username], one=True)
+
+  if not check_password_hash(user['pw_hash'], password):
+    flash("Current password not valid")
+  else:
+    g.db.execute('update user set pw_hash = ? where username = ?',
+        [generate_password_hash(new_password), username])
+
+    g.db.commit()
+
+    flash("Password updated")
+
+  return redirect(url_for('intmain'))
+
 
 @app.route('/login', methods=['POST'])
 def login():
