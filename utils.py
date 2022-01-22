@@ -11,14 +11,14 @@ class Config(object):
     # main paper information repo file
     db_path = 'db.p'
     # intermediate processing folders
-    pdf_dir = os.path.join('data', 'pdf')
-    txt_dir = os.path.join('data', 'txt')
+    pdf_dir = os.path.join('/', 'data', 'pdf')
+    txt_dir = os.path.join('/', 'data', 'txt')
     thumbs_dir = os.path.join('static', 'thumbs')
     # intermediate pickles
-    tfidf_path = 'tfidf.p'
-    meta_path = 'tfidf_meta.p'
-    sim_path = 'sim_dict.p'
-    user_sim_path = 'user_sim.p'
+    tfidf_path = os.path.join('/', 'data', 'pickles','tfidf.p')
+    meta_path = os.path.join('/', 'data', 'pickles','tfidf_meta.p')
+    sim_path = os.path.join('/', 'data', 'pickles','sim_dict.p')
+    user_sim_path = os.path.join('/', 'data', 'pickles','user_sim.p')
     # sql database file
     db_serve_path = 'db2.p' # an enriched db.p with various preprocessing info
     database_path = 'as.db'
@@ -97,5 +97,33 @@ def strip_version(idstr):
     return parts[0]
 
 # "1511.08198v1" is an example of a valid arxiv id that we accept
+# "0310594v1" and the dot may be missing too
 def isvalidid(pid):
-  return re.match('^\d+\.\d+(v\d+)?$', pid)
+  return re.match('^([a-z]+(-[a-z]+)?/)?\d+(\.\d+)?(v\d+)?$', pid)
+
+
+
+def dir_basename_from_pid(pid,j):
+  """ Mapping article id from metadata to its location in the arxiv S3 tarbals. 
+
+  Returns dir/basename without extention and without full qualified path.
+  It also ignores version because there is no version in the tarbals. 
+  I understand they have the updated version in the tarballs all the time.
+
+  Add .txt .pdf or .jpg for the actual file you need and prepend with the 
+  path to your files dirs.
+  """
+  schema="unhandled"
+  if j['_rawid'][:4].isdigit() and '.' in j['_rawid']: # this is the current scheme from 0704
+    schema='current' # YYMM/YYMM.xxxxx.pdf (number of xxx is variable)
+    dir_basename_str = '/'.join( [ j['_rawid'][:4] , j['_rawid'] ] )
+  elif '/' in j['_rawid']: # cond-mat/0210533 some rawids had the category and the id
+    schema='slash' #YYMM/catYYMMxxxxx.pdf
+    dir_basename_str = '/'.join( [ j['_rawid'].split("/")[1][:4], "".join(j['_rawid'].split("/")) ] )  
+  else: # this is for rawid with no category, but we split category from metadata on the dot (if it has one)
+    schema='else' #YYMM/catYYMMxxxxx.pdf
+    dir_basename_str = '/'.join( [ j['_rawid'][:4].split("-")[0]
+      , j['arxiv_primary_category']['term'].split(".")[0]+j['_rawid'] ] )
+  if schema == 'unhandled':
+    print('unhandled mapping in pid to tarball',j['_rawid'])
+  return dir_basename_str
