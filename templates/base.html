@@ -1,0 +1,45 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+<!-- meta info -->
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>arxiv-sanity</title>
+<!-- CSS -->
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+<!-- Favicon -->
+<link rel="shortcut icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}" />
+
+<script>
+var user = {{ user | tojson }};
+</script>
+{% block variables %}
+{% endblock %}
+
+</head>
+
+<body>
+<div id="header">
+    <a href="/" id="home-link">arxiv-sanity</a>
+    <a href="/profile" id="login-link">
+        {{ 'profile' if user else 'login' }}
+    </a>
+    <a href="/stats" id="stats-link">stats</a>
+    <a href="/about" id="stats-link">about</a>
+</div>
+
+{% block content %}
+{% endblock %}
+
+<!-- React -->
+<script src="https://unpkg.com/react@16/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@16/umd/react-dom.production.min.js" crossorigin></script>
+<!-- Babel for displaying JSX -->
+<script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+<!-- Load our React component -->
+{% block elements %}
+{% endblock %}
+
+</body>
+</html>

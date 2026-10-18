@@ -1,12 +1,6 @@
-tmp/
-pdf/
-txt/
-static/thumbs/
-*.p
-*.pyc
-as.db
-secret_key.txt
-env/
+.DS_Store
+.ipynb_checkpoints
+__pycache__
 data
-*.DS_Store
-twitter.txt
+*.ipynb
+secret_key.txt

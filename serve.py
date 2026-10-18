@@ -1,714 +1,494 @@
+"""
+Flask server backend
+
+ideas:
+- allow delete of tags
+- unify all different pages into single search filter sort interface
+- special single-image search just for paper similarity
+"""
+
 import os
-import json
+import re
 import time
-import pickle
-import argparse
-import dateutil.parser
-from random import shuffle, randrange, uniform
+from random import shuffle
 
 import numpy as np
-from sqlite3 import dbapi2 as sqlite3
-from hashlib import md5
-from flask import Flask, request, session, url_for, redirect, \
-     render_template, abort, g, flash, _app_ctx_stack
-from flask_limiter import Limiter
-from werkzeug import check_password_hash, generate_password_hash
-import pymongo
+from sklearn import svm
 
-from utils import safe_pickle_dump, strip_version, isvalidid, Config
+from flask import Flask, request, redirect, url_for
+from flask import render_template
+from flask import g # global session-level object
+from flask import session
 
-# various globals
+from aslite.db import get_papers_db, get_metas_db, get_tags_db, get_last_active_db, get_email_db
+from aslite.db import load_features
+
 # -----------------------------------------------------------------------------
+# inits and globals
 
-# database configuration
-if os.path.isfile('secret_key.txt'):
-  SECRET_KEY = open('secret_key.txt', 'r').read()
-else:
-  SECRET_KEY = 'devkey, should be in a file'
+RET_NUM = 25 # number of papers to return per page
+
 app = Flask(__name__)
-app.config.from_object(__name__)
-limiter = Limiter(app, global_limits=["100 per hour", "20 per minute"])
+
+# set the secret key so we can cryptographically sign cookies and maintain sessions
+if os.path.isfile('secret_key.txt'):
+    # example of generating a good key on your system is:
+    # import secrets; secrets.token_urlsafe(16)
+    sk = open('secret_key.txt').read().strip()
+else:
+    print("WARNING: no secret key found, using default devkey")
+    sk = 'devkey'
+app.secret_key = sk
 
 # -----------------------------------------------------------------------------
-# utilities for database interactions 
-# -----------------------------------------------------------------------------
-# to initialize the database: sqlite3 as.db < schema.sql
-def connect_db():
-  sqlite_db = sqlite3.connect(Config.database_path)
-  sqlite_db.row_factory = sqlite3.Row # to return dicts rather than tuples
-  return sqlite_db
+# globals that manage the (lazy) loading of various state for a request
 
-def query_db(query, args=(), one=False):
-  """Queries the database and returns a list of dictionaries."""
-  cur = g.db.execute(query, args)
-  rv = cur.fetchall()
-  return (rv[0] if rv else None) if one else rv
+def get_tags():
+    if g.user is None:
+        return {}
+    if not hasattr(g, '_tags'):
+        with get_tags_db() as tags_db:
+            tags_dict = tags_db[g.user] if g.user in tags_db else {}
+        g._tags = tags_dict
+    return g._tags
 
-def get_user_id(username):
-  """Convenience method to look up the id for a username."""
-  rv = query_db('select user_id from user where username = ?',
-                [username], one=True)
-  return rv[0] if rv else None
+def get_papers():
+    if not hasattr(g, '_pdb'):
+        g._pdb = get_papers_db()
+    return g._pdb
 
-def get_username(user_id):
-  """Convenience method to look up the username for a user."""
-  rv = query_db('select username from user where user_id = ?',
-                [user_id], one=True)
-  return rv[0] if rv else None
-
-# -----------------------------------------------------------------------------
-# connection handlers
-# -----------------------------------------------------------------------------
+def get_metas():
+    if not hasattr(g, '_mdb'):
+        g._mdb = get_metas_db()
+    return g._mdb
 
 @app.before_request
 def before_request():
-  # this will always request database connection, even if we dont end up using it ;\
-  g.db = connect_db()
-  # retrieve user object from the database if user_id is set
-  g.user = None
-  if 'user_id' in session:
-    g.user = query_db('select * from user where user_id = ?',
-                      [session['user_id']], one=True)
+    g.user = session.get('user', None)
+
+    # record activity on this user so we can reserve periodic
+    # recommendations heavy compute only for active users
+    if g.user:
+        with get_last_active_db(flag='c') as last_active_db:
+            last_active_db[g.user] = int(time.time())
 
 @app.teardown_request
-def teardown_request(exception):
-  db = getattr(g, 'db', None)
-  if db is not None:
-    db.close()
+def close_connection(error=None):
+    # close any opened database connections
+    if hasattr(g, '_pdb'):
+        g._pdb.close()
+    if hasattr(g, '_mdb'):
+        g._mdb.close()
 
 # -----------------------------------------------------------------------------
-# search/sort functionality
+# ranking utilities for completing the search/rank/filter requests
+
+def render_pid(pid):
+    # render a single paper with just the information we need for the UI
+    pdb = get_papers()
+    tags = get_tags()
+    thumb_path = 'static/thumb/' + pid + '.jpg'
+    thumb_url = thumb_path if os.path.isfile(thumb_path) else ''
+    d = pdb[pid]
+    return dict(
+        weight = 0.0,
+        id = d['_id'],
+        title = d['title'],
+        time = d['_time_str'],
+        authors = ', '.join(a['name'] for a in d['authors']),
+        tags = ', '.join(t['term'] for t in d['tags']),
+        utags = [t for t, pids in tags.items() if pid in pids],
+        summary = d['summary'],
+        thumb_url = thumb_url,
+    )
+
+def random_rank():
+    mdb = get_metas()
+    pids = list(mdb.keys())
+    shuffle(pids)
+    scores = [0 for _ in pids]
+    return pids, scores
+
+def time_rank():
+    mdb = get_metas()
+    ms = sorted(mdb.items(), key=lambda kv: kv[1]['_time'], reverse=True)
+    tnow = time.time()
+    pids = [k for k, v in ms]
+    scores = [(tnow - v['_time'])/60/60/24 for k, v in ms] # time delta in days
+    return pids, scores
+
+def svm_rank(tags: str = '', pid: str = '', C: float = 0.01):
+
+    # tag can be one tag or a few comma-separated tags or 'all' for all tags we have in db
+    # pid can be a specific paper id to set as positive for a kind of nearest neighbor search
+    if not (tags or pid):
+        return [], [], []
+
+    # load all of the features
+    features = load_features()
+    x, pids = features['x'], features['pids']
+    n, d = x.shape
+    ptoi, itop = {}, {}
+    for i, p in enumerate(pids):
+        ptoi[p] = i
+        itop[i] = p
+
+    # construct the positive set
+    y = np.zeros(n, dtype=np.float32)
+    if pid:
+        y[ptoi[pid]] = 1.0
+    elif tags:
+        tags_db = get_tags()
+        tags_filter_to = tags_db.keys() if tags == 'all' else set(tags.split(','))
+        for tag, pids in tags_db.items():
+            if tag in tags_filter_to:
+                for pid in pids:
+                    y[ptoi[pid]] = 1.0
+
+    if y.sum() == 0:
+        return [], [], [] # there are no positives?
+
+    # classify
+    clf = svm.LinearSVC(class_weight='balanced', verbose=False, max_iter=10000, tol=1e-6, C=C)
+    clf.fit(x, y)
+    s = clf.decision_function(x)
+    sortix = np.argsort(-s)
+    pids = [itop[ix] for ix in sortix]
+    scores = [100*float(s[ix]) for ix in sortix]
+
+    # get the words that score most positively and most negatively for the svm
+    ivocab = {v:k for k,v in features['vocab'].items()} # index to word mapping
+    weights = clf.coef_[0] # (n_features,) weights of the trained svm
+    sortix = np.argsort(-weights)
+    words = []
+    for ix in list(sortix[:40]) + list(sortix[-20:]):
+        words.append({
+            'word': ivocab[ix],
+            'weight': weights[ix],
+        })
+
+    return pids, scores, words
+
+def search_rank(q: str = ''):
+    if not q:
+        return [], [] # no query? no results
+    qs = q.lower().strip().split() # split query by spaces and lowercase
+
+    pdb = get_papers()
+    match = lambda s: sum(min(3, s.lower().count(qp)) for qp in qs)
+    matchu = lambda s: sum(int(s.lower().count(qp) > 0) for qp in qs)
+    pairs = []
+    for pid, p in pdb.items():
+        score = 0.0
+        score += 10.0 * matchu(' '.join([a['name'] for a in p['authors']]))
+        score += 20.0 * matchu(p['title'])
+        score += 1.0 * match(p['summary'])
+        if score > 0:
+            pairs.append((score, pid))
+
+    pairs.sort(reverse=True)
+    pids = [p[1] for p in pairs]
+    scores = [p[0] for p in pairs]
+    return pids, scores
+
 # -----------------------------------------------------------------------------
+# primary application endpoints
 
-def papers_search(qraw):
-  qparts = qraw.lower().strip().split() # split by spaces
-  # use reverse index and accumulate scores
-  scores = []
-  for pid,p in db.items():
-    score = sum(SEARCH_DICT[pid].get(q,0) for q in qparts)
-    if score == 0:
-      continue # no match whatsoever, dont include
-    # give a small boost to more recent papers
-    score += 0.0001*p['tscore']
-    scores.append((score, p))
-  scores.sort(reverse=True, key=lambda x: x[0]) # descending
-  out = [x[1] for x in scores if x[0] > 0]
-  return out
+def default_context():
+    # any global context across all pages, e.g. related to the current user
+    context = {}
+    context['user'] = g.user if g.user is not None else ''
+    return context
 
-def papers_similar(pid):
-  rawpid = strip_version(pid)
+@app.route('/', methods=['GET'])
+def main():
 
-  # check if we have this paper at all, otherwise return empty list
-  if not rawpid in db: 
-    return []
+    # default settings
+    default_rank = 'time'
+    default_tags = ''
+    default_time_filter = ''
+    default_skip_have = 'no'
 
-  # check if we have distances to this specific version of paper id (includes version)
-  if pid in sim_dict:
-    # good, simplest case: lets return the papers
-    return [db[strip_version(k)] for k in sim_dict[pid]]
-  else:
-    # ok we don't have this specific version. could be a stale URL that points to, 
-    # e.g. v1 of a paper, but due to an updated version of it we only have v2 on file
-    # now. We want to use v2 in that case.
-    # lets try to retrieve the most recent version of this paper we do have
-    kok = [k for k in sim_dict if rawpid in k]
-    if kok:
-      # ok we have at least one different version of this paper, lets use it instead
-      id_use_instead = kok[0]
-      return [db[strip_version(k)] for k in sim_dict[id_use_instead]]
+    # override variables with any provided options via the interface
+    opt_rank = request.args.get('rank', default_rank) # rank type. search|tags|pid|time|random
+    opt_q = request.args.get('q', '') # search request in the text box
+    opt_tags = request.args.get('tags', default_tags)  # tags to rank by if opt_rank == 'tag'
+    opt_pid = request.args.get('pid', '')  # pid to find nearest neighbors to
+    opt_time_filter = request.args.get('time_filter', default_time_filter) # number of days to filter by
+    opt_skip_have = request.args.get('skip_have', default_skip_have) # hide papers we already have?
+    opt_svm_c = request.args.get('svm_c', '') # svm C parameter
+    opt_page_number = request.args.get('page_number', '1') # page number for pagination
+
+    # if a query is given, override rank to be of type "search"
+    # this allows the user to simply hit ENTER in the search field and have the correct thing happen
+    if opt_q:
+        opt_rank = 'search'
+
+    # try to parse opt_svm_c into something sensible (a float)
+    try:
+        C = float(opt_svm_c)
+    except ValueError:
+        C = 0.01 # sensible default, i think
+
+    # rank papers: by tags, by time, by random
+    words = [] # only populated in the case of svm rank
+    if opt_rank == 'search':
+        pids, scores = search_rank(q=opt_q)
+    elif opt_rank == 'tags':
+        pids, scores, words = svm_rank(tags=opt_tags, C=C)
+    elif opt_rank == 'pid':
+        pids, scores, words = svm_rank(pid=opt_pid, C=C)
+    elif opt_rank == 'time':
+        pids, scores = time_rank()
+    elif opt_rank == 'random':
+        pids, scores = random_rank()
     else:
-      # return just the paper. we dont have similarities for it for some reason
-      return [db[rawpid]]
+        raise ValueError("opt_rank %s is not a thing" % (opt_rank, ))
 
-def papers_from_library():
-  out = []
-  if g.user:
-    # user is logged in, lets fetch their saved library data
-    uid = session['user_id']
-    user_library = query_db('''select * from library where user_id = ?''', [uid])
-    libids = [strip_version(x['paper_id']) for x in user_library]
-    out = [db[x] for x in libids]
-    out = sorted(out, key=lambda k: k['updated'], reverse=True)
-  return out
+    # filter by time
+    if opt_time_filter:
+        mdb = get_metas()
+        kv = {k:v for k,v in mdb.items()} # read all of metas to memory at once, for efficiency
+        tnow = time.time()
+        deltat = int(opt_time_filter)*60*60*24 # allowed time delta in seconds
+        keep = [i for i,pid in enumerate(pids) if (tnow - kv[pid]['_time']) < deltat]
+        pids, scores = [pids[i] for i in keep], [scores[i] for i in keep]
 
-def papers_from_svm(recent_days=None):
-  out = []
-  if g.user:
+    # optionally hide papers we already have
+    if opt_skip_have == 'yes':
+        tags = get_tags()
+        have = set().union(*tags.values())
+        keep = [i for i,pid in enumerate(pids) if pid not in have]
+        pids, scores = [pids[i] for i in keep], [scores[i] for i in keep]
 
-    uid = session['user_id']
-    if not uid in user_sim:
-      return []
-    
-    # we want to exclude papers that are already in user library from the result, so fetch them.
-    user_library = query_db('''select * from library where user_id = ?''', [uid])
-    libids = {strip_version(x['paper_id']) for x in user_library}
+    # crop the number of results to RET_NUM, and paginate
+    try:
+        page_number = max(1, int(opt_page_number))
+    except ValueError:
+        page_number = 1
+    start_index = (page_number - 1) * RET_NUM # desired starting index
+    end_index = min(start_index + RET_NUM, len(pids)) # desired ending index
+    pids = pids[start_index:end_index]
+    scores = scores[start_index:end_index]
 
-    plist = user_sim[uid]
-    out = [db[x] for x in plist if not x in libids]
+    # render all papers to just the information we need for the UI
+    papers = [render_pid(pid) for pid in pids]
+    for i, p in enumerate(papers):
+        p['weight'] = float(scores[i])
 
-    if recent_days is not None:
-      # filter as well to only most recent papers
-      curtime = int(time.time()) # in seconds
-      out = [x for x in out if curtime - x['time_published'] < recent_days*24*60*60]
+    # build the current tags for the user, and append the special 'all' tag
+    tags = get_tags()
+    rtags = [{'name':t, 'n':len(pids)} for t, pids in tags.items()]
+    if rtags:
+        rtags.append({'name': 'all'})
 
-  return out
+    # build the page context information and render
+    context = default_context()
+    context['papers'] = papers
+    context['tags'] = rtags
+    context['words'] = words
+    context['words_desc'] = "Here are the top 40 most positive and bottom 20 most negative weights of the SVM. If they don't look great then try tuning the regularization strength hyperparameter of the SVM, svm_c, above. Lower C is higher regularization."
+    context['gvars'] = {}
+    context['gvars']['rank'] = opt_rank
+    context['gvars']['tags'] = opt_tags
+    context['gvars']['pid'] = opt_pid
+    context['gvars']['time_filter'] = opt_time_filter
+    context['gvars']['skip_have'] = opt_skip_have
+    context['gvars']['search_query'] = opt_q
+    context['gvars']['svm_c'] = str(C)
+    context['gvars']['page_number'] = str(page_number)
+    return render_template('index.html', **context)
 
-def papers_filter_version(papers, v):
-  if v != '1': 
-    return papers # noop
-  intv = int(v)
-  filtered = [p for p in papers if p['_version'] == intv]
-  return filtered
+@app.route('/inspect', methods=['GET'])
+def inspect():
 
-def encode_json(ps, n=10, send_images=True, send_abstracts=True):
+    # fetch the paper of interest based on the pid
+    pid = request.args.get('pid', '')
+    pdb = get_papers()
+    if pid not in pdb:
+        return "error, malformed pid" # todo: better error handling
 
-  libids = set()
-  if g.user:
-    # user is logged in, lets fetch their saved library data
-    uid = session['user_id']
-    user_library = query_db('''select * from library where user_id = ?''', [uid])
-    libids = {strip_version(x['paper_id']) for x in user_library}
+    # load the tfidf vectors, the vocab, and the idf table
+    features = load_features()
+    x = features['x']
+    idf = features['idf']
+    ivocab = {v:k for k,v in features['vocab'].items()}
+    pix = features['pids'].index(pid)
+    wixs = np.flatnonzero(np.asarray(x[pix].todense()))
+    words = []
+    for ix in wixs:
+        words.append({
+            'word': ivocab[ix],
+            'weight': float(x[pix, ix]),
+            'idf': float(idf[ix]),
+        })
+    words.sort(key=lambda w: w['weight'], reverse=True)
 
-  ret = []
-  for i in range(min(len(ps),n)):
-    p = ps[i]
-    idvv = '%sv%d' % (p['_rawid'], p['_version'])
-    struct = {}
-    struct['title'] = p['title']
-    struct['pid'] = idvv
-    struct['rawpid'] = p['_rawid']
-    struct['category'] = p['arxiv_primary_category']['term']
-    struct['authors'] = [a['name'] for a in p['authors']]
-    struct['link'] = p['link']
-    struct['in_library'] = 1 if p['_rawid'] in libids else 0
-    if send_abstracts:
-      struct['abstract'] = p['summary']
-    if send_images:
-      struct['img'] = '/static/thumbs/' + idvv + '.pdf.jpg'
-    struct['tags'] = [t['term'] for t in p['tags']]
-    
-    # render time information nicely
-    timestruct = dateutil.parser.parse(p['updated'])
-    struct['published_time'] = '%s/%s/%s' % (timestruct.month, timestruct.day, timestruct.year)
-    timestruct = dateutil.parser.parse(p['published'])
-    struct['originally_published_time'] = '%s/%s/%s' % (timestruct.month, timestruct.day, timestruct.year)
+    # package everything up and render
+    paper = render_pid(pid)
+    context = default_context()
+    context['paper'] = paper
+    context['words'] = words
+    context['words_desc'] = "The following are the tokens and their (tfidf) weight in the paper vector. This is the actual summary that feeds into the SVM to power recommendations, so hopefully it is good and representative!"
+    return render_template('inspect.html', **context)
 
-    # fetch amount of discussion on this paper
-    struct['num_discussion'] = comments.count({ 'pid': p['_rawid'] })
+@app.route('/profile')
+def profile():
+    context = default_context()
+    with get_email_db() as edb:
+        email = edb.get(g.user, '')
+        context['email'] = email
+    return render_template('profile.html', **context)
 
-    # arxiv comments from the authors (when they submit the paper)
-    cc = p.get('arxiv_comment', '')
-    if len(cc) > 100:
-      cc = cc[:100] + '...' # crop very long comments
-    struct['comment'] = cc
+@app.route('/stats')
+def stats():
+    context = default_context()
+    mdb = get_metas()
+    kv = {k:v for k,v in mdb.items()} # read all of metas to memory at once, for efficiency
+    times = [v['_time'] for v in kv.values()]
+    tstr = lambda t: time.strftime('%b %d %Y', time.localtime(t))
 
-    ret.append(struct)
-  return ret
-
-# -----------------------------------------------------------------------------
-# flask request handling
-# -----------------------------------------------------------------------------
-
-def default_context(papers, **kws):
-  top_papers = encode_json(papers, args.num_results)
-
-  # prompt logic
-  show_prompt = 'no'
-  try:
-    if Config.beg_for_hosting_money and g.user and uniform(0,1) < 0.05:
-      uid = session['user_id']
-      entry = goaway_collection.find_one({ 'uid':uid })
-      if not entry:
-        lib_count = query_db('''select count(*) from library where user_id = ?''', [uid], one=True)
-        lib_count = lib_count['count(*)']
-        if lib_count > 0: # user has some items in their library too
-          show_prompt = 'yes'
-  except Exception as e:
-    print(e)
-
-  ans = dict(papers=top_papers, numresults=len(papers), totpapers=len(db), tweets=[], msg='', show_prompt=show_prompt, pid_to_users={})
-  ans.update(kws)
-  return ans
-
-@app.route('/goaway', methods=['POST'])
-def goaway():
-  if not g.user: return # weird
-  uid = session['user_id']
-  entry = goaway_collection.find_one({ 'uid':uid })
-  if not entry: # ok record this user wanting it to stop
-    username = get_username(session['user_id'])
-    print('adding', uid, username, 'to goaway.')
-    goaway_collection.insert_one({ 'uid':uid, 'time':int(time.time()) })
-  return 'OK'
-
-@app.route("/")
-def intmain():
-  vstr = request.args.get('vfilter', 'all')
-  papers = [db[pid] for pid in DATE_SORTED_PIDS] # precomputed
-  papers = papers_filter_version(papers, vstr)
-  ctx = default_context(papers, render_format='recent',
-                        msg='Showing most recent Arxiv papers:')
-  return render_template('main.html', **ctx)
-
-@app.route("/<request_pid>")
-def rank(request_pid=None):
-  if not isvalidid(request_pid):
-    return '' # these are requests for icons, things like robots.txt, etc
-  papers = papers_similar(request_pid)
-  ctx = default_context(papers, render_format='paper')
-  return render_template('main.html', **ctx)
-
-@app.route('/discuss', methods=['GET'])
-def discuss():
-  """ return discussion related to a paper """
-  pid = request.args.get('id', '') # paper id of paper we wish to discuss
-  papers = [db[pid]] if pid in db else []
-
-  # fetch the comments
-  comms_cursor = comments.find({ 'pid':pid }).sort([('time_posted', pymongo.DESCENDING)])
-  comms = list(comms_cursor)
-  for c in comms:
-    c['_id'] = str(c['_id']) # have to convert these to strs from ObjectId, and backwards later http://api.mongodb.com/python/current/tutorial.html
-
-  # fetch the counts for all tags
-  tag_counts = []
-  for c in comms:
-    cc = [tags_collection.count({ 'comment_id':c['_id'], 'tag_name':t }) for t in TAGS]
-    tag_counts.append(cc);
-
-  # and render
-  ctx = default_context(papers, render_format='default', comments=comms, gpid=pid, tags=TAGS, tag_counts=tag_counts)
-  return render_template('discuss.html', **ctx)
-
-@app.route('/comment', methods=['POST'])
-def comment():
-  """ user wants to post a comment """
-  anon = int(request.form['anon'])
-
-  if g.user and (not anon):
-    username = get_username(session['user_id'])
-  else:
-    # generate a unique username if user wants to be anon, or user not logged in.
-    username = 'anon-%s-%s' % (str(int(time.time())), str(randrange(1000)))
-
-  # process the raw pid and validate it, etc
-  try:
-    pid = request.form['pid']
-    if not pid in db: raise Exception("invalid pid")
-    version = db[pid]['_version'] # most recent version of this paper
-  except Exception as e:
-    print(e)
-    return 'bad pid. This is most likely Andrej\'s fault.'
-
-  # create the entry
-  entry = {
-    'user': username,
-    'pid': pid, # raw pid with no version, for search convenience
-    'version': version, # version as int, again as convenience
-    'conf': request.form['conf'],
-    'anon': anon,
-    'time_posted': time.time(),
-    'text': request.form['text'],
-  }
-
-  # enter into database
-  print(entry)
-  comments.insert_one(entry)
-  return 'OK'
-
-@app.route("/discussions", methods=['GET'])
-def discussions():
-  # return most recently discussed papers
-  comms_cursor = comments.find().sort([('time_posted', pymongo.DESCENDING)]).limit(100)
-
-  # get the (unique) set of papers.
-  papers = []
-  have = set()
-  for e in comms_cursor:
-    pid = e['pid']
-    if pid in db and not pid in have:
-      have.add(pid)
-      papers.append(db[pid])
-
-  ctx = default_context(papers, render_format="discussions")
-  return render_template('main.html', **ctx)
-
-@app.route('/toggletag', methods=['POST'])
-def toggletag():
-
-  if not g.user: 
-    return 'You have to be logged in to tag. Sorry - otherwise things could get out of hand FAST.'
-
-  # get the tag and validate it as an allowed tag
-  tag_name = request.form['tag_name']
-  if not tag_name in TAGS:
-    print('tag name %s is not in allowed tags.' % (tag_name, ))
-    return "Bad tag name. This is most likely Andrej's fault."
-
-  pid = request.form['pid']
-  comment_id = request.form['comment_id']
-  username = get_username(session['user_id'])
-  time_toggled = time.time()
-  entry = {
-    'username': username,
-    'pid': pid,
-    'comment_id': comment_id,
-    'tag_name': tag_name,
-    'time': time_toggled,
-  }
-
-  # remove any existing entries for this user/comment/tag
-  result = tags_collection.delete_one({ 'username':username, 'comment_id':comment_id, 'tag_name':tag_name })
-  if result.deleted_count > 0:
-    print('cleared an existing entry from database')
-  else:
-    print('no entry existed, so this is a toggle ON. inserting:')
-    print(entry)
-    tags_collection.insert_one(entry)
-
-  return 'OK'
-
-@app.route("/search", methods=['GET'])
-def search():
-  q = request.args.get('q', '') # get the search request
-  papers = papers_search(q) # perform the query and get sorted documents
-  ctx = default_context(papers, render_format="search")
-  return render_template('main.html', **ctx)
-
-@app.route('/recommend', methods=['GET'])
-def recommend():
-  """ return user's svm sorted list """
-  ttstr = request.args.get('timefilter', 'week') # default is week
-  vstr = request.args.get('vfilter', 'all') # default is all (no filter)
-  legend = {'day':1, '3days':3, 'week':7, 'month':30, 'year':365}
-  tt = legend.get(ttstr, None)
-  papers = papers_from_svm(recent_days=tt)
-  papers = papers_filter_version(papers, vstr)
-  ctx = default_context(papers, render_format='recommend',
-                        msg='Recommended papers: (based on SVM trained on tfidf of papers in your library, refreshed every day or so)' if g.user else 'You must be logged in and have some papers saved in your library.')
-  return render_template('main.html', **ctx)
-
-@app.route('/top', methods=['GET'])
-def top():
-  """ return top papers """
-  ttstr = request.args.get('timefilter', 'week') # default is week
-  vstr = request.args.get('vfilter', 'all') # default is all (no filter)
-  legend = {'day':1, '3days':3, 'week':7, 'month':30, 'year':365, 'alltime':10000}
-  tt = legend.get(ttstr, 7)
-  curtime = int(time.time()) # in seconds
-  top_sorted_papers = [db[p] for p in TOP_SORTED_PIDS]
-  papers = [p for p in top_sorted_papers if curtime - p['time_published'] < tt*24*60*60]
-  papers = papers_filter_version(papers, vstr)
-  ctx = default_context(papers, render_format='top',
-                        msg='Top papers based on people\'s libraries:')
-  return render_template('main.html', **ctx)
-
-@app.route('/toptwtr', methods=['GET'])
-def toptwtr():
-  """ return top papers """
-  ttstr = request.args.get('timefilter', 'day') # default is day
-  tweets_top = {'day':tweets_top1, 'week':tweets_top7, 'month':tweets_top30}[ttstr]
-  cursor = tweets_top.find().sort([('vote', pymongo.DESCENDING)]).limit(100)
-  papers, tweets = [], []
-  for rec in cursor:
-    if rec['pid'] in db:
-      papers.append(db[rec['pid']])
-      tweet = {k:v for k,v in rec.items() if k != '_id'}
-      tweets.append(tweet)
-  ctx = default_context(papers, render_format='toptwtr', tweets=tweets,
-                        msg='Top papers mentioned on Twitter over last ' + ttstr + ':')
-  return render_template('main.html', **ctx)
-
-@app.route('/library')
-def library():
-  """ render user's library """
-  papers = papers_from_library()
-  ret = encode_json(papers, 500) # cap at 500 papers in someone's library. that's a lot!
-  if g.user:
-    msg = '%d papers in your library:' % (len(ret), )
-  else:
-    msg = 'You must be logged in. Once you are, you can save papers to your library (with the save icon on the right of each paper) and they will show up here.'
-  ctx = default_context(papers, render_format='library', msg=msg)
-  return render_template('main.html', **ctx)
-
-@app.route('/libtoggle', methods=['POST'])
-def review():
-  """ user wants to toggle a paper in his library """
-  
-  # make sure user is logged in
-  if not g.user:
-    return 'NO' # fail... (not logged in). JS should prevent from us getting here.
-
-  idvv = request.form['pid'] # includes version
-  if not isvalidid(idvv):
-    return 'NO' # fail, malformed id. weird.
-  pid = strip_version(idvv)
-  if not pid in db:
-    return 'NO' # we don't know this paper. wat
-
-  uid = session['user_id'] # id of logged in user
-
-  # check this user already has this paper in library
-  record = query_db('''select * from library where
-          user_id = ? and paper_id = ?''', [uid, pid], one=True)
-  print(record)
-
-  ret = 'NO'
-  if record:
-    # record exists, erase it.
-    g.db.execute('''delete from library where user_id = ? and paper_id = ?''', [uid, pid])
-    g.db.commit()
-    #print('removed %s for %s' % (pid, uid))
-    ret = 'OFF'
-  else:
-    # record does not exist, add it.
-    rawpid = strip_version(pid)
-    g.db.execute('''insert into library (paper_id, user_id, update_time) values (?, ?, ?)''',
-        [rawpid, uid, int(time.time())])
-    g.db.commit()
-    #print('added %s for %s' % (pid, uid))
-    ret = 'ON'
-
-  return ret
-
-@app.route('/friends', methods=['GET'])
-def friends():
-    
-    ttstr = request.args.get('timefilter', 'week') # default is week
-    legend = {'day':1, '3days':3, 'week':7, 'month':30, 'year':365}
-    tt = legend.get(ttstr, 7)
-
-    papers = []
-    pid_to_users = {}
-    if g.user:
-        # gather all the people we are following
-        username = get_username(session['user_id'])
-        edges = list(follow_collection.find({ 'who':username }))
-        # fetch all papers in all of their libraries, and count the top ones
-        counts = {}
-        for edict in edges:
-            whom = edict['whom']
-            uid = get_user_id(whom)
-            user_library = query_db('''select * from library where user_id = ?''', [uid])
-            libids = [strip_version(x['paper_id']) for x in user_library]
-            for lid in libids:
-                if not lid in counts:
-                    counts[lid] = []
-                counts[lid].append(whom)
-
-        keys = list(counts.keys())
-        keys.sort(key=lambda k: len(counts[k]), reverse=True) # descending by count
-        papers = [db[x] for x in keys]
-        # finally filter by date
-        curtime = int(time.time()) # in seconds
-        papers = [x for x in papers if curtime - x['time_published'] < tt*24*60*60]
-        # trim at like 100
-        if len(papers) > 100: papers = papers[:100]
-        # trim counts as well correspondingly
-        pid_to_users = { p['_rawid'] : counts.get(p['_rawid'], []) for p in papers }
-
-    if not g.user:
-        msg = "You must be logged in and follow some people to enjoy this tab."
+    context['num_papers'] = len(kv)
+    if len(kv) > 0:
+        context['earliest_paper'] = tstr(min(times))
+        context['latest_paper'] = tstr(max(times))
     else:
-        if len(papers) == 0:
-            msg = "No friend papers present. Try to extend the time range, or add friends by clicking on your account name (top, right)"
+        context['earliest_paper'] = 'N/A'
+        context['latest_paper'] = 'N/A'
+
+    # count number of papers from various time deltas to now
+    tnow = time.time()
+    for thr in [1, 6, 12, 24, 48, 72, 96]:
+        context['thr_%d' % thr] = len([t for t in times if t > tnow - thr*60*60])
+
+    return render_template('stats.html', **context)
+
+@app.route('/about')
+def about():
+    context = default_context()
+    return render_template('about.html', **context)
+
+# -----------------------------------------------------------------------------
+# tag related endpoints: add, delete tags for any paper
+
+@app.route('/add/<pid>/<tag>')
+def add(pid=None, tag=None):
+    if g.user is None:
+        return "error, not logged in"
+    if tag == 'all':
+        return "error, cannot add the protected tag 'all'"
+    elif tag == 'null':
+        return "error, cannot add the protected tag 'null'"
+
+    with get_tags_db(flag='c') as tags_db:
+
+        # create the user if we don't know about them yet with an empty library
+        if not g.user in tags_db:
+            tags_db[g.user] = {}
+
+        # fetch the user library object
+        d = tags_db[g.user]
+
+        # add the paper to the tag
+        if tag not in d:
+            d[tag] = set()
+        d[tag].add(pid)
+
+        # write back to database
+        tags_db[g.user] = d
+
+    print("added paper %s to tag %s for user %s" % (pid, tag, g.user))
+    return "ok: " + str(d) # return back the user library for debugging atm
+
+@app.route('/sub/<pid>/<tag>')
+def sub(pid=None, tag=None):
+    if g.user is None:
+        return "error, not logged in"
+
+    with get_tags_db(flag='c') as tags_db:
+
+        # if the user doesn't have any tags, there is nothing to do
+        if not g.user in tags_db:
+            return "user has no library of tags ¯\_(ツ)_/¯"
+
+        # fetch the user library object
+        d = tags_db[g.user]
+
+        # add the paper to the tag
+        if tag not in d:
+            return "user doesn't have the tag %s" % (tag, )
         else:
-            msg = "Papers in your friend's libraries:"
+            if pid in d[tag]:
 
-    ctx = default_context(papers, render_format='friends', pid_to_users=pid_to_users, msg=msg)
-    return render_template('main.html', **ctx)
+                # remove this pid from the tag
+                d[tag].remove(pid)
 
-@app.route('/account')
-def account():
-    ctx = { 'totpapers':len(db) }
+                # if this was the last paper in this tag, also delete the tag
+                if len(d[tag]) == 0:
+                    del d[tag]
 
-    followers = []
-    following = []
-    # fetch all followers/following of the logged in user
-    if g.user:
-        username = get_username(session['user_id'])
-        
-        following_db = list(follow_collection.find({ 'who':username }))
-        for e in following_db:
-            following.append({ 'user':e['whom'], 'active':e['active'] })
+                # write back the resulting dict to database
+                tags_db[g.user] = d
+                return "ok removed pid %s from tag %s" % (pid, tag)
+            else:
+                return "user doesn't have paper %s in tag %s" % (pid, tag)
 
-        followers_db = list(follow_collection.find({ 'whom':username }))
-        for e in followers_db:
-            followers.append({ 'user':e['who'], 'active':e['active'] })
+@app.route('/del/<tag>')
+def delete_tag(tag=None):
+    if g.user is None:
+        return "error, not logged in"
 
-    ctx['followers'] = followers
-    ctx['following'] = following
-    return render_template('account.html', **ctx)
+    with get_tags_db(flag='c') as tags_db:
 
-@app.route('/requestfollow', methods=['POST'])
-def requestfollow():
-    if request.form['newf'] and g.user:
-        # add an entry: this user is requesting to follow a second user
-        who = get_username(session['user_id'])
-        whom = request.form['newf']
-        # make sure whom exists in our database
-        whom_id = get_user_id(whom)
-        if whom_id is not None:
-            e = { 'who':who, 'whom':whom, 'active':0, 'time_request':int(time.time()) }
-            print('adding request follow:')
-            print(e)
-            follow_collection.insert_one(e)
+        if g.user not in tags_db:
+            return "user does not have a library"
 
-    return redirect(url_for('account'))
+        d = tags_db[g.user]
 
-@app.route('/removefollow', methods=['POST'])
-def removefollow():
-    user = request.form['user']
-    lst = request.form['lst']
-    if user and lst:
-        username = get_username(session['user_id'])
-        if lst == 'followers':
-            # user clicked "X" in their followers list. Erase the follower of this user
-            who = user
-            whom = username
-        elif lst == 'following':
-            # user clicked "X" in their following list. Stop following this user.
-            who = username
-            whom = user
-        else:
-            return 'NOTOK'
+        if tag not in d:
+            return "user does not have this tag"
 
-        delq = { 'who':who, 'whom':whom }
-        print('deleting from follow collection:', delq)
-        follow_collection.delete_one(delq)
-        return 'OK'
-    else:
-        return 'NOTOK'
+        # delete the tag
+        del d[tag]
 
-@app.route('/addfollow', methods=['POST'])
-def addfollow():
-    user = request.form['user']
-    lst = request.form['lst']
-    if user and lst:
-        username = get_username(session['user_id'])
-        if lst == 'followers':
-            # user clicked "OK" in the followers list, wants to approve some follower. make active.
-            who = user
-            whom = username
-            delq = { 'who':who, 'whom':whom }
-            print('making active in follow collection:', delq)
-            follow_collection.update_one(delq, {'$set':{'active':1}})
-            return 'OK'
-        
-    return 'NOTOK'
+        # write back to database
+        tags_db[g.user] = d
+
+    print("deleted tag %s for user %s" % (tag, g.user))
+    return "ok: " + str(d) # return back the user library for debugging atm
+
+# -----------------------------------------------------------------------------
+# endpoints to log in and out
 
 @app.route('/login', methods=['POST'])
 def login():
-  """ logs in the user. if the username doesn't exist creates the account """
-  
-  if not request.form['username']:
-    flash('You have to enter a username')
-  elif not request.form['password']:
-    flash('You have to enter a password')
-  elif get_user_id(request.form['username']) is not None:
-    # username already exists, fetch all of its attributes
-    user = query_db('''select * from user where
-          username = ?''', [request.form['username']], one=True)
-    if check_password_hash(user['pw_hash'], request.form['password']):
-      # password is correct, log in the user
-      session['user_id'] = get_user_id(request.form['username'])
-      flash('User ' + request.form['username'] + ' logged in.')
-    else:
-      # incorrect password
-      flash('User ' + request.form['username'] + ' already exists, wrong password.')
-  else:
-    # create account and log in
-    creation_time = int(time.time())
-    g.db.execute('''insert into user (username, pw_hash, creation_time) values (?, ?, ?)''',
-      [request.form['username'], 
-      generate_password_hash(request.form['password']), 
-      creation_time])
-    user_id = g.db.execute('select last_insert_rowid()').fetchall()[0][0]
-    g.db.commit()
 
-    session['user_id'] = user_id
-    flash('New account %s created' % (request.form['username'], ))
-  
-  return redirect(url_for('intmain'))
+    # the user is logged out but wants to log in, ok
+    if g.user is None and request.form['username']:
+        username = request.form['username']
+        if len(username) > 0: # one more paranoid check
+            session['user'] = username
+
+    return redirect(url_for('profile'))
 
 @app.route('/logout')
 def logout():
-  session.pop('user_id', None)
-  flash('You were logged out')
-  return redirect(url_for('intmain'))
+    session.pop('user', None)
+    return redirect(url_for('profile'))
 
 # -----------------------------------------------------------------------------
-# int main
-# -----------------------------------------------------------------------------
-if __name__ == "__main__":
-   
-  parser = argparse.ArgumentParser()
-  parser.add_argument('-p', '--prod', dest='prod', action='store_true', help='run in prod?')
-  parser.add_argument('-r', '--num_results', dest='num_results', type=int, default=200, help='number of results to return per query')
-  parser.add_argument('--port', dest='port', type=int, default=5000, help='port to serve on')
-  args = parser.parse_args()
-  print(args)
+# user settings and configurations
 
-  if not os.path.isfile(Config.database_path):
-    print('did not find as.db, trying to create an empty database from schema.sql...')
-    print('this needs sqlite3 to be installed!')
-    os.system('sqlite3 as.db < schema.sql')
+@app.route('/register_email', methods=['POST'])
+def register_email():
+    email = request.form['email']
 
-  print('loading the paper database', Config.db_serve_path)
-  db = pickle.load(open(Config.db_serve_path, 'rb'))
-  
-  print('loading tfidf_meta', Config.meta_path)
-  meta = pickle.load(open(Config.meta_path, "rb"))
-  vocab = meta['vocab']
-  idf = meta['idf']
+    if g.user:
+        # do some basic input validation
+        proper_email = re.match(r'^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$', email, re.IGNORECASE)
+        if email == '' or proper_email: # allow empty email, meaning no email
+            # everything checks out, write to the database
+            with get_email_db(flag='c') as edb:
+                edb[g.user] = email
 
-  print('loading paper similarities', Config.sim_path)
-  sim_dict = pickle.load(open(Config.sim_path, "rb"))
-
-  print('loading user recommendations', Config.user_sim_path)
-  user_sim = {}
-  if os.path.isfile(Config.user_sim_path):
-    user_sim = pickle.load(open(Config.user_sim_path, 'rb'))
-  
-  print('loading serve cache...', Config.serve_cache_path)
-  cache = pickle.load(open(Config.serve_cache_path, "rb"))
-  DATE_SORTED_PIDS = cache['date_sorted_pids']
-  TOP_SORTED_PIDS = cache['top_sorted_pids']
-  SEARCH_DICT = cache['search_dict']
-
-  print('connecting to mongodb...')
-  client = pymongo.MongoClient()
-  mdb = client.arxiv
-  tweets_top1 = mdb.tweets_top1
-  tweets_top7 = mdb.tweets_top7
-  tweets_top30 = mdb.tweets_top30
-  comments = mdb.comments
-  tags_collection = mdb.tags
-  goaway_collection = mdb.goaway
-  follow_collection = mdb.follow
-  print('mongodb tweets_top1 collection size:', tweets_top1.count())
-  print('mongodb tweets_top7 collection size:', tweets_top7.count())
-  print('mongodb tweets_top30 collection size:', tweets_top30.count())
-  print('mongodb comments collection size:', comments.count())
-  print('mongodb tags collection size:', tags_collection.count())
-  print('mongodb goaway collection size:', goaway_collection.count())
-  print('mongodb follow collection size:', follow_collection.count())
-  
-  TAGS = ['insightful!', 'thank you', 'agree', 'disagree', 'not constructive', 'troll', 'spam']
-
-  # start
-  if args.prod:
-    # run on Tornado instead, since running raw Flask in prod is not recommended
-    print('starting tornado!')
-    from tornado.wsgi import WSGIContainer
-    from tornado.httpserver import HTTPServer
-    from tornado.ioloop import IOLoop
-    from tornado.log import enable_pretty_logging
-    enable_pretty_logging()
-    http_server = HTTPServer(WSGIContainer(app))
-    http_server.listen(args.port)
-    IOLoop.instance().start()
-  else:
-    print('starting flask!')
-    app.debug = False
-    app.run(port=args.port, host='0.0.0.0')
+    return redirect(url_for('profile'))

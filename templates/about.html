@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block variables %}
+{% endblock %}
+
+{% block content %}
+<div id="aboutwrap">
+    <div>
+        A much lighter-weight arxiv-sanity from-scratch re-write. Periodically polls arxiv API for new papers. Then allows users to tag papers of interest, and recommends new papers for each tag based on SVMs over tfidf features of paper abstracts. Allows one to search, rank, sort, slice and dice these results in a pretty web UI. Lastly, arxiv-sanity-lite can send you daily emails with recommendations of new papers based on your tags. Curate your tags, track recent papers in your area, and don't miss out!
+    </div>
+
+    <br>
+    <div>
+        This particular instance indexes papers from cs.CV, cs.LG, cs.CL, cs.AI, cs.NE, cs.RO,
+        and only since early-ish 2021.
+    </div>
+
+    <br>
+    <div>The code for this website is open source at Github under <a href="https://github.com/karpathy/arxiv-sanity-lite">arxiv-sanity-lite</a>.</div>
+
+    <br>
+    <div>Developed in spare time as a labor of love by <a href="https://twitter.com/karpathy">@karpathy</a>.</div>
+</div>
+{% endblock %}
+
+{% block elements %}
+{% endblock %}

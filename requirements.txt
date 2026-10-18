@@ -1,18 +1,5 @@
-# feedparser is only if you want to scrape arxiv
-feedparser
-numpy
-scipy
-
-# sciki-learn is only for sparse arrays
-scikit-learn
-
-# twitter
-python-twitter
-pytz
-
-# the following are only for serve.py
-python-dateutil
-flask
-flask_limiter
-tornado
-pymongo
+feedparser==6.0.8
+Flask==2.0.2
+numpy==1.21.4
+scikit-learn==1.0.1
+sqlitedict==1.7.0

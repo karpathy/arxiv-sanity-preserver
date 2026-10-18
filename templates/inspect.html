@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block variables %}
+<script>
+var paper = {{ paper | tojson }};
+var words = {{ words | tojson }};
+var words_desc = {{ words_desc | tojson }};
+</script>
+{% endblock %}
+
+{% block content %}
+<div id="wrap">
+</div>
+<div id="wordwrap">
+</div>
+{% endblock %}
+
+{% block elements %}
+<script src="{{ url_for('static', filename='paper_detail.js') }}" type="text/babel"></script>
+<script src="{{ url_for('static', filename='word_list.js') }}" type="text/babel"></script>
+{% endblock %}
