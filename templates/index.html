@@ -34,7 +34,8 @@ var move_page = function(int_offset) {
             <form action="/" method="get">
 
                 <!-- the search box, allowing us to search by keywords -->
-                <input name="q" type="text" id="qfield" value="{{ gvars.search_query }}">
+                <input name="q" type="text" id="qfield" value="{{ gvars.search_query }}" placeholder='e.g. "graph neural network" +robot* -survey au:lecun'>
+                <a href="/about#search">search syntax</a>
 
                 <!-- rank type: one of tags, pid, time, or random -->
                 <label for="rank_type">Rank by:</label>

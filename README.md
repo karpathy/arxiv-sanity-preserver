@@ -1,6 +1,20 @@
 
 # arxiv-sanity-lite
 
+This repository is based on [karpathy/arxiv-sanity-lite](https://github.com/karpathy/arxiv-sanity-lite) (commit d7a303b), which replaced the older arxiv-sanity-preserver code. The goal of this fork is to add features for sourcing researchers by keyword.
+
+#### Search syntax
+
+Terms match whole words, ignoring case and accents, and plurals match too. Papers are ranked by how many terms match, with title matches weighted most, then authors, then the abstract.
+
+- `diffusion` a plain term (`rl` will not match "world")
+- `"graph neural network"` an exact phrase
+- `learn*` a prefix: learn, learning, learned, ...
+- `+robotics` required, `-survey` excluded
+- `au:hinton`, `ti:transformer`, `abs:benchmark` restrict a term to the authors, title or abstract
+
+These combine, e.g. `+au:"yann lecun" "self-supervised" -ti:survey`. The same help is on the site's About page.
+
 A much lighter-weight arxiv-sanity from-scratch re-write. Periodically polls arxiv API for new papers. Then allows users to tag papers of interest, and recommends new papers for each tag based on SVMs over tfidf features of paper abstracts. Allows one to search, rank, sort, slice and dice these results in a pretty web UI. Lastly, arxiv-sanity-lite can send you daily emails with recommendations of new papers based on your tags. Curate your tags, track recent papers in your area, and don't miss out!
 
 I am running a live version of this code on [arxiv-sanity-lite.com](https://arxiv-sanity-lite.com).

@@ -16,6 +16,20 @@
     </div>
 
     <br>
+    <div id="search">
+        <b>Search syntax.</b> Terms match whole words, ignoring case and accents. Papers are ranked by how many terms match, with title matches weighted most, then authors, then the abstract.
+        <ul>
+            <li><code>diffusion</code> a plain term; plurals match too, but <code>rl</code> will not match "world"</li>
+            <li><code>"graph neural network"</code> an exact phrase</li>
+            <li><code>learn*</code> a prefix: learn, learning, learned, ...</li>
+            <li><code>+robotics</code> required: only papers that contain it</li>
+            <li><code>-survey</code> excluded: drop papers that contain it</li>
+            <li><code>au:hinton</code>, <code>ti:transformer</code>, <code>abs:benchmark</code> restrict a term to the authors, title or abstract</li>
+        </ul>
+        These combine, e.g. <code>+au:"yann lecun" "self-supervised" -ti:survey</code>.
+    </div>
+
+    <br>
     <div>The code for this website is open source at Github under <a href="https://github.com/karpathy/arxiv-sanity-lite">arxiv-sanity-lite</a>.</div>
 
     <br>

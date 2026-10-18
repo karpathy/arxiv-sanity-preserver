@@ -22,6 +22,7 @@ from flask import session
 
 from aslite.db import get_papers_db, get_metas_db, get_tags_db, get_last_active_db, get_email_db
 from aslite.db import load_features
+from aslite.search import search
 
 # -----------------------------------------------------------------------------
 # inits and globals
@@ -172,24 +173,7 @@ def svm_rank(tags: str = '', pid: str = '', C: float = 0.01):
 def search_rank(q: str = ''):
     if not q:
         return [], [] # no query? no results
-    qs = q.lower().strip().split() # split query by spaces and lowercase
-
-    pdb = get_papers()
-    match = lambda s: sum(min(3, s.lower().count(qp)) for qp in qs)
-    matchu = lambda s: sum(int(s.lower().count(qp) > 0) for qp in qs)
-    pairs = []
-    for pid, p in pdb.items():
-        score = 0.0
-        score += 10.0 * matchu(' '.join([a['name'] for a in p['authors']]))
-        score += 20.0 * matchu(p['title'])
-        score += 1.0 * match(p['summary'])
-        if score > 0:
-            pairs.append((score, pid))
-
-    pairs.sort(reverse=True)
-    pids = [p[1] for p in pairs]
-    scores = [p[0] for p in pairs]
-    return pids, scores
+    return search(q, get_papers())
 
 # -----------------------------------------------------------------------------
 # primary application endpoints
